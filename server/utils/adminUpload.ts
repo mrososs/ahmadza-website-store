@@ -1,7 +1,8 @@
 import type { H3Event } from 'h3'
 import { readMultipartFormData } from 'h3'
 import { createHash } from 'node:crypto'
-import { badRequest, createErrorStatus } from './adminUploadErrors'
+import { badRequest } from './errors'
+import { createErrorStatus } from './adminUploadErrors'
 import { contentLength } from './adminRoute'
 
 // Content inspection for admin uploads: the extension and the browser-supplied MIME type are NEVER trusted.

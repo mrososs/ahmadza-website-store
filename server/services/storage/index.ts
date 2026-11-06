@@ -14,12 +14,22 @@ export function isProviderEnabled(event: H3Event, provider: MediaProvider): bool
   return enabledMediaProviders(event).has(provider)
 }
 
+/** VPS adapter from server-only runtime config; throws MediaUnavailableError('provider_disabled') when it is not configured. */
+export function createVpsStorage(event: H3Event) {
+  const cfg = useRuntimeConfig(event)
+  return new VpsStorageAdapter({
+    baseUrl: String(cfg.vpsStorageBaseUrl ?? ''),
+    signingSecret: String(cfg.vpsStorageSigningSecret ?? ''),
+    uploadToken: String(cfg.vpsStorageUploadToken ?? ''),
+  })
+}
+
 /** Resolve the adapter for a media row, or fail safely. Never falls back to another backend or to a public path. */
 export function createMediaStorage(event: H3Event) {
   const adapters: Record<string, () => MediaStorageAdapter> = {
     supabase: () => new SupabaseStorageAdapter(serviceClient(event)),
     external: () => new ExternalLinkAdapter(),
-    vps: () => new VpsStorageAdapter(),
+    vps: () => createVpsStorage(event),
   }
   return {
     async deliver(media: MediaRecord, options: DeliveryOptions): Promise<Delivery> {

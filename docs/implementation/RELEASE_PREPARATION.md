@@ -5,7 +5,7 @@ Prepared 2026-11-06. **Nothing here has been run.** No merge, no push, no deploy
 ## State
 
 * `main` is at `ea3c183` (one commit ahead of `origin/main`: a documentation commit, reviewed below).
-* `vps-recovery-prep` is **15 commits ahead of `main`**, linear (its merge base is `main` itself), so it integrates as a fast-forward with no merge commit and no conflicts.
+* `vps-recovery-prep` is a **linear series of commits ahead of `main`** (`git log --oneline main..HEAD`), linear (its merge base is `main` itself), so it integrates as a fast-forward with no merge commit and no conflicts.
 * 140 files, about 10,500 added lines. Everything is committed; the working tree is clean.
 
 ## Review before publishing
@@ -58,7 +58,7 @@ Publishing is a separate decision with consequences:
 git push origin main
 ```
 
-This would publish **both** the 15 branch commits **and** the earlier unpublished `ea3c183`. Never force-push. Do not push `vps-recovery-prep` as a separate branch unless you want that history visible too.
+This would publish **both** the branch commits **and** the earlier unpublished `ea3c183`. Never force-push. Do not push `vps-recovery-prep` as a separate branch unless you want that history visible too.
 
 ## Order of operations for a working preview
 

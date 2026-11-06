@@ -134,6 +134,12 @@ isOneToOne: false
       referencedRelation: "books"
       referencedColumns: ["id"]
     },{
+      foreignKeyName: "book_categories_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books_readiness"
+      referencedColumns: ["book_id"]
+    },{
       foreignKeyName: "book_categories_category_id_fkey"
       columns: ["category_id"]
 isOneToOne: false
@@ -160,6 +166,12 @@ isOneToOne: false
       referencedRelation: "books"
       referencedColumns: ["id"]
     },{
+      foreignKeyName: "book_makers_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books_readiness"
+      referencedColumns: ["book_id"]
+    },{
       foreignKeyName: "book_makers_maker_id_fkey"
       columns: ["maker_id"]
 isOneToOne: false
@@ -169,9 +181,9 @@ isOneToOne: false
                   ]
                 },"book_media": {
                   Row: {
-                    "book_id": number,"byte_size": number | null,"checksum_verified_at": string | null,"created_at": string,"extension": string | null,"external_url": string | null,"id": number,"is_external": boolean,"kind": Database["public"]['Enums']["media_kind"],"legacy_book_media_id": number | null,"legacy_download_count": number | null,"legacy_path": string | null,"migration_status": Database["public"]['Enums']["media_migration_status"],"mime_type": string | null,"name": string,"page_count": number,"sha256": string | null,"sort_order": number,"storage_path": string | null,"storage_provider": Database["public"]['Enums']["media_storage_provider"],"updated_at": string,"visibility": Database["public"]['Enums']["media_visibility"]
+                    "book_id": number,"byte_size": number | null,"checksum_verified_at": string | null,"created_at": string,"extension": string | null,"external_url": string | null,"id": number,"is_external": boolean,"kind": Database["public"]['Enums']["media_kind"],"legacy_book_media_id": number | null,"legacy_download_count": number | null,"legacy_path": string | null,"migration_status": Database["public"]['Enums']["media_migration_status"],"mime_type": string | null,"name": string,"page_count": number,"sha256": string | null,"sort_order": number,"storage_path": string | null,"storage_provider": Database["public"]['Enums']["media_storage_provider"],"updated_at": string,"visibility": Database["public"]['Enums']["media_visibility"],"book_media_is_validated": boolean | null
                   }
-                  ComputedFields: never
+                  ComputedFields: "book_media_is_validated"
                   Insert: {
                     "book_id": number,"byte_size"?: number | null,"checksum_verified_at"?: string | null,"created_at"?: string,"extension"?: string | null,"external_url"?: string | null,"id"?: never,"is_external"?: boolean,"kind"?: Database["public"]['Enums']["media_kind"],"legacy_book_media_id"?: number | null,"legacy_download_count"?: number | null,"legacy_path"?: string | null,"migration_status"?: Database["public"]['Enums']["media_migration_status"],"mime_type"?: string | null,"name"?: string,"page_count"?: number,"sha256"?: string | null,"sort_order"?: number,"storage_path"?: string | null,"storage_provider"?: Database["public"]['Enums']["media_storage_provider"],"updated_at"?: string,"visibility"?: Database["public"]['Enums']["media_visibility"]
                   }
@@ -185,6 +197,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "books"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "book_media_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books_readiness"
+      referencedColumns: ["book_id"]
     }
                   ]
                 },"book_relations": {
@@ -206,11 +224,23 @@ isOneToOne: false
       referencedRelation: "books"
       referencedColumns: ["id"]
     },{
+      foreignKeyName: "book_relations_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books_readiness"
+      referencedColumns: ["book_id"]
+    },{
       foreignKeyName: "book_relations_related_id_fkey"
       columns: ["related_id"]
 isOneToOne: false
       referencedRelation: "books"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "book_relations_related_id_fkey"
+      columns: ["related_id"]
+isOneToOne: false
+      referencedRelation: "books_readiness"
+      referencedColumns: ["book_id"]
     }
                   ]
                 },"book_tags": {
@@ -231,21 +261,39 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "books"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "book_tags_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books_readiness"
+      referencedColumns: ["book_id"]
     }
                   ]
                 },"books": {
                   Row: {
-                    "cover_path": string | null,"created_at": string,"deleted_at": string | null,"description_html": string | null,"id": number,"is_demo": boolean,"kind": Database["public"]['Enums']["book_kind"],"legacy_cost_raw": string | null,"legacy_id": number | null,"owner_id": string | null,"pages": number,"price_amount": number,"price_currency": string,"slug": string,"status": Database["public"]['Enums']["content_status"],"title": string,"title_norm": string,"updated_at": string,"view_count": number
+                    "cover_path": string | null,"created_at": string,"deleted_at": string | null,"description_html": string | null,"id": number,"import_run_id": number | null,"is_demo": boolean,"kind": Database["public"]['Enums']["book_kind"],"legacy_cost_raw": string | null,"legacy_id": number | null,"legacy_status_raw": string | null,"legacy_verified_at": string | null,"legacy_verified_by": string | null,"owner_id": string | null,"pages": number,"price_amount": number,"price_currency": string,"provenance": string,"slug": string,"status": Database["public"]['Enums']["content_status"],"title": string,"title_norm": string,"updated_at": string,"view_count": number,"book_readiness_row": (string)[] | null
                   }
-                  ComputedFields: never
+                  ComputedFields: "book_readiness_row"
                   Insert: {
-                    "cover_path"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"description_html"?: string | null,"id"?: never,"is_demo"?: boolean,"kind"?: Database["public"]['Enums']["book_kind"],"legacy_cost_raw"?: string | null,"legacy_id"?: number | null,"owner_id"?: string | null,"pages"?: number,"price_amount"?: number,"price_currency"?: string,"slug"?: string,"status"?: Database["public"]['Enums']["content_status"],"title": string,"title_norm"?: string,"updated_at"?: string,"view_count"?: number
+                    "cover_path"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"description_html"?: string | null,"id"?: never,"import_run_id"?: number | null,"is_demo"?: boolean,"kind"?: Database["public"]['Enums']["book_kind"],"legacy_cost_raw"?: string | null,"legacy_id"?: number | null,"legacy_status_raw"?: string | null,"legacy_verified_at"?: string | null,"legacy_verified_by"?: string | null,"owner_id"?: string | null,"pages"?: number,"price_amount"?: number,"price_currency"?: string,"provenance"?: string,"slug"?: string,"status"?: Database["public"]['Enums']["content_status"],"title": string,"title_norm"?: string,"updated_at"?: string,"view_count"?: number
                   }
                   Update: {
-                    "cover_path"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"description_html"?: string | null,"id"?: never,"is_demo"?: boolean,"kind"?: Database["public"]['Enums']["book_kind"],"legacy_cost_raw"?: string | null,"legacy_id"?: number | null,"owner_id"?: string | null,"pages"?: number,"price_amount"?: number,"price_currency"?: string,"slug"?: string,"status"?: Database["public"]['Enums']["content_status"],"title"?: string,"title_norm"?: string,"updated_at"?: string,"view_count"?: number
+                    "cover_path"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"description_html"?: string | null,"id"?: never,"import_run_id"?: number | null,"is_demo"?: boolean,"kind"?: Database["public"]['Enums']["book_kind"],"legacy_cost_raw"?: string | null,"legacy_id"?: number | null,"legacy_status_raw"?: string | null,"legacy_verified_at"?: string | null,"legacy_verified_by"?: string | null,"owner_id"?: string | null,"pages"?: number,"price_amount"?: number,"price_currency"?: string,"provenance"?: string,"slug"?: string,"status"?: Database["public"]['Enums']["content_status"],"title"?: string,"title_norm"?: string,"updated_at"?: string,"view_count"?: number
                   }
                   Relationships: [
                     {
+      foreignKeyName: "books_import_run_id_fkey"
+      columns: ["import_run_id"]
+isOneToOne: false
+      referencedRelation: "migration_runs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "books_legacy_verified_by_fkey"
+      columns: ["legacy_verified_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "books_owner_id_fkey"
       columns: ["owner_id"]
 isOneToOne: false
@@ -285,6 +333,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "books"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "comments_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books_readiness"
+      referencedColumns: ["book_id"]
     },{
       foreignKeyName: "comments_user_id_fkey"
       columns: ["user_id"]
@@ -332,6 +386,12 @@ isOneToOne: false
       referencedRelation: "books"
       referencedColumns: ["id"]
     },{
+      foreignKeyName: "contributor_requests_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books_readiness"
+      referencedColumns: ["book_id"]
+    },{
       foreignKeyName: "contributor_requests_reviewed_by_fkey"
       columns: ["reviewed_by"]
 isOneToOne: false
@@ -363,6 +423,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "books"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "entitlements_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books_readiness"
+      referencedColumns: ["book_id"]
     },{
       foreignKeyName: "entitlements_order_item_id_fkey"
       columns: ["order_item_id"]
@@ -401,6 +467,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "books"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "favourites_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books_readiness"
+      referencedColumns: ["book_id"]
     },{
       foreignKeyName: "favourites_user_id_fkey"
       columns: ["user_id"]
@@ -447,6 +519,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "book_media"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "legacy_media_staging_book_media_id_fkey"
+      columns: ["book_media_id"]
+isOneToOne: false
+      referencedRelation: "book_media_readiness"
+      referencedColumns: ["media_id"]
     },{
       foreignKeyName: "legacy_media_staging_duplicate_of_fkey"
       columns: ["duplicate_of"]
@@ -521,6 +599,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "books"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "order_items_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books_readiness"
+      referencedColumns: ["book_id"]
     },{
       foreignKeyName: "order_items_order_id_fkey"
       columns: ["order_id"]
@@ -718,7 +802,47 @@ isOneToOne: false
                 }
           }
           Views: {
-            [_ in never]: never
+            "book_media_readiness": {
+                  Row: {
+                    "book_id": number,"checksum_verified_at": string | null,"has_hash": boolean | null,"is_external": boolean,"kind": Database["public"]['Enums']["media_kind"],"legacy_book_media_id": number | null,"legacy_path": string | null,"media_id": number,"migration_status": Database["public"]['Enums']["media_migration_status"],"name": string,"storage_provider": Database["public"]['Enums']["media_storage_provider"],"validated": boolean | null,"visibility": Database["public"]['Enums']["media_visibility"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                           "book_id"?: number | null,"checksum_verified_at"?: string | null,"has_hash"?: never,"is_external"?: boolean | null,"kind"?: Database["public"]['Enums']["media_kind"] | null,"legacy_book_media_id"?: number | null,"legacy_path"?: string | null,"media_id"?: number | null,"migration_status"?: Database["public"]['Enums']["media_migration_status"] | null,"name"?: string | null,"storage_provider"?: Database["public"]['Enums']["media_storage_provider"] | null,"validated"?: never,"visibility"?: Database["public"]['Enums']["media_visibility"] | null
+                         }
+                        Update: {
+                           "book_id"?: number | null,"checksum_verified_at"?: string | null,"has_hash"?: never,"is_external"?: boolean | null,"kind"?: Database["public"]['Enums']["media_kind"] | null,"legacy_book_media_id"?: number | null,"legacy_path"?: string | null,"media_id"?: number | null,"migration_status"?: Database["public"]['Enums']["media_migration_status"] | null,"name"?: string | null,"storage_provider"?: Database["public"]['Enums']["media_storage_provider"] | null,"validated"?: never,"visibility"?: Database["public"]['Enums']["media_visibility"] | null
+                         }
+                        Relationships: [
+                    {
+      foreignKeyName: "book_media_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "book_media_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books_readiness"
+      referencedColumns: ["book_id"]
+    }
+                  ]
+                },"books_readiness": {
+                  Row: {
+                    "book_id": number,"cover_path": string | null,"eligible": boolean | null,"import_run_id": number | null,"kind": Database["public"]['Enums']["book_kind"],"legacy_cost_raw": string | null,"legacy_id": number | null,"legacy_status_raw": string | null,"legacy_verified_at": string | null,"media_missing": number | null,"media_total": number | null,"media_validated": number | null,"price_amount": number,"provenance": string,"reasons": (string)[] | null,"status": Database["public"]['Enums']["content_status"],"title": string
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "books_import_run_id_fkey"
+      columns: ["import_run_id"]
+isOneToOne: false
+      referencedRelation: "migration_runs"
+      referencedColumns: ["id"]
+    }
+                  ]
+                }
           }
           Functions: {
             "admin_affiliate_overview":
@@ -743,6 +867,17 @@ isOneToOne: false
 { Args: { "p_book": number }; Returns: {
               "author_name": string,"body": string,"created_at": string,"id": number,"is_mine": boolean
             }[]
+                           },
+"book_media_is_validated":
+{ Args: { "m": Omit<Database["public"]['Tables']["book_media"]['Row'], Database["public"]['Tables']["book_media"]['ComputedFields']> }; Returns: boolean
+                           },
+"book_readiness":
+{ Args: { "p_book": number }; Returns: {
+              "eligible": boolean,"reasons": (string)[]
+            }[]
+                           },
+"book_readiness_row":
+{ Args: { "b": Omit<Database["public"]['Tables']["books"]['Row'], Database["public"]['Tables']["books"]['ComputedFields']> }; Returns: (string)[]
                            },
 "contributor_book_stats":
 { Args: { "p_user": string }; Returns: {
@@ -809,6 +944,11 @@ isOneToOne: false
 "owns_book":
 { Args: { "p_book": number }; Returns: boolean
                            },
+"promote_eligible_books":
+{ Args: { "p_run"?: number }; Returns: {
+              "book_id": number,"new_status": Database["public"]['Enums']["content_status"]
+            }[]
+                           },
 "purge_demo_data":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
@@ -822,6 +962,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "articles": number,"books": number,"views": number
             }[]
+                           },
+"verify_legacy_run":
+{ Args: { "p_admin": string,"p_run": number }; Returns: number
                            }
           }
           Enums: {

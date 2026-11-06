@@ -62,23 +62,37 @@ export function mapMaker(r, { sanitize = (x) => x, rewriteImages = (h) => ({ htm
 }
 
 /**
- * books: price parsed with legacy_cost_raw kept. A free book approved from a request-book path stores NULL cost => 0.00;
- * a paid book with NULL/invalid cost is rejected (docs/14 §3.2).
+ * books (incremental recovery, owner decision 2026-11-06):
+ *  - EVERY recovered book is imported as a DRAFT (deleted ones as archived). The original legacy status is kept verbatim in
+ *    `legacy_status_raw`; a book becomes published only through the verified, conservative promotion path (migration 18).
+ *  - A paid book with a NULL / unparsable / non-positive cost is NOT rejected: it is imported as a draft with price 0.00, the raw
+ *    string kept in `legacy_cost_raw`, and an explicit reason. No price is invented or normalised; checkout is impossible for it
+ *    (the database refuses to publish a paid book at 0.00 and the promotion rule demands a valid price).
+ *  - An unknown legacy status is kept raw and the book stays a draft with the reason `legacy_status_unknown`.
+ *  - Only records that cannot be interpreted at all are rejected: unknown book type (free/paid cannot be guessed) and empty title.
+ * A free book approved from a request-book path stores NULL cost => 0.00.
  */
 export function mapBook(r, { sanitize = (x) => x, rewriteImages = (h) => ({ html: h, unresolved: [] }) } = {}) {
   const warnings = []
+  const draftReasons = []
   const kind = r.type === 'free' ? 'free' : r.type === 'paid' ? 'paid' : null
   if (!kind) return no(`unknown book type ${JSON.stringify(r.type)}`)
   const status = pick(BOOK_STATUS, r.status)
-  if (!status) return no(`status outside the documented set: ${JSON.stringify(r.status)}`)
+  if (!status) { draftReasons.push('legacy_status_unknown'); warnings.push(`status outside the documented set: ${JSON.stringify(r.status)} — kept raw, imported as a draft`) }
   if (!r.name || !String(r.name).trim()) return no('empty title')
   let price = '0.00'
   if (kind === 'paid') {
     const p = parseMoney(r.cost)
-    if (!p.ok) return no(`paid book with unusable cost (${p.reason}, raw ${JSON.stringify(p.raw)})`)
-    if (Number(p.value) <= 0) return no('paid book with non-positive price')
-    price = p.value
-    if (p.rounded) warnings.push(`cost ${JSON.stringify(r.cost)} rounded to ${p.value}`)
+    if (!p.ok) {
+      draftReasons.push(r.cost == null ? 'price_missing' : 'price_unparsable')
+      warnings.push(`paid book with unusable cost (${p.reason}, raw ${JSON.stringify(p.raw)}) — imported as a draft at 0.00, raw string kept`)
+    } else if (Number(p.value) <= 0) {
+      draftReasons.push('price_non_positive')
+      warnings.push(`paid book with non-positive cost ${JSON.stringify(r.cost)} — imported as a draft at 0.00, raw string kept`)
+    } else {
+      price = p.value
+      if (p.rounded) warnings.push(`cost ${JSON.stringify(r.cost)} rounded to ${p.value}`)
+    }
   } else if (r.cost != null && parseMoney(r.cost).ok && Number(parseMoney(r.cost).value) > 0) {
     warnings.push(`free book carries a non-zero legacy cost ${JSON.stringify(r.cost)} — imported as 0.00, raw kept`)
   }
@@ -92,12 +106,13 @@ export function mapBook(r, { sanitize = (x) => x, rewriteImages = (h) => ({ html
   const deleted_at = iso(r.deleted_at)
   return ok({
     legacy_id: int(r.id), title: String(r.name).trim(), description_html: rw.html ? sanitize(rw.html) : null, kind,
-    status: deleted_at ? 'archived' : status, price_amount: Number(price), price_currency: String(r.currency || 'USD').slice(0, 3).toUpperCase(),
+    status: deleted_at ? 'archived' : 'draft', provenance: 'legacy', legacy_status_raw: r.status == null ? null : String(r.status), price_amount: Number(price), price_currency: String(r.currency || 'USD').slice(0, 3).toUpperCase(),
     pages: int(r.pages) ?? 0, legacy_cost_raw: r.cost == null ? null : String(r.cost), created_at: iso(r.created_at) ?? undefined, deleted_at, cover_path: null,
   }, {
     categoryLegacyIds: cats.ok ? cats.value.map((x) => int(x)).filter(Number.isInteger) : [],
     tags: tags.ok ? [...new Set(tags.value.map((t) => String(t).trim()).filter(Boolean))] : [],
     makers, ownerLegacyUserId: int(r.user_id), requestBookLegacyId: int(r.request_book_id), legacyCover: str(r.file), unresolvedImages: rw.unresolved,
+    draftReasons, legacyStatus: status ?? null,
   }, warnings)
 }
 

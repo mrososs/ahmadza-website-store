@@ -21,15 +21,20 @@ describe('importer --dry-run', () => {
     expect(r.runId).toBeNull()
     expect(r.counts['categories.would_upsert']).toBe(2)
     expect(r.counts['categories.rejected']).toBe(1)
-    expect(r.counts['books.would_upsert']).toBe(3) // 900001, 900002, 900006 (archived)
-    expect(r.counts['books.rejected']).toBe(3)
+    expect(r.counts['books.would_upsert']).toBe(6) // 900001-900006: every interpretable book (900006 archived); 900007 / 900008 are uninterpretable
+    expect(r.counts['books.rejected']).toBe(2)
+    expect(r.counts['books.imported_as_draft']).toBe(5) // all but the archived one
+    expect(r.counts['books.draft_price_unparsable']).toBe(1)
+    expect(r.counts['books.draft_price_missing']).toBe(1)
+    expect(r.counts['books.draft_legacy_status_unknown']).toBe(1)
     expect(r.counts['articles.skipped_user_authored']).toBe(1)
     expect(r.counts['users.would_import']).toBe(2)
     expect(r.counts['orders.would_import']).toBe(3)
     expect(r.rejects.find((x: any) => x.entity === 'orders').reason).toMatch(/amount unusable/)
     const v1 = r.reconciliation.V1_row_counts
     expect(v1.categories).toMatchObject({ legacy_rows: 3, imported: 2, rejected: 1, balanced: true })
-    expect(v1.books).toMatchObject({ legacy_rows: 6, imported: 3, rejected: 3, balanced: true })
+    expect(v1.books).toMatchObject({ legacy_rows: 8, imported: 6, rejected: 2, balanced: true })
+    expect(r.reconciliation.recovery).toMatchObject({ books_imported_as_draft: 5, draft_reasons_at_import: { price_unparsable: 1, price_missing: 1, legacy_status_unknown: 1 } })
     expect(v1.makers).toMatchObject({ legacy_rows: 2, imported: 1, rejected: 1, balanced: true })
     expect(v1.orders).toMatchObject({ legacy_rows: 4, balanced: true })
     expect(r.warnings.join('\n')).toMatch(/guest-checkout account/)

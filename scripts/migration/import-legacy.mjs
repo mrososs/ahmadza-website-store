@@ -15,7 +15,8 @@ import { OUT_DIR } from './lib/paths.mjs'
 import { OWNER_CONFIRMATION, createMariaDbSource, preflight } from './lib/source.mjs'
 import { CATALOG_PHASES, SENSITIVE_PHASES, runImport } from './lib/importer.mjs'
 import { sanitizeRichText } from './lib/sanitize.mjs'
-import { serviceClient } from './lib/supabase.mjs'
+import { createClient } from '@supabase/supabase-js'
+import { checkRecoveryStackIsClean, checkTargetPolicy, countSynthetic, loadTargetEnv } from './lib/target.mjs'
 
 const args = process.argv.slice(2)
 const flag = (n) => args.includes(n)
@@ -39,9 +40,24 @@ if (!pre.ready) {
   process.exit(2)
 }
 
+// ---- which stack may this run write to? Real recovered data only ever goes to the isolated recovery stack -----------------------------
+const target = opt('--target')
+if (!flag('--dry-run')) {
+  const { env, devEnv } = loadTargetEnv(target ?? 'recovery')
+  const policy = checkTargetPolicy({ target, sourceKind: 'mariadb', targetEnv: env, devEnv })
+  if (!policy.ok) { console.error(['IMPORT REFUSED (target policy):', ...policy.problems.map((m, i) => `  ${i + 1}. ${m}`)].join('\n')); process.exit(2) }
+}
+
 const source = await createMariaDbSource({ host: cfg.dbHost, port: Number(process.env.LEGACY_DB_PORT ?? 3306), user: cfg.dbUser, password: process.env.LEGACY_DB_PASSWORD, database: cfg.dbName })
 try {
-  const { db } = serviceClient()
+  let db = null
+  if (!flag('--dry-run')) {
+    const { env } = loadTargetEnv(target)
+    db = createClient(env.NUXT_PUBLIC_SUPABASE_URL, env.NUXT_SUPABASE_SECRET_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
+    const clean = checkRecoveryStackIsClean(await countSynthetic(db))
+    if (!clean.ok) { console.error('IMPORT REFUSED: the recovery stack contains synthetic data (' + clean.problems.join('; ') + '). Real data is never mixed with test data; recreate the recovery stack.'); process.exit(2) }
+    console.log(`target: ${target} stack at ${env.NUXT_PUBLIC_SUPABASE_URL} (verified free of synthetic data)`)
+  }
   const result = await runImport({
     source, db, dryRun: flag('--dry-run'), phases, sanitize: sanitizeRichText,
     includePii: flag('--include-pii'), grantTestEntitlements: flag('--grant-test-entitlements'),

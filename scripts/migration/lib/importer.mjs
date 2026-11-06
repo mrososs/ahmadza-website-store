@@ -56,6 +56,28 @@ async function runImportInner(o, state) {
     bump(`${entity}.imported`, rows.length)
     return map
   }
+  /**
+   * Recovered CATALOGUE entities are inserted only when absent. A later import (e.g. from a second backup) therefore never overwrites an
+   * admin's edits, a verification, or a book's published/draft state; existing rows are only mapped to their ids.
+   */
+  async function insertIfAbsent(table, entity, rows, conflict = 'legacy_id') {
+    if (!rows.length) return new Map()
+    if (dryRun) { const m = new Map(); rows.forEach((r, i) => m.set(r[conflict], `dry-${i}`)); bump(`${entity}.would_upsert`, rows.length); return m }
+    const map = new Map()
+    const existing = []
+    for (const part of chunk(rows.map((r) => r[conflict]), 200)) existing.push(...must(await db.from(table).select(`id,${conflict}`).in(conflict, part)))
+    existing.forEach((r) => map.set(r[conflict], r.id))
+    const fresh = rows.filter((r) => !map.has(r[conflict]))
+    for (const part of chunk(fresh, 200)) {
+      const data = must(await db.from(table).insert(part, { defaultToNull: false }).select(`id,${conflict}`))
+      data.forEach((r) => map.set(r[conflict], r.id))
+    }
+    for (const part of chunk([...map.entries()], 200)) must(await db.from('legacy_id_map').upsert(part.map(([lid, id]) => ({ entity, legacy_id: String(lid), new_id: String(id), run_id: runId })), { onConflict: 'entity,legacy_id' }))
+    bump(`${entity}.imported`, fresh.length)
+    if (existing.length) bump(`${entity}.kept_existing`, existing.length)
+    map.fresh = new Set(fresh.map((r) => r[conflict]))   // callers write relations (categories, makers, tags) only for NEW rows
+    return map
+  }
   const resolved = (map, legacy) => (legacy == null ? undefined : map.get(legacy))
 
   // ---- non-sensitive catalog & content ---------------------------------------------------------------------------
@@ -71,19 +93,21 @@ async function runImportInner(o, state) {
   if (phases.includes('categories')) {
     const rows = []
     for (const r of await rowsOf('categories')) { const m = T.mapCategory(r); if (m.ok) rows.push({ ...m.row, ...demo }); else reject('categories', r.id, m.reason, r) }
-    idMap.categories = await upsert('categories', 'categories', rows)
+    idMap.categories = await insertIfAbsent('categories', 'categories', rows)
   }
   if (phases.includes('makers')) {
     const rows = []
     for (const r of await rowsOf('makers')) { const m = T.mapMaker(r, ctxT); if (m.ok) { rows.push({ ...m.row, ...demo }); m.unresolvedImages.forEach((f) => warnings.push(`maker ${r.id}: unresolved editor image ${f}`)) } else reject('makers', r.id, m.reason, r) }
-    idMap.makers = await upsert('makers', 'makers', rows)
+    idMap.makers = await insertIfAbsent('makers', 'makers', rows)
   }
   if (phases.includes('books')) {
     const mapped = []
-    for (const r of await rowsOf('books')) { const m = T.mapBook(r, ctxT); if (m.ok) { mapped.push(m); m.warnings.forEach((w) => warnings.push(`book ${r.id}: ${w}`)) } else reject('books', r.id, m.reason, r) }
-    idMap.books = await upsert('books', 'books', mapped.map((m) => ({ ...m.row, ...demo })))
+    for (const r of await rowsOf('books')) { const m = T.mapBook(r, ctxT); if (m.ok) { mapped.push(m); m.warnings.forEach((w) => warnings.push(`book ${r.id}: ${w}`)); m.draftReasons.forEach((x) => bump(`books.draft_${x}`)) } else reject('books', r.id, m.reason, r) }
+    bump('books.imported_as_draft', mapped.filter((m) => m.row.status === 'draft').length)
+    idMap.books = await insertIfAbsent('books', 'books', mapped.map((m) => ({ ...m.row, import_run_id: runId, ...demo })))
     if (!dryRun) {
       for (const m of mapped) {
+        if (!idMap.books.fresh.has(m.row.legacy_id)) continue   // an existing book keeps its (possibly edited) relations
         const id = idMap.books.get(m.row.legacy_id)
         const cats = [...new Set(m.categoryLegacyIds.map((c) => resolved(idMap.categories, c)))].filter(Boolean)
         const unresolvedCats = m.categoryLegacyIds.filter((c) => !idMap.categories.has(c))
@@ -290,6 +314,15 @@ async function runImportInner(o, state) {
 
   // ---- reconciliation (V1–V10 skeleton) --------------------------------------------------------------------------
   const reconciliation = await reconcile({ source, db, dryRun, counts, rejects, tableCount, phases })
+  // Recovery readiness: why recovered books are still drafts. Dry run: from the mapping only. Real run: straight from the database view.
+  const draftReasons = Object.fromEntries(Object.entries(counts).filter(([k]) => k.startsWith('books.draft_')).map(([k, v]) => [k.slice('books.draft_'.length), v]))
+  reconciliation.recovery = { books_imported_as_draft: counts['books.imported_as_draft'] ?? 0, draft_reasons_at_import: draftReasons, note: 'every recovered book is a draft until the run is verified and the book is complete (migration 18)' }
+  if (!dryRun && runId && phases.includes('books')) {
+    const rows = must(await db.from('books_readiness').select('reasons,eligible').eq('import_run_id', runId))
+    const byReason = {}
+    rows.forEach((x) => x.reasons.forEach((r) => { byReason[r] = (byReason[r] ?? 0) + 1 }))
+    reconciliation.recovery.readiness_after_import = { books: rows.length, eligible_now: rows.filter((x) => x.eligible).length, blocked_by: byReason }
+  }
   if (!dryRun) {
     if (rejects.length) for (const part of chunk(rejects, 200)) must(await db.from('migration_rejects').insert(part))
     must(await db.from('migration_runs').update({ finished_at: new Date().toISOString(), counts: { ...counts, reconciliation }, notes: warnings.slice(0, 50).join('\n') }).eq('id', runId))

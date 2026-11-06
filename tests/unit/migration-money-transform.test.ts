@@ -32,9 +32,14 @@ describe('parseMoney (exact decimal strings, raw preserved)', () => {
 })
 
 describe('status / enum maps', () => {
-  it('maps book status 0/1/2 and rejects anything else', () => {
-    expect(T.mapBook({ id: 1, name: 'x', type: 'free', status: 2 }).row.status).toBe('coming_soon')
-    expect(T.mapBook({ id: 1, name: 'x', type: 'free', status: 7 })).toMatchObject({ ok: false })
+  it('keeps the ORIGINAL book status raw and imports every recovered book as a draft; an unknown status is kept raw with a reason', () => {
+    const a = T.mapBook({ id: 1, name: 'x', type: 'free', status: 2 })
+    expect(a.row).toMatchObject({ status: 'draft', legacy_status_raw: '2', provenance: 'legacy' })
+    expect(a.legacyStatus).toBe('coming_soon')
+    const b = T.mapBook({ id: 1, name: 'x', type: 'free', status: 7 })
+    expect(b).toMatchObject({ ok: true, draftReasons: ['legacy_status_unknown'] })
+    expect(b.row).toMatchObject({ status: 'draft', legacy_status_raw: '7' })
+    expect(T.mapBook({ id: 1, name: 'x', type: 'free', status: null }).row.legacy_status_raw).toBeNull()
   })
   it('maps is_free 0 and 2 to preview, 1 to after_purchase', () => {
     expect(T.mapMediaVisibility(0)).toBe('preview')
@@ -53,20 +58,39 @@ describe('books', () => {
   it('keeps the raw cost and parses Arabic-Indic prices', () => {
     const r = T.mapBook(m.books[0])
     expect(r.ok).toBe(true)
-    expect(r.row).toMatchObject({ price_amount: 12.5, legacy_cost_raw: '١٢٫٥٠', kind: 'paid', status: 'published' })
+    expect(r.row).toMatchObject({ price_amount: 12.5, legacy_cost_raw: '١٢٫٥٠', kind: 'paid', status: 'draft', legacy_status_raw: '1', provenance: 'legacy' })
+    expect(r.draftReasons).toEqual([])
     expect(r.categoryLegacyIds).toEqual([900001])
     expect(r.makers).toEqual([{ legacy_maker_id: 900001, role: 'author' }])
   })
   it('free book with NULL cost becomes 0.00; invalid category JSON is reported, never guessed', () => {
     const r = T.mapBook(m.books[1])
-    expect(r.row).toMatchObject({ price_amount: 0, kind: 'free', status: 'coming_soon', legacy_cost_raw: null })
+    expect(r.row).toMatchObject({ price_amount: 0, kind: 'free', status: 'draft', legacy_status_raw: '2', legacy_cost_raw: null })
+    expect(r.legacyStatus).toBe('coming_soon')
     expect(r.categoryLegacyIds).toEqual([])
     expect(r.warnings.join()).toMatch(/category JSON invalid/)
   })
-  it('rejects paid books with unusable / NULL / out-of-set values', () => {
-    expect(T.mapBook(m.books[2])).toMatchObject({ ok: false })
-    expect(T.mapBook(m.books[3])).toMatchObject({ ok: false })
-    expect(T.mapBook(m.books[4])).toMatchObject({ ok: false })
+  it('a paid book with an unparsable / NULL / non-positive price is imported as a DRAFT at 0.00 with the raw string kept and an explicit reason (never rejected, never invented)', () => {
+    const bad = T.mapBook(m.books[2])                         // cost 'abc'
+    expect(bad).toMatchObject({ ok: true, draftReasons: ['price_unparsable'] })
+    expect(bad.row).toMatchObject({ status: 'draft', price_amount: 0, legacy_cost_raw: 'abc', legacy_id: 900003 })
+    const none = T.mapBook(m.books[3])                        // cost NULL
+    expect(none).toMatchObject({ ok: true, draftReasons: ['price_missing'] })
+    expect(none.row).toMatchObject({ status: 'draft', price_amount: 0, legacy_cost_raw: null })
+    const zero = T.mapBook({ id: 5, name: 'x', type: 'paid', cost: '0', status: 1 })
+    expect(zero).toMatchObject({ ok: true, draftReasons: ['price_non_positive'] })
+    expect(zero.row).toMatchObject({ price_amount: 0, legacy_cost_raw: '0' })
+    expect(bad.warnings.join()).toMatch(/imported as a draft at 0.00, raw string kept/)
+  })
+  it('a book with an unknown status keeps it raw and stays a draft', () => {
+    const odd = T.mapBook(m.books[4])                         // status 7, valid cost
+    expect(odd).toMatchObject({ ok: true, draftReasons: ['legacy_status_unknown'] })
+    expect(odd.row).toMatchObject({ status: 'draft', legacy_status_raw: '7', price_amount: 5 })
+  })
+  it('only records that cannot be interpreted at all are rejected: unknown book type and empty title', () => {
+    expect(T.mapBook(m.books[6])).toMatchObject({ ok: false })    // type 'bundle': free/paid cannot be guessed
+    expect(T.mapBook(m.books[7])).toMatchObject({ ok: false })    // empty title
+    expect(T.mapBook({ id: 9, name: 'x', type: 'free', status: 1 })).toMatchObject({ ok: true })
   })
   it('soft-deleted books are archived, not dropped', () => {
     const r = T.mapBook(m.books[5])

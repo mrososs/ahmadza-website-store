@@ -20,6 +20,8 @@ export const legacyMock = () => ({
     { id: 900004, name: 'كتاب مدفوع بلا سعر', type: 'paid', cost: null, currency: 'USD', status: 1, deleted_at: null },
     { id: 900005, name: 'كتاب حالة غريبة', type: 'paid', cost: '5', currency: 'USD', status: 7, deleted_at: null },
     { id: 900006, name: 'كتاب محذوف', type: 'paid', cost: '1,234.567', currency: 'USD', status: 1, category: '["900001","999999"]', deleted_at: '2024-05-05 00:00:00' },
+    { id: 900007, name: 'كتاب نوع غير معروف', type: 'bundle', cost: '5', currency: 'USD', status: 1, deleted_at: null },
+    { id: 900008, name: '   ', type: 'free', cost: null, currency: 'USD', status: 1, deleted_at: null },
   ],
   book_media: [
     { id: 900001, book_id: 900001, is_free: 1, name: 'ملف', order: '1', type: 'file', extension: 'pdf', page_count: '10', file: 'product_media/missing-from-archive-0000000001.pdf', external: 0, download: 3 },

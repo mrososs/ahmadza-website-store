@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useCanonical('/authors')
 import { listMakers } from '~~/shared/queries/catalog'
 import type { Database } from '~~/shared/types/database.types'
 

@@ -16,7 +16,7 @@ useHead({
       <div class="container">
         <h1>{{ is404 ? 404 : error.statusCode }}</h1>
         <p>{{ is404 ? 'هذه الصفحة غير موجودة' : 'حدث خطأ غير متوقع' }}</p>
-        <p><NuxtLink to="/" @click="clearError()">العودة للرئيسية</NuxtLink></p>
+        <p><a href="/" @click.prevent="clearError({ redirect: '/' })">العودة للرئيسية</a></p>
       </div>
     </div>
   </NuxtLayout>

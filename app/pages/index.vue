@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useCanonical('/')
 definePageMeta({ showPoster: true, showStats: true })
 </script>
 

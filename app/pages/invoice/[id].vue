@@ -12,6 +12,8 @@ useHead({
 const route = useRoute()
 const client = useSupabaseClient<Database>()
 const { info } = useSessionInfo()
+const cart = useCartStore()
+onMounted(() => { if (route.query.purchased === '1') cart.clear() }) // the purchase emptied the basket: drop it locally too (header counter, /cart)
 const no = Number(route.params.id)
 const { data: order, status, error } = await useAsyncData(`invoice-${no}`, async () => (Number.isInteger(no) && no > 0 ? getOrderByNo(client, no) : null), { server: false })
 

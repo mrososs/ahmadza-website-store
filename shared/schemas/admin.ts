@@ -50,6 +50,7 @@ export const adminReportQuerySchema = z.object({
 
 export const adminBooksListQuerySchema = adminListQuerySchema.extend({
   recovery: z.enum(['all', 'recovered', 'not_ready', 'ready', 'missing_media']).default('all'),
+  workflow: z.enum(['all', 'draft', 'needs_review', 'missing_media', 'ready', 'published', 'archived']).default('all'),
 })
 
 export const recoveryRunSchema = z.object({ run: z.coerce.number().int().positive() })

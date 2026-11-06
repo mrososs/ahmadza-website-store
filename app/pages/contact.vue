@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useCanonical('/contact')
 // Port of resources/views/front/contact.blade.php. Submits to POST /api/contact (validated + rate limited server-side).
 import { contactSchema } from '~~/shared/schemas'
 

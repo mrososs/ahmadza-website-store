@@ -21,7 +21,7 @@ const globalError = ref('')
 const saved = ref(false)
 const busy = ref(false)
 const loading = ref(!!props.id)
-interface RecoveryInfo { provenance: string; readiness: { eligible: boolean; reasons: string[] }; legacyId: number | null; legacyStatusRaw: string | null; legacyCostRaw: string | null; verifiedAt: string | null; media: { media_id: number; name: string; kind: string; migration_status: string; storage_provider: string; is_external: boolean; has_hash: boolean; validated: boolean }[] }
+interface RecoveryInfo { evidence: Record<string, unknown> | null; provenance: string; readiness: { eligible: boolean; reasons: string[] }; legacyId: number | null; legacyStatusRaw: string | null; legacyCostRaw: string | null; verifiedAt: string | null; media: { media_id: number; name: string; kind: string; migration_status: string; storage_provider: string; is_external: boolean; has_hash: boolean; validated: boolean }[] }
 const recovery = ref<RecoveryInfo | null>(null)
 
 if (props.id) {
@@ -29,7 +29,7 @@ if (props.id) {
     const b = await adminFetch<{
       title: string; kind: 'paid' | 'free'; status: typeof form.status; price_amount: number | string; pages: number; description_html: string | null
       cover_path: string | null; category_ids: number[]; maker_ids: { id: number; role: string }[]; tags: string[]; related_ids: number[]
-      provenance: string; legacy_id: number | null; legacy_status_raw: string | null; legacy_cost_raw: string | null; legacy_verified_at: string | null
+      provenance: string; recovery_evidence: Record<string, unknown> | null; legacy_id: number | null; legacy_status_raw: string | null; legacy_cost_raw: string | null; legacy_verified_at: string | null
       readiness: RecoveryInfo['readiness']; media_readiness: RecoveryInfo['media']
     }>(`/api/admin/books/${props.id}`)
     Object.assign(form, {
@@ -39,12 +39,22 @@ if (props.id) {
       writer: b.maker_ids.find((m) => m.role === 'writer')?.id ?? null,
     })
     currentCover.value = b.cover_path
-    if (b.provenance === 'legacy') recovery.value = { provenance: b.provenance, readiness: b.readiness, legacyId: b.legacy_id, legacyStatusRaw: b.legacy_status_raw, legacyCostRaw: b.legacy_cost_raw, verifiedAt: b.legacy_verified_at, media: b.media_readiness }
+    if (b.provenance === 'legacy' || b.provenance === 'recovered_media') recovery.value = { evidence: b.recovery_evidence, provenance: b.provenance, readiness: b.readiness, legacyId: b.legacy_id, legacyStatusRaw: b.legacy_status_raw, legacyCostRaw: b.legacy_cost_raw, verifiedAt: b.legacy_verified_at, media: b.media_readiness }
   } catch (e) { globalError.value = (e as Error).message } finally { loading.value = false }
 }
 
 const opts = (role: 'author' | 'reader' | 'writer') => (lookups.value?.makers ?? []).filter((m) => m.kind === role).map((m) => ({ value: m.id, label: m.name }))
 watch(() => form.kind, (k) => { if (k === 'free') form.price_amount = 0 })
+
+async function verifyBook() {
+  if (!props.id || !window.confirm('هل راجعت هذا السجل وتؤكد أنه أصلي؟ (لن يتم نشر الكتاب بهذه الخطوة)')) return
+  globalError.value = ''
+  try {
+    await adminFetch(`/api/admin/books/${props.id}/verify`, { method: 'POST' })
+    const b = await adminFetch<{ readiness: RecoveryInfo['readiness']; media_readiness: RecoveryInfo['media']; legacy_verified_at: string | null }>(`/api/admin/books/${props.id}`)
+    if (recovery.value) recovery.value = { ...recovery.value, readiness: b.readiness, media: b.media_readiness, verifiedAt: b.legacy_verified_at }
+  } catch (e) { globalError.value = (e as Error).message }
+}
 
 async function submit() {
   Object.keys(errors).forEach((k) => delete errors[k])
@@ -84,7 +94,7 @@ async function submit() {
     <div class="row justify-content-center">
       <div class="col-12 text-right"><NuxtLink to="/admin/makers/create" target="_blank" class="text-info">إضافة مؤلف جديد</NuxtLink></div>
       <div class="col-lg-10 col-12">
-        <AdminRecoveryPanel v-if="recovery" v-bind="recovery" />
+        <AdminRecoveryPanel v-if="recovery" v-bind="recovery" can-verify @verify="verifyBook" />
         <div v-if="globalError" class="alert alert-danger" role="alert">{{ globalError }}</div>
         <div v-if="saved" class="alert alert-success" role="status">تم الحفظ بنجاح</div>
         <div class="form-layout">

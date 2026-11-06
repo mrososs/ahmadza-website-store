@@ -1,5 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ showPoster: true, showStats: true })
+useSeoMeta({ robots: 'noindex, follow' })
+useCanonical('/search')
 </script>
 
 <template>

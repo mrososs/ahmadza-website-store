@@ -14,6 +14,7 @@ const { publicUrl } = useMediaUrl()
 const { data: maker } = await useAsyncData(`maker:${id}`, () => getMaker(client, id))
 if (!maker.value) throw createError({ statusCode: 404, statusMessage: 'هذه الصفحة غير موجودة', fatal: true })
 const { data: books } = await useAsyncData(() => `maker-books:${id}:${page.value}`, () => listBooks(client, { makerId: id, page: page.value }), { watch: [page] })
+useCanonical(`/maker/${Number(useRoute().params.id)}`)
 useSeoMeta({ title: maker.value.name, description: `كتب ${maker.value.name}` })
 </script>
 

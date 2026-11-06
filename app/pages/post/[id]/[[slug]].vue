@@ -13,6 +13,7 @@ if (!article.value) throw createError({ statusCode: 404, statusMessage: 'هذه 
 
 const { liked, toggle } = useFavourite('article', id)
 const date = computed(() => article.value ? new Intl.DateTimeFormat('ar', { dateStyle: 'medium' }).format(new Date(article.value.created_at)) : '')
+useCanonical(`/post/${Number(useRoute().params.id)}`)
 useSeoMeta({
   title: article.value.title,
   description: article.value.excerpt ?? undefined,

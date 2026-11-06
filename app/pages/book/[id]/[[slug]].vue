@@ -43,6 +43,17 @@ const mayDownloadPaid = computed(() => b.value.kind === 'free' || owned.value ||
 const paidMessage = computed(() => (!info.value ? 'قم بتسجيل الدخول حتى تستطيع رؤية المحتوى' : 'قم بشراء الكتاب حتى تستطيع رؤية المحتوى'))
 
 const { liked, toggle: toggleFavourite } = useFavourite('book', id)
+
+// free books: a separate, server-validated claim into the personal library (no order, no payment record)
+const claiming = ref(false)
+const claimError = ref('')
+async function claimFree() {
+  if (!info.value) { await navigateTo({ path: '/login', query: { redirect: route.fullPath } }); return }
+  claiming.value = true; claimError.value = ''
+  try { await $fetch('/api/library/claim', { method: 'POST', body: { bookId: id } }); owned.value = true } catch (e) {
+    claimError.value = (e as { data?: { statusMessage?: string } }).data?.statusMessage || 'تعذرت إضافة الكتاب إلى مكتبتك'
+  } finally { claiming.value = false }
+}
 const added = ref(false)
 function addToCart() {
   if (!canBuy.value) return
@@ -80,6 +91,7 @@ onMounted(() => {
 })
 
 // ---- SEO -------------------------------------------------------------------------------------------
+useCanonical(() => `/book/${id}${b.value.slug ? `/${encodeURIComponent(b.value.slug)}` : ''}`)
 const plain = computed(() => (b.value.description_html ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200))
 useSeoMeta({
   title: b.value.title, description: plain.value || b.value.title,
@@ -187,6 +199,10 @@ useHead({
               {{ cart.has(id) ? 'في السلة' : 'أضف إلى السلة' }}
             </button>
             <NuxtLink v-else-if="owned" to="/library" class="wp_btn btn-block"><i class="fa fa-book" /> الكتاب في مكتبتك</NuxtLink>
+            <button v-else-if="book.kind === 'free' && book.status === 'published'" type="button" class="wp_btn btn-block" :disabled="claiming" @click="claimFree">
+              <i class="fa" :class="claiming ? 'fa-spinner fa-spin' : 'fa-plus'" /> أضف إلى مكتبتي (مجاني)
+            </button>
+            <p v-if="claimError" class="text-danger mt-2" role="alert">{{ claimError }}</p>
             <div class="actions">
               <div class="row justify-content-center">
                 <div class="col-12"><ShareLinks :title="book.title" :path="`/book/${book.id}`" /></div>

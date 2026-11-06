@@ -12,14 +12,15 @@ type BookStatus = 'draft' | 'published' | 'coming_soon' | 'archived'
 type RecoveryFilter = 'all' | 'recovered' | 'not_ready' | 'ready' | 'missing_media'
 const BOOK_LIST_COLUMNS = 'id,title,cover_path,status,kind,price_amount,price_currency,view_count,is_demo,created_at,deleted_at,provenance'
 
-export async function listBooks(event: H3Event, q: { page: number; q: string; status: string; recovery?: RecoveryFilter }) {
+export async function listBooks(event: H3Event, q: { page: number; q: string; status: string; recovery?: RecoveryFilter; workflow?: string }) {
   const db = serviceClient(event)
   const range: [number, number] = [(q.page - 1) * ADMIN_PAGE_SIZE, q.page * ADMIN_PAGE_SIZE - 1]
   const term = escapeLike(q.q)
   const recovery = q.recovery ?? 'all'
+  const workflow = q.workflow ?? 'all'
   let rows: Array<Record<string, unknown> & { id: number }> = []
   let total = 0
-  if (recovery === 'all') {
+  if (recovery === 'all' && workflow === 'all') {
     let query = db.from('books').select(BOOK_LIST_COLUMNS, { count: 'exact' })
     switch (q.status) {
       case 'active': query = query.is('deleted_at', null).eq('status', 'published'); break
@@ -35,7 +36,9 @@ export async function listBooks(event: H3Event, q: { page: number; q: string; st
     total = count ?? 0
   } else {
     // recovery filters read the readiness view (it only lists non-deleted books), then load the display columns for that page
-    let query = db.from('books_readiness').select('book_id', { count: 'exact' }).eq('provenance', 'legacy')
+    let query = db.from('books_readiness').select('book_id', { count: 'exact' })
+    if (recovery !== 'all') query = query.in('provenance', ['legacy', 'recovered_media'])
+    if (workflow !== 'all') query = query.eq('workflow_status', workflow)
     switch (q.status) {
       case 'active': query = query.eq('status', 'published'); break
       case 'inactive': query = query.in('status', ['draft', 'archived']); break
@@ -58,16 +61,16 @@ export async function listBooks(event: H3Event, q: { page: number; q: string; st
     }
   }
   const ids = rows.map((b) => b.id)
-  const orders = new Map<number, number>(), favs = new Map<number, number>(), ready = new Map<number, { eligible: boolean; reasons: string[]; media_total: number; media_validated: number; media_missing: number }>()
+  const orders = new Map<number, number>(), favs = new Map<number, number>(), ready = new Map<number, { eligible: boolean; reasons: string[]; media_total: number; media_validated: number; media_missing: number; workflow_status: string | null }>()
   if (ids.length) {
     const [oi, fv, rd] = await Promise.all([
       db.from('order_items').select('book_id').in('book_id', ids),
       db.from('favourites').select('book_id').in('book_id', ids),
-      db.from('books_readiness').select('book_id,eligible,reasons,media_total,media_validated,media_missing').in('book_id', ids),
+      db.from('books_readiness').select('book_id,eligible,reasons,media_total,media_validated,media_missing,workflow_status').in('book_id', ids),
     ])
     for (const r of oi.data ?? []) if (r.book_id) orders.set(r.book_id, (orders.get(r.book_id) ?? 0) + 1)
     for (const r of fv.data ?? []) if (r.book_id) favs.set(r.book_id, (favs.get(r.book_id) ?? 0) + 1)
-    for (const r of rd.data ?? []) if (r.book_id != null) ready.set(r.book_id, { eligible: !!r.eligible, reasons: r.reasons ?? [], media_total: Number(r.media_total ?? 0), media_validated: Number(r.media_validated ?? 0), media_missing: Number(r.media_missing ?? 0) })
+    for (const r of rd.data ?? []) if (r.book_id != null) ready.set(r.book_id, { eligible: !!r.eligible, reasons: r.reasons ?? [], media_total: Number(r.media_total ?? 0), media_validated: Number(r.media_validated ?? 0), media_missing: Number(r.media_missing ?? 0), workflow_status: r.workflow_status })
   }
   return {
     items: rows.map((b) => ({ ...b, orders_count: orders.get(b.id) ?? 0, favourites_count: favs.get(b.id) ?? 0, readiness: ready.get(b.id) ?? null })),

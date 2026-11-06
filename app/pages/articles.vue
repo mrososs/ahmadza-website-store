@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useCanonical('/articles')
 // Port of resources/views/front/article.blade.php (blog list).
 import { searchArticles } from '~~/shared/queries/storefront'
 import type { Database } from '~~/shared/types/database.types'

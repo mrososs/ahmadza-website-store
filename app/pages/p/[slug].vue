@@ -7,6 +7,7 @@ const client = useSupabaseClient<Database>()
 const slug = String(useRoute().params.slug)
 const { data: page } = await useAsyncData(`page:${slug}`, () => getPage(client, slug))
 if (!page.value) throw createError({ statusCode: 404, statusMessage: 'هذه الصفحة غير موجودة', fatal: true })
+useCanonical(`/p/${encodeURIComponent(String(useRoute().params.slug))}`)
 useHead({ style: [{ innerHTML: ".fx_page{font-family:'Droid' !important;}" }] })
 </script>
 

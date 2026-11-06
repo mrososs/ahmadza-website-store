@@ -11,7 +11,10 @@ defineProps<{
   legacyCostRaw: string | null
   verifiedAt: string | null
   media: MediaRow[]
+  evidence?: { sha256?: string; byte_size?: number; pdf?: { title?: string; author?: string; pages?: number } } | null
+  canVerify?: boolean
 }>()
+const emit = defineEmits<{ verify: [] }>()
 
 const MEDIA_STATUS: Record<string, string> = { pending: 'بانتظار النقل', staged: 'تم الاستلام وبانتظار الفحص', available: 'متاح', missing: 'الملف مفقود', rejected: 'مرفوض' }
 const LEGACY_STATUS: Record<string, string> = { '0': 'غير مفعل', '1': 'مفعل', '2': 'قريباً' }
@@ -30,7 +33,16 @@ const LEGACY_STATUS: Record<string, string> = { '0': 'غير مفعل', '1': 'م
         <div><dt>حالة النشر الأصلية</dt><dd>{{ legacyStatusRaw === null ? 'غير معروفة' : (LEGACY_STATUS[legacyStatusRaw] ?? legacyStatusRaw) }}</dd></div>
         <div><dt>السعر الأصلي (كما ورد)</dt><dd><bdi>{{ legacyCostRaw ?? '—' }}</bdi></dd></div>
         <div><dt>اعتماد المصدر</dt><dd>{{ verifiedAt ? `تم الاعتماد ${verifiedAt.slice(0, 10)}` : 'لم يُعتمد بعد' }}</dd></div>
+        <template v-if="evidence">
+          <div v-if="evidence.pdf?.title"><dt>العنوان في الملف الأصلي</dt><dd>{{ evidence.pdf.title }}</dd></div>
+          <div v-if="evidence.pdf?.author"><dt>المؤلف في الملف الأصلي</dt><dd>{{ evidence.pdf.author }}</dd></div>
+          <div v-if="evidence.sha256"><dt>بصمة الملف (SHA-256)</dt><dd dir="ltr" class="text-right"><code>{{ evidence.sha256.slice(0, 16) }}…</code></dd></div>
+        </template>
       </dl>
+      <p v-if="canVerify && !verifiedAt" class="mb-3">
+        <button type="button" class="btn btn-sm btn-primary" @click="emit('verify')">اعتماد هذا الكتاب بعد مراجعته</button>
+        <small class="text-muted d-block">الاعتماد لا ينشر الكتاب. يلزم أيضاً سعر صالح وملف موثق.</small>
+      </p>
 
       <div v-if="!readiness.eligible" class="alert alert-warning" role="status">
         <strong>لا يمكن نشر هذا الكتاب بعد:</strong>

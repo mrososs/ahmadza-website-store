@@ -19,6 +19,20 @@ describe('checkTargetPolicy', () => {
     expect(checkTargetPolicy({ target: 'recovery', sourceKind: 'fixture', targetEnv: rec, devEnv: dev }).problems.join(' ')).toMatch(/NEVER be written to the recovery stack/)
     expect(checkTargetPolicy({ target: 'dev', sourceKind: 'fixture', targetEnv: dev, devEnv: dev }).ok).toBe(true)
   })
+  it('recovered-media drafts are allowed ONLY for the recovery stack', () => {
+    expect(checkTargetPolicy({ target: 'recovery', sourceKind: 'recovered_media', targetEnv: rec, devEnv: dev })).toEqual({ ok: true, problems: [] })
+    const onDev = checkTargetPolicy({ target: 'dev', sourceKind: 'recovered_media', targetEnv: dev, devEnv: dev })
+    expect(onDev.ok).toBe(false)
+    expect(onDev.problems.join(' ')).toMatch(/ONLY be written with --target recovery/)
+    expect(checkTargetPolicy({ target: undefined, sourceKind: 'recovered_media', targetEnv: rec, devEnv: dev }).ok).toBe(false)
+    expect(checkTargetPolicy({ target: 'prod', sourceKind: 'recovered_media', targetEnv: rec, devEnv: dev }).ok).toBe(false)
+  })
+  it('recovered-media drafts never reach a hosted URL or a non-isolated recovery env', () => {
+    const hosted = { ...rec, NUXT_PUBLIC_SUPABASE_URL: 'https://abcdefghijklmnopqrst.supabase.co' }
+    expect(checkTargetPolicy({ target: 'recovery', sourceKind: 'recovered_media', targetEnv: hosted, devEnv: dev }).problems.join(' ')).toMatch(/must be local/)
+    expect(checkTargetPolicy({ target: 'recovery', sourceKind: 'recovered_media', targetEnv: { NUXT_PUBLIC_SUPABASE_URL: rec.NUXT_PUBLIC_SUPABASE_URL }, devEnv: dev }).problems.join(' ')).toMatch(/AAWRAQ_STACK=recovery/)
+    expect(checkTargetPolicy({ target: 'recovery', sourceKind: 'recovered_media', targetEnv: { ...rec, NUXT_PUBLIC_SUPABASE_URL: dev.NUXT_PUBLIC_SUPABASE_URL }, devEnv: dev }).problems.join(' ')).toMatch(/must be different stacks/)
+  })
   it('a missing or unknown --target is refused', () => {
     expect(checkTargetPolicy({ target: undefined, sourceKind: 'mariadb', targetEnv: rec, devEnv: dev }).ok).toBe(false)
     expect(checkTargetPolicy({ target: 'prod', sourceKind: 'mariadb', targetEnv: rec, devEnv: dev }).ok).toBe(false)

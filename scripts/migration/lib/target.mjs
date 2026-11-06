@@ -17,6 +17,8 @@ export function checkTargetPolicy({ target, sourceKind, targetEnv, devEnv }) {
   if (target !== 'dev' && target !== 'recovery') problems.push(`--target must be "recovery" or "dev" (got ${JSON.stringify(target)}). Real recovered data goes to "recovery".`)
   if (sourceKind === 'mariadb' && target === 'dev') problems.push('real recovered data must NEVER be imported into the dev database (it holds synthetic books and test users). Use --target recovery.')
   if (sourceKind === 'fixture' && target === 'recovery') problems.push('fixture/mock data must NEVER be written to the recovery stack, which is reserved for real recovered data.')
+  // draft books built from real recovered PDFs: real data, so recovery only (and, through the loopback check below, never a hosted project)
+  if (sourceKind === 'recovered_media' && target !== 'recovery') problems.push('books built from recovered media are real recovered data: they may ONLY be written with --target recovery (never the dev database, never a hosted project).')
   if (targetEnv) {
     if (!isLoopback(targetEnv.NUXT_PUBLIC_SUPABASE_URL)) problems.push(`the target Supabase URL must be local (got ${JSON.stringify(targetEnv.NUXT_PUBLIC_SUPABASE_URL)})`)
     if (target === 'recovery') {

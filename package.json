@@ -27,6 +27,8 @@
     "migrate:stage": "node scripts/migration/stage-media.mjs",
     "migrate:import": "node scripts/migration/import-legacy.mjs",
     "migrate:reconcile": "node scripts/migration/reconcile.mjs",
+    "recovery:reconcile": "node scripts/recovery/reconcile-media.mjs",
+    "recovery:import-media": "node scripts/recovery/import-recovered-media.mjs",
     "assets:sync": "node scripts/dev/sync-legacy-assets.mjs",
     "dev:hosted": "nuxt dev --dotenv .env.hosted --port 3000",
     "audit:db": "node scripts/db/run-audit.mjs",

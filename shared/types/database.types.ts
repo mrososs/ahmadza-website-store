@@ -169,14 +169,14 @@ isOneToOne: false
                   ]
                 },"book_media": {
                   Row: {
-                    "book_id": number,"byte_size": number | null,"created_at": string,"extension": string | null,"external_url": string | null,"id": number,"is_external": boolean,"kind": Database["public"]['Enums']["media_kind"],"legacy_book_media_id": number | null,"legacy_download_count": number | null,"legacy_path": string | null,"mime_type": string | null,"name": string,"page_count": number,"sha256": string | null,"sort_order": number,"storage_path": string | null,"updated_at": string,"visibility": Database["public"]['Enums']["media_visibility"]
+                    "book_id": number,"byte_size": number | null,"checksum_verified_at": string | null,"created_at": string,"extension": string | null,"external_url": string | null,"id": number,"is_external": boolean,"kind": Database["public"]['Enums']["media_kind"],"legacy_book_media_id": number | null,"legacy_download_count": number | null,"legacy_path": string | null,"migration_status": Database["public"]['Enums']["media_migration_status"],"mime_type": string | null,"name": string,"page_count": number,"sha256": string | null,"sort_order": number,"storage_path": string | null,"storage_provider": Database["public"]['Enums']["media_storage_provider"],"updated_at": string,"visibility": Database["public"]['Enums']["media_visibility"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "book_id": number,"byte_size"?: number | null,"created_at"?: string,"extension"?: string | null,"external_url"?: string | null,"id"?: never,"is_external"?: boolean,"kind"?: Database["public"]['Enums']["media_kind"],"legacy_book_media_id"?: number | null,"legacy_download_count"?: number | null,"legacy_path"?: string | null,"mime_type"?: string | null,"name"?: string,"page_count"?: number,"sha256"?: string | null,"sort_order"?: number,"storage_path"?: string | null,"updated_at"?: string,"visibility"?: Database["public"]['Enums']["media_visibility"]
+                    "book_id": number,"byte_size"?: number | null,"checksum_verified_at"?: string | null,"created_at"?: string,"extension"?: string | null,"external_url"?: string | null,"id"?: never,"is_external"?: boolean,"kind"?: Database["public"]['Enums']["media_kind"],"legacy_book_media_id"?: number | null,"legacy_download_count"?: number | null,"legacy_path"?: string | null,"migration_status"?: Database["public"]['Enums']["media_migration_status"],"mime_type"?: string | null,"name"?: string,"page_count"?: number,"sha256"?: string | null,"sort_order"?: number,"storage_path"?: string | null,"storage_provider"?: Database["public"]['Enums']["media_storage_provider"],"updated_at"?: string,"visibility"?: Database["public"]['Enums']["media_visibility"]
                   }
                   Update: {
-                    "book_id"?: number,"byte_size"?: number | null,"created_at"?: string,"extension"?: string | null,"external_url"?: string | null,"id"?: never,"is_external"?: boolean,"kind"?: Database["public"]['Enums']["media_kind"],"legacy_book_media_id"?: number | null,"legacy_download_count"?: number | null,"legacy_path"?: string | null,"mime_type"?: string | null,"name"?: string,"page_count"?: number,"sha256"?: string | null,"sort_order"?: number,"storage_path"?: string | null,"updated_at"?: string,"visibility"?: Database["public"]['Enums']["media_visibility"]
+                    "book_id"?: number,"byte_size"?: number | null,"checksum_verified_at"?: string | null,"created_at"?: string,"extension"?: string | null,"external_url"?: string | null,"id"?: never,"is_external"?: boolean,"kind"?: Database["public"]['Enums']["media_kind"],"legacy_book_media_id"?: number | null,"legacy_download_count"?: number | null,"legacy_path"?: string | null,"migration_status"?: Database["public"]['Enums']["media_migration_status"],"mime_type"?: string | null,"name"?: string,"page_count"?: number,"sha256"?: string | null,"sort_order"?: number,"storage_path"?: string | null,"storage_provider"?: Database["public"]['Enums']["media_storage_provider"],"updated_at"?: string,"visibility"?: Database["public"]['Enums']["media_visibility"]
                   }
                   Relationships: [
                     {
@@ -803,9 +803,6 @@ isOneToOne: false
 "is_affiliate":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
-"is_public_book":
-{ Args: { "p_book": number }; Returns: boolean
-                           },
 "normalize_ar":
 { Args: { "p": string }; Returns: string
                            },
@@ -828,7 +825,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "account_status": "active"|"review"|"banned","app_role": "admin","article_kind": "article"|"video"|"ads","book_kind": "paid"|"free","comment_status": "pending"|"approved"|"rejected","content_status": "draft"|"published"|"coming_soon"|"archived","contributor_deal": "share"|"rent","contributor_status": "pending"|"approved"|"declined","data_mode": "live"|"test","ledger_entry_type": "commission"|"withdrawal_hold"|"withdrawal_release"|"adjustment"|"reversal","maker_era": "old"|"new","maker_kind": "author"|"reader"|"writer","media_kind": "file"|"audio","media_visibility": "preview"|"after_purchase","order_status": "paid"|"failed"|"refunded","payment_status": "pending"|"succeeded"|"failed"|"cancelled"|"expired","staging_status": "inventoried"|"quarantined"|"staged"|"linked"|"missing"|"rejected","withdrawal_status": "pending"|"paid"|"rejected"
+            "account_status": "active"|"review"|"banned","app_role": "admin","article_kind": "article"|"video"|"ads","book_kind": "paid"|"free","comment_status": "pending"|"approved"|"rejected","content_status": "draft"|"published"|"coming_soon"|"archived","contributor_deal": "share"|"rent","contributor_status": "pending"|"approved"|"declined","data_mode": "live"|"test","ledger_entry_type": "commission"|"withdrawal_hold"|"withdrawal_release"|"adjustment"|"reversal","maker_era": "old"|"new","maker_kind": "author"|"reader"|"writer","media_kind": "file"|"audio","media_migration_status": "pending"|"staged"|"available"|"missing"|"rejected","media_storage_provider": "none"|"supabase"|"vps"|"external","media_visibility": "preview"|"after_purchase","order_status": "paid"|"failed"|"refunded","payment_status": "pending"|"succeeded"|"failed"|"cancelled"|"expired","staging_status": "inventoried"|"quarantined"|"staged"|"linked"|"missing"|"rejected","withdrawal_status": "pending"|"paid"|"rejected"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -948,7 +945,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "account_status": ["active", "review", "banned"],"app_role": ["admin"],"article_kind": ["article", "video", "ads"],"book_kind": ["paid", "free"],"comment_status": ["pending", "approved", "rejected"],"content_status": ["draft", "published", "coming_soon", "archived"],"contributor_deal": ["share", "rent"],"contributor_status": ["pending", "approved", "declined"],"data_mode": ["live", "test"],"ledger_entry_type": ["commission", "withdrawal_hold", "withdrawal_release", "adjustment", "reversal"],"maker_era": ["old", "new"],"maker_kind": ["author", "reader", "writer"],"media_kind": ["file", "audio"],"media_visibility": ["preview", "after_purchase"],"order_status": ["paid", "failed", "refunded"],"payment_status": ["pending", "succeeded", "failed", "cancelled", "expired"],"staging_status": ["inventoried", "quarantined", "staged", "linked", "missing", "rejected"],"withdrawal_status": ["pending", "paid", "rejected"]
+            "account_status": ["active", "review", "banned"],"app_role": ["admin"],"article_kind": ["article", "video", "ads"],"book_kind": ["paid", "free"],"comment_status": ["pending", "approved", "rejected"],"content_status": ["draft", "published", "coming_soon", "archived"],"contributor_deal": ["share", "rent"],"contributor_status": ["pending", "approved", "declined"],"data_mode": ["live", "test"],"ledger_entry_type": ["commission", "withdrawal_hold", "withdrawal_release", "adjustment", "reversal"],"maker_era": ["old", "new"],"maker_kind": ["author", "reader", "writer"],"media_kind": ["file", "audio"],"media_migration_status": ["pending", "staged", "available", "missing", "rejected"],"media_storage_provider": ["none", "supabase", "vps", "external"],"media_visibility": ["preview", "after_purchase"],"order_status": ["paid", "failed", "refunded"],"payment_status": ["pending", "succeeded", "failed", "cancelled", "expired"],"staging_status": ["inventoried", "quarantined", "staged", "linked", "missing", "rejected"],"withdrawal_status": ["pending", "paid", "rejected"]
           }
         }
 } as const

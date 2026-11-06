@@ -27,7 +27,10 @@
     "migrate:stage": "node scripts/migration/stage-media.mjs",
     "migrate:import": "node scripts/migration/import-legacy.mjs",
     "migrate:reconcile": "node scripts/migration/reconcile.mjs",
-    "assets:sync": "node scripts/dev/sync-legacy-assets.mjs"
+    "assets:sync": "node scripts/dev/sync-legacy-assets.mjs",
+    "dev:hosted": "nuxt dev --dotenv .env.hosted --port 3000",
+    "audit:db": "node scripts/db/run-audit.mjs",
+    "hosted:preflight": "node scripts/db/hosted-preflight.mjs"
   },
   "dependencies": {
     "@nuxtjs/supabase": "^2.1.0",

@@ -56,7 +56,10 @@ describe('login', () => {
     const customer = await signedInClient(DEV_USERS.customer)
     expect((await admin.client.rpc('is_admin')).data).toBe(true)
     expect((await customer.client.rpc('is_admin')).data).toBe(false)
-    expect((await anonClient().rpc('is_admin')).data).toBe(false)
+    // anonymous visitors can no longer even call the helper (EXECUTE revoked in 20261114…): an error, never a role
+    const anonRes = await anonClient().rpc('is_admin')
+    expect(anonRes.data).toBeNull()
+    expect(anonRes.error).not.toBeNull()
   })
 
   it('a user cannot promote themselves (no write access to user_roles / profiles.is_affiliate)', async () => {

@@ -1,0 +1,80 @@
+{
+  "authorised_project_ref": "ubjuyeccioflhpcpnhmo",
+  "migrations": [
+    {
+      "file": "20261106100000_foundation_identity.sql",
+      "sha256": "75fd82fe909861e484ad5610aac8f27acf03232ac17380f9e9d2e9b3fc0ee67d",
+      "bytes": 9103
+    },
+    {
+      "file": "20261106100100_catalog_content.sql",
+      "sha256": "790b526755c78b74875f522386bf059a0e7f5846517ec40089a650ab965156f6",
+      "bytes": 11259
+    },
+    {
+      "file": "20261106100200_commerce_affiliate.sql",
+      "sha256": "27127fe83ae0bceaae4a59f6041ab7a2a2915f0df83a06f5ab538bd10adad9a8",
+      "bytes": 28802
+    },
+    {
+      "file": "20261106100300_rls_grants.sql",
+      "sha256": "3ebd41bb0c4ddbef873d0f5100e4a9ac648713c3fe9e4b278c8fc2680fb8f40c",
+      "bytes": 16085
+    },
+    {
+      "file": "20261107000000_storefront_comments.sql",
+      "sha256": "e1a4883f30743f3a6eea23574dc24b9aef8aa6cc320041ba65baf9282ed7a284",
+      "bytes": 1176
+    },
+    {
+      "file": "20261108000000_commerce_helpers.sql",
+      "sha256": "39729ebf2ca10584b044f990b5b8053aadab2add76cdf038beaf079d9575c614",
+      "bytes": 522
+    },
+    {
+      "file": "20261109000000_admin_support.sql",
+      "sha256": "c71da767611ab38f10c417457976e043edae06e58c0e0b47cc5369b99d9069b9",
+      "bytes": 1729
+    },
+    {
+      "file": "20261110000000_affiliate_contributor_support.sql",
+      "sha256": "85cee781616c24e4a25d3fb0caa40fd63edd2f6a428e66d43827a12ccf612056",
+      "bytes": 3783
+    },
+    {
+      "file": "20261110000100_affiliate_balance_service_role.sql",
+      "sha256": "fafa1a712a622ad6a0ce16f2cd15172ffe1001691b5084920544bb4ee64f2b6a",
+      "bytes": 322
+    },
+    {
+      "file": "20261110000200_ledger_visibility_fix.sql",
+      "sha256": "955d3dc12bfe88f0aeafb5cad3a1f99ad6b519d7e5bec1f06e4e0da4febdc4de",
+      "bytes": 5699
+    },
+    {
+      "file": "20261111000000_legacy_staging_support.sql",
+      "sha256": "9fe4c217b38d7e77888b60655812e1357c554eb8c06d1150cfd8e0bd738e9145",
+      "bytes": 884
+    },
+    {
+      "file": "20261112000000_fix_public_book_policies.sql",
+      "sha256": "ec5fad928c8cbfb66001204f6574037e264ff28e1149b8822df7e6004a1c31a9",
+      "bytes": 1922
+    },
+    {
+      "file": "20261113000000_purge_demo_safe.sql",
+      "sha256": "a57fd21a7ff5aaa707b03cd835a5a97569799030bf7c7677385a2daafbc5f271",
+      "bytes": 1452
+    },
+    {
+      "file": "20261114000000_security_performance_hardening.sql",
+      "sha256": "ffc025be60a671d76ef015a21b3499e0b2ec22a80743a507ed34ada412bc436a",
+      "bytes": 10366
+    },
+    {
+      "file": "20261115000000_media_storage_readiness.sql",
+      "sha256": "feeaa50ee421f8d5f00a87a4284929c03e9acefb80d186b090fdb9cef53373a2",
+      "bytes": 5222
+    }
+  ]
+}

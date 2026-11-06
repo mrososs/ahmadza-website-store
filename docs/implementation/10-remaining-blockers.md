@@ -1,5 +1,12 @@
 # 10 — Remaining blockers and next priorities
 
+## 0. Blocking the hosted Supabase integration (owner action)
+| # | Blocker | Action |
+|---|---|---|
+| 0.1 | No authorised access to hosted project `ubjuyeccioflhpcpnhmo` from this environment: CLI is logged in to another account; project MCP (`.mcp.json`) is pending the owner's OAuth approval | owner runs `claude` → `/mcp` → supabase → authenticate with the account that owns the project; creates `.env.hosted` (see `HOSTED_SUPABASE_SETUP.md`) |
+| 0.2 | Hosted migrations, advisors, Auth settings, first admin invitation not done | run the procedure in `HOSTED_SUPABASE_SETUP.md` (migration inventory: `MIGRATION_INVENTORY.md`) |
+| 0.3 | VPS storage (paid PDFs cannot be downloaded in hosted environments until it exists) | `VPS_STORAGE_INTEGRATION_PLAN.md` |
+
 ## A. Blocking real data (owner / external)
 | # | Blocker | Impact | Action |
 |---|---|---|---|

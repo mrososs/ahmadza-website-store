@@ -3,6 +3,7 @@ import { getRequestHeader } from 'h3'
 import { adminExternalMediaSchema } from '~~/shared/schemas/admin'
 import { badRequest, notFound } from '../../../../../utils/errors'
 import { countPdfPages, readAdminUpload } from '../../../../../utils/adminUpload'
+import { isProviderEnabled } from '../../../../../services/storage'
 
 const MAX_MEDIA_BYTES = 100 * 1024 * 1024 // = private-products bucket limit
 
@@ -27,6 +28,10 @@ export default defineEventHandler(async (event) => {
     return data
   }
 
+  // File bytes only go to a backend that is enabled in this environment (hosted: none until the VPS adapter exists).
+  if (!isProviderEnabled(event, 'supabase')) {
+    throw createError({ statusCode: 503, statusMessage: 'رفع الملفات غير مفعّل بعد: مخزن الملفات الخاص لم يُربط. يمكن إضافة رابط خارجي (https) فقط.', data: { reason: 'provider_disabled' } })
+  }
   const up = await readAdminUpload(event, { groups: ['pdf', 'audio'], maxBytes: MAX_MEDIA_BYTES })
   const rawVis = up.fields.visibility
   const visibility = !rawVis || rawVis === 'after_purchase' ? 'after_purchase' : rawVis === 'preview' ? 'preview' : null

@@ -1,6 +1,6 @@
 # Data availability & reconciliation report (generated)
 
-Generated 2026-11-06T12:38:20.329Z by `scripts/migration/reconcile.mjs`. Numbers come from the recovered archives and the LOCAL database — nothing is estimated.
+Generated 2026-11-06T14:03:09.008Z by `scripts/migration/reconcile.mjs`. Numbers come from the recovered archives and the LOCAL database — nothing is estimated.
 
 ## 1. Is there a production database?
 
@@ -54,5 +54,5 @@ Latest migration runs: none.
 
 ## 5. Disk
 
-- C: free (hosts the Docker/Supabase volumes): 8.21 GiB
-- D: free (hosts quarantine D:\mostqel\aawraq-quarantine): 176.70 GiB
+- C: free (hosts the Docker/Supabase volumes): 7.09 GiB
+- D: free (hosts quarantine D:\mostqel\aawraq-quarantine): 176.62 GiB

@@ -13,7 +13,7 @@ original look (legacy CSS/markup ported 1:1), the verified business model, and f
 
 ## Documents
 `01-architecture` · `02-frontend-structure` · `03-supabase-schema` · `04-auth-and-permissions` · `05-legacy-ui-fidelity` · `06-business-rule-coverage` ·
-`07-historical-data-import` · `08-security-decisions` · `09-testing-results` · `10-remaining-blockers` · `ui-validation/` · `data-availability-report.md` · `notes/` (per-slice detail).
+`07-historical-data-import` · `08-security-decisions` · **hosted phase:** `HOSTED_SUPABASE_SETUP` · `MIGRATION_INVENTORY` · `RLS_PERMISSION_MATRIX` · `AUTH_INTEGRATION` · `HOSTED_INTEGRATION_TEST_RESULTS` · `VPS_STORAGE_INTEGRATION_PLAN` · · `09-testing-results` · `10-remaining-blockers` · `ui-validation/` · `data-availability-report.md` · `notes/` (per-slice detail).
 
 ## Local installation
 Prerequisites: Node ≥ 22 (tested 24), npm, Docker Desktop (running; ≥ 8 GB RAM for Docker; ~15 GB disk for images), Google Chrome (UI tests).

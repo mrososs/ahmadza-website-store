@@ -13,7 +13,9 @@ implementation deviates from that draft, the deviation is listed in §6.
 | `20261106100200_commerce_affiliate` | `payments`, `payment_events`, `orders`, `order_items`, `entitlements`, `affiliate_commissions`, `affiliate_ledger`, `withdrawal_requests`, `payout_methods`, `contributor_requests`, legacy-import bookkeeping tables, and the trusted SQL functions (`create_payment_for_cart`, `fulfill_payment`, `register_payment_event`, `fail_payment`, `affiliate_balance`, `request_withdrawal`, `decide_withdrawal`, `approve/decline_contributor_request`, `increment_view`) |
 | `20261106100300_rls_grants` | RLS on **every** table, explicit grants, column-level grants, storage buckets, `site_totals()` |
 | `20261112000000_fix_public_book_policies` | `is_public_book()` (policies must not sub-select non-granted columns — bug found by `tests/db/rls.test.ts`) |
-| `2026110[7-11]…` | slice migrations (storefront, commerce, admin, affiliate/contributor, import) — listed in the slice notes under `docs/implementation/notes/` |
+| `20261107…20261113` | slice migrations (storefront, commerce, admin, affiliate/contributor, import, demo purge) — see `MIGRATION_INVENTORY.md` |
+| `20261114000000_security_performance_hardening` | `private` schema helper, merged policies, initplan `is_admin()`, anon execute revoked on helpers, 22 FK indexes |
+| `20261115000000_media_storage_readiness` | `book_media.storage_provider` / `migration_status`, normalising trigger, provider/key constraints (VPS-ready) |
 
 ## 2. Entity overview
 

@@ -37,6 +37,9 @@ export default defineNuxtConfig({
     paymentProvider: 'dev_simulator', // dev_simulator | paymob | tap  (real gateways are NOT wired — docs/10-remaining-blockers)
     allowDevPaymentSimulator: process.env.NODE_ENV !== 'production',
     signedUrlTtlSeconds: 120,
+    // Which media backends may serve/accept files in THIS environment (override: NUXT_MEDIA_ENABLED_PROVIDERS).
+    // Local dev: Supabase Storage + external links. Hosted/production default: external links only until the VPS adapter exists.
+    mediaEnabledProviders: process.env.NODE_ENV === 'production' ? 'external' : 'supabase,external',
     public: {
       siteUrl: 'http://127.0.0.1:3000',
     },

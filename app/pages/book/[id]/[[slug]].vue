@@ -141,7 +141,7 @@ useHead({
                 <div id="paid_file" class="tab-pane container fade">
                   <ul v-if="mayDownloadPaid && files('after_purchase', 'file').length" class="book_list">
                     <li v-for="m in files('after_purchase', 'file')" :key="m.id">
-                      <a :href="`/api/library/download/${m.id}`" target="_blank" rel="noopener"><i class="fa fa-file-pdf-o" /> {{ m.name || 'الكتاب' }}</a>
+                      <span v-if="m.migration_status !== 'available'" class="response_access" title="الملف قيد التجهيز"><i class="fa fa-clock-o" /> {{ m.name || 'ملف' }} — قيد التجهيز</span><a v-else :href="`/api/library/download/${m.id}`" target="_blank" rel="noopener"><i class="fa fa-file-pdf-o" /> {{ m.name || 'الكتاب' }}</a>
                     </li>
                   </ul>
                   <p v-else-if="mayDownloadPaid" class="response_access">الكتاب الإلكتروني غير متوفر</p>
@@ -150,7 +150,7 @@ useHead({
                 <div id="paid_audio" class="tab-pane container fade">
                   <ul v-if="mayDownloadPaid && files('after_purchase', 'audio').length" class="book_list">
                     <li v-for="m in files('after_purchase', 'audio')" :key="m.id">
-                      <a :href="`/api/library/download/${m.id}`" target="_blank" rel="noopener"><i class="fa fa-headphones" /> {{ m.name || 'الكتاب الصوتى' }}</a>
+                      <span v-if="m.migration_status !== 'available'" class="response_access" title="الملف قيد التجهيز"><i class="fa fa-clock-o" /> {{ m.name || 'ملف' }} — قيد التجهيز</span><a v-else :href="`/api/library/download/${m.id}`" target="_blank" rel="noopener"><i class="fa fa-headphones" /> {{ m.name || 'الكتاب الصوتى' }}</a>
                     </li>
                   </ul>
                   <p v-else-if="mayDownloadPaid" class="response_access">الكتاب الصوتى غير متوفر</p>
@@ -167,7 +167,7 @@ useHead({
                 <div id="free_file" class="tab-pane container fade">
                   <ul v-if="files('preview', 'file').length" class="book_list">
                     <li v-for="m in files('preview', 'file')" :key="m.id">
-                      <a :href="`/api/library/download/${m.id}`" target="_blank" rel="noopener"><i class="fa fa-file-pdf-o" /> {{ m.name || 'نبذة' }}</a>
+                      <span v-if="m.migration_status !== 'available'" class="response_access" title="الملف قيد التجهيز"><i class="fa fa-clock-o" /> {{ m.name || 'ملف' }} — قيد التجهيز</span><a v-else :href="`/api/library/download/${m.id}`" target="_blank" rel="noopener"><i class="fa fa-file-pdf-o" /> {{ m.name || 'نبذة' }}</a>
                     </li>
                   </ul>
                   <p v-else class="response_access">لا توجد نبذة إلكترونية الان</p>
@@ -175,7 +175,7 @@ useHead({
                 <div id="free_audio" class="tab-pane container fade">
                   <ul v-if="files('preview', 'audio').length" class="book_list">
                     <li v-for="m in files('preview', 'audio')" :key="m.id">
-                      <a :href="`/api/library/download/${m.id}`" target="_blank" rel="noopener"><i class="fa fa-headphones" /> {{ m.name || 'نبذة صوتية' }}</a>
+                      <span v-if="m.migration_status !== 'available'" class="response_access" title="الملف قيد التجهيز"><i class="fa fa-clock-o" /> {{ m.name || 'ملف' }} — قيد التجهيز</span><a v-else :href="`/api/library/download/${m.id}`" target="_blank" rel="noopener"><i class="fa fa-headphones" /> {{ m.name || 'نبذة صوتية' }}</a>
                     </li>
                   </ul>
                   <p v-else class="response_access">لا توجد نبذة صوتية الان</p>

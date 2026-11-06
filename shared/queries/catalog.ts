@@ -51,7 +51,7 @@ export async function getBook(c: Client, id: number) {
       book_categories(categories(id,name)),
       book_makers(role,makers(id,name,kind,image_path)),
       book_tags(tag),
-      book_media(id,kind,visibility,name,extension,page_count,sort_order,is_external)`)
+      book_media(id,kind,visibility,name,extension,page_count,sort_order,is_external,migration_status)`)
     .eq('id', id).in('status', ['published', 'coming_soon']).maybeSingle()
   if (error) throw error
   return data

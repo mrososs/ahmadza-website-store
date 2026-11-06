@@ -35,7 +35,7 @@
     "status": 200,
     "dir": "rtl",
     "overflowPx": 0,
-    "diffPct": 14.71,
+    "diffPct": 15.71,
     "refNote": "new 1440x1401 vs ref 1440x1182",
     "pageErrors": []
   },
@@ -125,7 +125,7 @@
     "status": 200,
     "dir": "rtl",
     "overflowPx": 0,
-    "diffPct": 1.27,
+    "diffPct": 1.4,
     "refNote": "new 1440x966 vs ref 1440x966",
     "pageErrors": []
   },
@@ -135,7 +135,7 @@
     "status": 200,
     "dir": "rtl",
     "overflowPx": 0,
-    "diffPct": 1.2,
+    "diffPct": 1.19,
     "refNote": "new 1440x966 vs ref 1440x966",
     "pageErrors": []
   },
@@ -145,8 +145,8 @@
     "status": 200,
     "dir": "rtl",
     "overflowPx": 0,
-    "diffPct": 2.82,
-    "refNote": "new 1440x2011 vs ref 1440x966",
+    "diffPct": 2.83,
+    "refNote": "new 1440x1986 vs ref 1440x966",
     "pageErrors": []
   },
   {
@@ -185,7 +185,7 @@
     "status": 200,
     "dir": "rtl",
     "overflowPx": 0,
-    "diffPct": 14.83,
+    "diffPct": 15.88,
     "refNote": "new 768x2189 vs ref 768x1832",
     "pageErrors": []
   },
@@ -205,7 +205,7 @@
     "status": 200,
     "dir": "rtl",
     "overflowPx": 0,
-    "diffPct": 3.86,
+    "diffPct": 3.87,
     "refNote": "new 768x1783 vs ref 768x2158",
     "pageErrors": []
   },
@@ -275,7 +275,7 @@
     "status": 200,
     "dir": "rtl",
     "overflowPx": 0,
-    "diffPct": 2.1,
+    "diffPct": 2.32,
     "refNote": "new 768x1090 vs ref 768x1090",
     "pageErrors": []
   },
@@ -285,7 +285,7 @@
     "status": 200,
     "dir": "rtl",
     "overflowPx": 0,
-    "diffPct": 1.29,
+    "diffPct": 1.28,
     "refNote": "new 768x1456 vs ref 768x1288",
     "pageErrors": []
   },
@@ -295,8 +295,8 @@
     "status": 200,
     "dir": "rtl",
     "overflowPx": 0,
-    "diffPct": 4.27,
-    "refNote": "new 768x2118 vs ref 768x1090",
+    "diffPct": 4.34,
+    "refNote": "new 768x2074 vs ref 768x1090",
     "pageErrors": []
   },
   {
@@ -335,7 +335,7 @@
     "status": 200,
     "dir": "rtl",
     "overflowPx": 0,
-    "diffPct": 21.23,
+    "diffPct": 22.86,
     "refNote": "new 390x2513 vs ref 390x2411",
     "pageErrors": []
   },
@@ -425,8 +425,8 @@
     "status": 200,
     "dir": "rtl",
     "overflowPx": 0,
-    "diffPct": 3.88,
-    "refNote": "new 390x1040 vs ref 390x910",
+    "diffPct": 3.9,
+    "refNote": "new 390x1101 vs ref 390x910",
     "pageErrors": []
   },
   {
@@ -445,8 +445,8 @@
     "status": 200,
     "dir": "rtl",
     "overflowPx": 0,
-    "diffPct": 3.86,
-    "refNote": "new 390x2175 vs ref 390x910",
+    "diffPct": 3.85,
+    "refNote": "new 390x2131 vs ref 390x910",
     "pageErrors": []
   }
 ]

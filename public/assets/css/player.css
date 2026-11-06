@@ -1,0 +1,201 @@
+.wp_player_list{
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+}
+.wp_player_list .wrapper{
+    box-shadow: rgba(0, 0, 0, 0.3) 0px 19px 38px, rgba(0, 0, 0, 0.22) 0px 15px 12px;
+    overflow: hidden;
+}
+.wp_player_list .details{
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+}
+.wp_player_list .track-art{
+    margin: 25px;
+    height: 250px;
+    width: 250px;
+    border: 2px solid #fff;
+    background-size: cover;
+    background-position: center;
+    border-radius: 50%;
+    -moz-box-shadow: 0px 6px 5px #ccc;
+    -webkit-box-shadow:0px 6px 5px #ccc;
+    box-shadow: 0px 6px 5px #ccc;
+    -moz-border-radius:190px;
+    -webkit-border-radius:190px;
+    border-radius: 190px;
+}
+.wp_player_list .now-playing{
+    font-size: 10px;
+    display: none;
+}
+.wp_player_list .track-name{
+    font-size: 16px;
+    display: block;
+    background: #131921;
+    width: 100%;
+    text-align: center;
+    color: #fff;
+    padding: 5px 2px;
+}
+.wp_player_list .track-artist{
+    margin-top: 5px;
+    font-size: 1.5rem;
+}
+.wp_player_list .buttons{
+   text-align: center;
+}
+.wp_player_list .active{
+    color: black;
+}
+.wp_player_list .repeat-track,
+.wp_player_list .random-track,
+.wp_player_list .playpause-track,
+.wp_player_list .prev-track,
+.wp_player_list .next-track{
+    padding: 5px 10px;
+    opacity: 0.8;
+    transition: opacity .2s;
+    display: inline-block;
+}
+.wp_player_list .repeat-track:hover,
+.wp_player_list .random-track:hover,
+.wp_player_list .playpause-track:hover,
+.wp_player_list .prev-track:hover,
+.wp_player_list .next-track:hover{
+    opacity: 1.0;
+}
+.wp_player_list .slider_container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.wp_player_list .seek_slider,
+.wp_player_list .volume_slider{
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    height: 5px;
+    background: #83a9ff;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+.wp_player_list .seek_slider::-webkit-slider-thumb,
+.wp_player_list .volume_slider::-webkit-slider-thumb{
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    background: white;
+    border: 3px solid #3774ff;
+    cursor: pointer;
+    border-radius: 100%;
+}
+.wp_player_list .seek_slider:hover,
+.wp_player_list .volume_slider:hover{
+    opacity: 1.0;
+}
+.wp_player_list .seek_slider{
+    width: 60%;
+}
+.wp_player_list .volume_slider{
+    width: 30%;
+}
+.wp_player_list .current-time,
+.wp_player_list .total-duration{
+    padding: 5px;
+}
+.wp_player_list i.fa-volume-down,
+.wp_player_list i.fa-volume-up{
+    padding: 5px;
+}
+i,
+.wp_player_list i.fa-play-circle,
+.wp_player_list i.fa-pause-circle,
+.wp_player_list i.fa-step-forward,
+.wp_player_list i.fa-step-backward{
+    cursor: pointer;
+}
+.wp_player_list .randomActive{
+    color: black;
+}
+.wp_player_list .rotate{
+    animation: rotation 8s infinite linear;
+}
+@keyframes rotation{
+    from{
+        transform: rotate(0deg);
+    }
+    to{
+        transform: rotate(359deg);
+    }
+}
+.wp_player_list .loader{
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px 0;
+}
+.wp_player_list .loader .stroke{
+    background: #f1f1f1;
+    height: 150%;
+    width: 10px;
+    border-radius: 50px;
+    margin: 0px 5px;
+    animation: animate 1.4s linear infinite;
+}
+@keyframes animate{
+    50%{
+        height: 20%;
+        background: #4286f4;
+    }
+    100%{
+        height: 100%;
+    }
+}
+.wp_player_list .stroke:nth-child(1){
+    animation-delay: 0s;
+}
+.wp_player_list .stroke:nth-child(2){
+    animation-delay: 0.3s;
+}
+.wp_player_list .stroke:nth-child(3){
+    animation-delay: 0.6s;
+}
+.wp_player_list .stroke:nth-child(4){
+    animation-delay: 0.9s;
+}
+.wp_player_list .stroke:nth-child(5){
+    animation-delay: 0.6s;
+}
+.wp_player_list .stroke:nth-child(6){
+    animation-delay: 0.3s;
+}
+.wp_player_list .stroke:nth-child(7){
+    animation-delay: 0s;
+}
+.wp_player_list .list_track{
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    margin-top: 5px;
+}
+.wp_player_list .list_track li{
+    border-top: 1px solid #ddd;
+    padding: 5px 7px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: .3s ease-in-out;
+    background: #f4f4f4;
+}
+.wp_player_list .list_track li:hover,
+.wp_player_list .list_track li.active{
+    background: #c6c6c6;
+    color: #111;
+    padding-right: 10px;
+}

@@ -1,0 +1,452 @@
+[
+  {
+    "page": "home",
+    "viewport": "1440",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 11.15,
+    "refNote": "new 1440x3253 vs ref 1440x2752",
+    "pageErrors": []
+  },
+  {
+    "page": "search",
+    "viewport": "1440",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 23.17,
+    "refNote": "new 1440x3253 vs ref 1440x1800",
+    "pageErrors": []
+  },
+  {
+    "page": "book-details",
+    "viewport": "1440",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 5.4,
+    "refNote": "new 1440x1670 vs ref 1440x1766",
+    "pageErrors": []
+  },
+  {
+    "page": "categories",
+    "viewport": "1440",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 14.71,
+    "refNote": "new 1440x1401 vs ref 1440x1182",
+    "pageErrors": []
+  },
+  {
+    "page": "authors",
+    "viewport": "1440",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 13.9,
+    "refNote": "new 1440x1687 vs ref 1440x1909",
+    "pageErrors": []
+  },
+  {
+    "page": "articles",
+    "viewport": "1440",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 4.89,
+    "refNote": "new 1440x1748 vs ref 1440x2118",
+    "pageErrors": []
+  },
+  {
+    "page": "contact",
+    "viewport": "1440",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 5.64,
+    "refNote": "new 1440x1057 vs ref 1440x1048",
+    "pageErrors": []
+  },
+  {
+    "page": "cart",
+    "viewport": "1440",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 3.89,
+    "refNote": "new 1440x1466 vs ref 1440x960",
+    "pageErrors": []
+  },
+  {
+    "page": "login",
+    "viewport": "1440",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 5.56,
+    "refNote": "new 1440x934 vs ref 1440x925",
+    "pageErrors": []
+  },
+  {
+    "page": "register",
+    "viewport": "1440",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 7.69,
+    "refNote": "new 1440x900 vs ref 1440x977",
+    "pageErrors": []
+  },
+  {
+    "page": "library",
+    "viewport": "1440",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 3.37,
+    "refNote": "new 1440x900 vs ref 1440x1177",
+    "pageErrors": []
+  },
+  {
+    "page": "invoices",
+    "viewport": "1440",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 1.75,
+    "refNote": "new 1440x1466 vs ref 1440x1471",
+    "pageErrors": []
+  },
+  {
+    "page": "affiliate-dashboard",
+    "viewport": "1440",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 1.27,
+    "refNote": "new 1440x966 vs ref 1440x966",
+    "pageErrors": []
+  },
+  {
+    "page": "admin-dashboard",
+    "viewport": "1440",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 1.2,
+    "refNote": "new 1440x966 vs ref 1440x966",
+    "pageErrors": []
+  },
+  {
+    "page": "admin-books",
+    "viewport": "1440",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 2.82,
+    "refNote": "new 1440x2011 vs ref 1440x966",
+    "pageErrors": []
+  },
+  {
+    "page": "home",
+    "viewport": "768",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 10.55,
+    "refNote": "new 768x5417 vs ref 768x4481",
+    "pageErrors": []
+  },
+  {
+    "page": "search",
+    "viewport": "768",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 11.25,
+    "refNote": "new 768x5417 vs ref 768x2614",
+    "pageErrors": []
+  },
+  {
+    "page": "book-details",
+    "viewport": "768",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 8.39,
+    "refNote": "new 768x2010 vs ref 768x2466",
+    "pageErrors": []
+  },
+  {
+    "page": "categories",
+    "viewport": "768",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 14.83,
+    "refNote": "new 768x2189 vs ref 768x1832",
+    "pageErrors": []
+  },
+  {
+    "page": "authors",
+    "viewport": "768",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 13.89,
+    "refNote": "new 768x2365 vs ref 768x3249",
+    "pageErrors": []
+  },
+  {
+    "page": "articles",
+    "viewport": "768",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 3.86,
+    "refNote": "new 768x1783 vs ref 768x2158",
+    "pageErrors": []
+  },
+  {
+    "page": "contact",
+    "viewport": "768",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 4.68,
+    "refNote": "new 768x1093 vs ref 768x1088",
+    "pageErrors": []
+  },
+  {
+    "page": "cart",
+    "viewport": "768",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 4.5,
+    "refNote": "new 768x1625 vs ref 768x1024",
+    "pageErrors": []
+  },
+  {
+    "page": "login",
+    "viewport": "768",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 6.54,
+    "refNote": "new 768x1024 vs ref 768x1024",
+    "pageErrors": []
+  },
+  {
+    "page": "register",
+    "viewport": "768",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 8.92,
+    "refNote": "new 768x1024 vs ref 768x1024",
+    "pageErrors": []
+  },
+  {
+    "page": "library",
+    "viewport": "768",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 3.66,
+    "refNote": "new 768x1024 vs ref 768x1721",
+    "pageErrors": []
+  },
+  {
+    "page": "invoices",
+    "viewport": "768",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 1.99,
+    "refNote": "new 768x1625 vs ref 768x1595",
+    "pageErrors": []
+  },
+  {
+    "page": "affiliate-dashboard",
+    "viewport": "768",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 2.1,
+    "refNote": "new 768x1090 vs ref 768x1090",
+    "pageErrors": []
+  },
+  {
+    "page": "admin-dashboard",
+    "viewport": "768",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 1.29,
+    "refNote": "new 768x1456 vs ref 768x1288",
+    "pageErrors": []
+  },
+  {
+    "page": "admin-books",
+    "viewport": "768",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 4.27,
+    "refNote": "new 768x2118 vs ref 768x1090",
+    "pageErrors": []
+  },
+  {
+    "page": "home",
+    "viewport": "390",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 16.92,
+    "refNote": "new 390x5458 vs ref 390x5263",
+    "pageErrors": []
+  },
+  {
+    "page": "search",
+    "viewport": "390",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 16.96,
+    "refNote": "new 390x5458 vs ref 390x3423",
+    "pageErrors": []
+  },
+  {
+    "page": "book-details",
+    "viewport": "390",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 15.97,
+    "refNote": "new 390x3000 vs ref 390x3405",
+    "pageErrors": []
+  },
+  {
+    "page": "categories",
+    "viewport": "390",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 21.23,
+    "refNote": "new 390x2513 vs ref 390x2411",
+    "pageErrors": []
+  },
+  {
+    "page": "authors",
+    "viewport": "390",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 26.08,
+    "refNote": "new 390x2614 vs ref 390x3868",
+    "pageErrors": []
+  },
+  {
+    "page": "articles",
+    "viewport": "390",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 19.21,
+    "refNote": "new 390x2820 vs ref 390x3578",
+    "pageErrors": []
+  },
+  {
+    "page": "contact",
+    "viewport": "390",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 9.08,
+    "refNote": "new 390x1722 vs ref 390x1707",
+    "pageErrors": []
+  },
+  {
+    "page": "cart",
+    "viewport": "390",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 7.23,
+    "refNote": "new 390x2075 vs ref 390x1845",
+    "pageErrors": []
+  },
+  {
+    "page": "login",
+    "viewport": "390",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 10.25,
+    "refNote": "new 390x1599 vs ref 390x1584",
+    "pageErrors": []
+  },
+  {
+    "page": "register",
+    "viewport": "390",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 8.98,
+    "refNote": "new 390x1746 vs ref 390x1910",
+    "pageErrors": []
+  },
+  {
+    "page": "library",
+    "viewport": "390",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 6.03,
+    "refNote": "new 390x1284 vs ref 390x2380",
+    "pageErrors": []
+  },
+  {
+    "page": "invoices",
+    "viewport": "390",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 2.38,
+    "refNote": "new 390x2039 vs ref 390x2074",
+    "pageErrors": []
+  },
+  {
+    "page": "affiliate-dashboard",
+    "viewport": "390",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 3.88,
+    "refNote": "new 390x1040 vs ref 390x910",
+    "pageErrors": []
+  },
+  {
+    "page": "admin-dashboard",
+    "viewport": "390",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 1.34,
+    "refNote": "new 390x2297 vs ref 390x2091",
+    "pageErrors": []
+  },
+  {
+    "page": "admin-books",
+    "viewport": "390",
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "diffPct": 3.86,
+    "refNote": "new 390x2175 vs ref 390x910",
+    "pageErrors": []
+  }
+]

@@ -1,0 +1,379 @@
+/* Extra small devices (portrait phones, less than 576px)*/
+@media (max-width: 575.98px) {
+    .wp_nav .f_nav .logo img{
+
+    }
+    .wp_nav .f_nav {
+        text-align: center;
+    }
+    .wp_nav .s_nav .nav-link,
+    .wp_nav .s_nav .nav-link:last-child{
+        border: 0;
+    }
+    .wp_nav .s_nav .nav-item {
+
+        padding: 3px;
+    }
+    .wp_h3{
+        font-size: 15px;
+        padding: 15px 5px;
+    }
+    .article_block .pref{
+        text-align: center;
+        font-size: 13px;
+    }
+    .article_block .img-block{
+        height: 100px;
+        margin-bottom: 10px;
+    }
+    .article_block .title{
+        font-size: 13px;
+        text-align: center;
+    }
+    .not_found h1{
+
+    }
+    .not_found p{
+
+    }
+    .side_wp{
+        margin-top: 10px;
+    }
+    .book_block .cart {
+        height: 35px;
+        line-height: 35px;
+        font-size: 11px;
+    }
+    .book_block .item .info .name{
+        font-size: 12px;
+    }
+    .product_wp .about .words{
+        font-size: 15px;
+    }
+    .wp_comment .block .comment_text{
+        font-size: 13px;
+        text-align: unset;
+    }
+    .wp_comment .block .comment_name{
+        font-size: 14px;
+    }
+    .wp_comment .block .comment_date{
+        font-size: 10px;
+    }
+    .wp_maker .maker_info .words{
+        font-size: 15px;
+        text-align: center;
+    }
+    .footer_wp .one ul li{
+        padding: 0 5px;
+        margin-top: 20px;
+        display: block;
+    }
+    .footer_wp .one ul{
+        text-align: right;
+    }
+    .footer_wp .one ul li::before{
+        margin-left: 4px;
+    }
+    .footer_wp .one ul li a .value{
+        font-size: 13px;
+    }
+    .footer_wp .one ul li a .name{
+        font-size: 11px;
+    }
+    .footer_wp .one h1{
+        font-size: 20px;
+    }
+    .footer_wp .one .sub_title{
+        font-size: 12px;
+    }
+    .footer_wp .one h1,
+    .footer_wp .one .sub_title{
+        text-align: center;
+    }
+    .footer_wp .three .social{
+        text-align: center;
+    }
+    .footer_wp .three ul{
+    }
+    .footer_wp .three ul li{
+        display: block;
+        margin-top: 5px;
+    }
+    .footer_wp .three ul li a{
+        font-size: 11px;
+        margin: 0 2px;
+    }
+    .footer_wp .three .social a img{
+        width: 20px;
+    }
+    .book_block .item .info .category span{
+        font-size:9px;
+    }
+    .book_block .under .cart{
+        height: 25px;
+        line-height: 25px;
+        font-size: 14px;
+    }
+    .wp_cart .deal_modal .modal-body p{
+        font-size: 13px;
+    }
+    .book_block .item .type_book{
+        left:5px;
+    }
+    .product_wp .product_img{
+        text-align:center;
+    }
+    .footer_wp .three ul{
+        min-height: auto;
+        margin-top:15px;
+    }
+    .trial p{
+        font-size:12px;
+    }
+}
+/* Small devices (landscape phones, 576px and up)*/
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .wp_nav .f_nav,
+    .wp_nav .f_nav ul{
+        text-align: center;
+    }
+    .wp_nav .s_nav .nav-link,
+    .wp_nav .s_nav .nav-link:last-child{
+        border: 0;
+    }
+    .wp_nav .s_nav .nav-item {
+        padding: 3px;
+    }
+    .article_block .pref{
+        font-size: 12px;
+        margin-bottom: 5px;
+    }
+    .article_block .title{
+        font-size: 13px;
+    }
+    .article_block .icon{
+        font-size: 10px;
+    }
+    .side_wp{
+        margin-top: 10px;
+    }
+    .product_wp .product_img{
+        height: 305px;
+    }
+    .wp_maker .maker_info .words{
+        font-size: 15px;
+        text-align: center;
+    }
+    .footer_wp .one ul li{
+        padding: 0 5px;
+        margin-top: 20px;
+    }
+    .footer_wp .one ul{
+        text-align: center;
+    }
+    .footer_wp .one ul li::before{
+        margin-left: 4px;
+    }
+    .footer_wp .one ul li a .value{
+        font-size: 13px;
+    }
+    .footer_wp .one ul li a .name{
+        font-size: 11px;
+    }
+    .footer_wp .one h1,
+    .footer_wp .one .sub_title{
+        text-align: center;
+    }
+    .footer_wp .three .social{
+        text-align: center;
+    }
+    .footer_wp .three ul{
+        margin-top: 15px;
+    }
+    .footer_wp .three ul li a{
+        font-size: 11px;
+        margin: 0 2px;
+    }
+    .footer_wp .three .social a img{
+        width: 20px;
+    }
+    .wp_cart .summery .login{
+        font-size: 10px;
+    }
+    .wp_cart .summery .info .key{
+        font-size: 9px;
+    }
+    .wp_cart .summery .info .value{
+        font-size: 15px;
+    }
+    .wp_cart .summery .title{
+        font-size: 14px;
+    }
+    .footer_wp .three ul{
+        min-height: auto;
+    }
+}
+/* Medium devices (tablets, 768px and up)*/
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .wp_nav .f_nav ul li a {
+        padding: 2px 0px;
+        font-size: 9px;
+        margin: 1px;
+    }
+    .wp_h3{
+        font-size: 14px;
+    }
+    .side_wp .block .data .name{
+        font-size: 12px;
+    }
+    .article_block .pref{
+        font-size: 12px;
+        margin-bottom: 5px;
+    }
+    .article_block .title{
+        font-size: 13px;
+    }
+    .article_block .icon{
+        font-size: 10px;
+    }
+    .product_wp .item{
+        margin: 8px 0;
+    }
+    .product_wp .item span{
+        font-size: 12px;
+    }
+    .product_wp .item .more{
+        font-size: 11px;
+    }
+    .product_wp .item a{
+        font-size: 13px;
+    }
+    .product_wp .product_img{
+
+    }
+    .wp_maker .maker_info .words{
+        font-size: 15px;
+        text-align: center;
+    }
+    .footer_wp .one h1{
+        font-size: 15px;
+    }
+    .footer_wp .one .sub_title{
+        font-size: 10px;
+    }
+    .footer_wp .one ul li{
+        padding: 0 5px;
+    }
+    .footer_wp .one ul li::before{
+        margin-left: 1px;
+    }
+    .footer_wp .one ul li a .value{
+        font-size: 10px;
+    }
+    .footer_wp .one ul li a .name{
+        font-size: 9px;
+    }
+    .footer_wp .three .social{
+        text-align:center;
+    }
+    .footer_wp .three ul
+    {
+        margin-top: 15px;
+    }
+    .footer_wp .three ul li a{
+        font-size: 11px;
+        margin: 0 2px;
+    }
+    .footer_wp .three .social a img{
+        width: 20px;
+    }
+    .footer_wp .two .payment img{
+
+    }
+    .wp_cart .products .block .name{
+        font-size: 10px;
+    }
+    .wp_cart .products .block .price{
+        font-size: 11px;
+    }
+    .wp_cart .summery .login{
+        font-size: 10px;
+    }
+    .wp_cart .summery .info .key{
+        font-size: 9px;
+    }
+    .wp_cart .summery .info .value{
+        font-size: 15px;
+    }
+    .wp_cart .summery .title{
+        font-size: 14px;
+    }
+    .wp_nav .s_nav .nav-link{
+        font-size:7px;
+    }
+}
+/* Large devices (desktops, 992px and up)*/
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .wp_nav .f_nav ul li a{
+        font-size: 12px;
+        padding: 2px 2px;
+    }
+    .wp_h3{
+        font-size: 14px;
+    }
+    .side_wp .block .data .name{
+        font-size: 12px;
+    }
+    .wp_player_list .track-name{
+        font-size: 13px !important;
+    }
+    .wp_player_list .current-time, .wp_player_list .total-duration{
+        padding: 5px !important;
+    }
+    .wp_player_list .list_track li{
+        font-size: 13px !important;
+    }
+    .product_wp .item{
+        margin: 8px 0;
+    }
+    .product_wp .item span{
+        font-size: 12px;
+    }
+    .product_wp .item .more{
+        font-size: 11px;
+    }
+    .product_wp .item a{
+        font-size: 13px;
+    }
+    .product_wp .product_img{
+
+    }
+    .product_wp .product_img img{
+        height: 100%;
+        object-fit: cover;
+    }
+    .wp_maker .maker_info .data{
+        font-size: 13px;
+    }
+    .wp_maker .maker_info .words{
+        font-size: 14px;
+    }
+    .footer_wp .three ul li a{
+        font-size: 11px;
+        margin: 0 2px;
+    }
+    .wp_cart .summery .login{
+        font-size: 11px;
+    }
+    .wp_nav .s_nav .nav-link{
+        font-size:10px;
+    }
+    .paid_product_media .nav-pills .nav-link{
+        font-size: 12px;
+    }
+}
+/* Extra large devices (large desktops, 1200px and up)*/
+@media (min-width: 1200px) {
+
+}

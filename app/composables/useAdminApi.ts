@@ -1,0 +1,52 @@
+// Thin helpers for the admin area. All data goes through /api/admin/** (server checks the role on every call).
+import type { LocationQueryValue } from 'vue-router'
+
+export function adminErrorMessage(e: unknown, fallback = 'حدث خطأ غير متوقع'): string {
+  const err = e as { data?: { statusMessage?: string; message?: string }; statusMessage?: string; message?: string } | null
+  return err?.data?.statusMessage ?? err?.statusMessage ?? err?.data?.message ?? fallback
+}
+
+/** $fetch wrapper that throws an Error with a user-facing Arabic message. */
+export async function adminFetch<T = unknown>(url: string, opts: Parameters<typeof $fetch>[1] = {}): Promise<T> {
+  try {
+    return (await $fetch(url, opts)) as T
+  } catch (e) {
+    const status = (e as { statusCode?: number; status?: number }).statusCode ?? (e as { status?: number }).status
+    if (status === 401 || status === 403) await navigateTo('/admin/login')
+    throw new Error(adminErrorMessage(e))
+  }
+}
+
+export function useAdminTitle(title: MaybeRefOrGetter<string>) {
+  const state = useState<string>('admin-title', () => '')
+  watchEffect(() => { state.value = toValue(title) })
+  useHead({ title: () => toValue(title) })
+}
+
+const first = (v: LocationQueryValue | LocationQueryValue[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? ''
+
+/** Server-paginated list: page / q / status live in the URL (shareable, back-button friendly). */
+export function useAdminList<T>(endpoint: string, extraQuery: () => Record<string, string | undefined> = () => ({})) {
+  const route = useRoute()
+  const query = computed(() => ({
+    page: String(Math.max(1, Number(first(route.query.page)) || 1)),
+    q: first(route.query.q),
+    status: first(route.query.status) || 'all',
+    ...extraQuery(),
+  }))
+  const { data, pending, error, refresh } = useFetch<{ items: T[]; total: number; page: number; pageSize: number }>(endpoint, {
+    query, server: false, key: `${endpoint}:${JSON.stringify(query.value)}`, watch: [query],
+  })
+  const errorText = computed(() => (error.value ? adminErrorMessage(error.value) : ''))
+  return { data, pending, error, errorText, refresh, query }
+}
+
+export const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+  published: { label: 'مفعلة', cls: 'badge-success' },
+  draft: { label: 'غير مفعلة', cls: 'badge-danger' },
+  coming_soon: { label: 'قريباً', cls: 'badge-warning' },
+  archived: { label: 'مؤرشفة', cls: 'badge-secondary' },
+}
+
+export const fmtDate = (v: string | null | undefined) => (v ? new Date(v).toISOString().slice(0, 10) : '')
+export const fmtDateTime = (v: string | null | undefined) => (v ? new Date(v).toISOString().slice(0, 16).replace('T', ' ') : '')

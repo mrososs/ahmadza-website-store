@@ -1,0 +1,208 @@
+/* AAWRAQ — storefront refinement layer.
+   Loaded AFTER the verified legacy stylesheets (front.css / media.css, which stay untouched). It keeps the legacy
+   layout, palette and fonts and only polishes execution: card proportions, spacing rhythm, type scale, focus states.
+   Everything is scoped under `.body` (the storefront shell) so the Webmin admin/affiliate shells are not affected. */
+
+:root {
+  /* brand (values taken from legacy front.css, see docs/legacy-ui/03-design-system.md) */
+  --aw-green: #467839;
+  --aw-green-dark: #386030;
+  --aw-cream: #faf0d5;
+  --aw-cream-soft: #fcfbf4;
+  --aw-tan: #b29573;
+  --aw-gold: #ffd564;
+  --aw-gold-text: #753f27;
+  --aw-free: #28a745;
+  --aw-bg: #f7f7fa;
+  --aw-surface: #fff;
+  --aw-text: #131921;
+  --aw-heading: #404553;
+  --aw-muted: #6b7183;
+  --aw-line: #e7e7ee;
+  /* scale */
+  --aw-space-1: 4px; --aw-space-2: 8px; --aw-space-3: 12px; --aw-space-4: 16px; --aw-space-5: 24px;
+  --aw-radius: 6px;
+  --aw-control-h: 44px;
+  --aw-shadow-card: 0 1px 2px rgba(19, 25, 33, .06), 0 4px 14px rgba(19, 25, 33, .06);
+  --aw-shadow-card-hover: 0 2px 4px rgba(19, 25, 33, .08), 0 10px 24px rgba(19, 25, 33, .10);
+  --aw-focus: 0 0 0 3px rgba(70, 120, 57, .35);
+  --aw-container: 1560px;
+}
+
+/* ---------- page container: keep content readable on very wide screens ---------- */
+.body .f_nav > .container-fluid,
+.body .body-content > .container-fluid,
+.body .footer_wp .container-fluid {
+  max-width: var(--aw-container);
+  margin-inline: auto;
+}
+.body .body-content { margin: 16px 0; line-height: 1.7; }
+
+/* ---------- focus (legacy suppressed it) ---------- */
+.body a:focus-visible,
+.body button:focus-visible,
+.body .wp_btn:focus-visible,
+.body .dropdown-item:focus-visible {
+  outline: 0;
+  box-shadow: var(--aw-focus);
+}
+.body .form-control:focus,
+.body .bootstrap-select button:focus {
+  border-color: var(--aw-green) !important;
+  box-shadow: var(--aw-focus) !important;
+}
+
+/* ---------- header ---------- */
+.body .wp_nav .f_nav .row { align-items: center; }
+.body .wp_nav .f_nav .logo { display: flex; align-items: center; min-height: 72px; }
+.body .wp_nav .f_nav .logo img { width: 96px; }
+.body .wp_nav .f_nav ul { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0; }
+.body .wp_nav .f_nav ul li { white-space: nowrap; }
+.body .wp_nav .f_nav ul li a { padding: 4px 6px; margin: 0; border-radius: 4px; font-size: 14px; }
+.body .wp_nav .f_nav ul li a:hover { background: var(--aw-cream-soft); }
+.body .wp_nav .f_nav .search_form { padding: 14px 0; }
+.body .wp_nav .f_nav .search_form .form-control { border-color: #e6dcc0; }
+.body .wp_nav .f_nav .search_form .form-control::placeholder { color: #8a8f9c; }
+.body .wp_nav #number_product:not(:empty) { min-width: 18px; text-align: center; }
+@media (min-width: 768px) and (max-width: 991.98px) {
+  /* legacy shrinks links to 9px here; keep them legible */
+  .body .wp_nav .f_nav ul li a { font-size: 12px; padding: 2px 4px; }
+}
+@media (max-width: 767.98px) {
+  .body .wp_nav .f_nav .logo { min-height: 64px; }
+  .body .wp_nav .f_nav .logo img { width: 84px; }
+  .body .wp_nav .f_nav .cart { min-width: 40px; display: inline-block; text-align: center; }
+}
+
+/* ---------- headings ---------- */
+.body .wp_h3 { font-size: 19px; line-height: 1.6; padding: 14px 16px; margin-bottom: 12px; }
+
+/* ---------- filter / sort panel ---------- */
+.body .wp_home .search_sec { padding: 12px; margin-bottom: 12px; }
+.body .wp_home .search_sec > form .row { align-items: stretch; row-gap: 8px; margin-inline: -6px; }
+.body .wp_home .search_sec > form .row > [class*="col-"] { padding-inline: 6px; }
+.body .wp_home .search_sec .bootstrap-select,
+.body .wp_home .search_sec .bootstrap-select > .btn { height: var(--aw-control-h); }
+.body .wp_home .search_sec .bootstrap-select > .btn { width: 100%; text-align: start; border: 1px solid #ced4da; border-radius: 4px; background: #fff; display: flex; align-items: center; }
+.body .wp_home .search_sec .bootstrap-select { padding: 0; border: 0; margin: 0; }
+.body .wp_home .search_sec .wp_btn { height: var(--aw-control-h); line-height: var(--aw-control-h); border-radius: 4px; font-size: 16px; transition: background-color .2s ease; }
+.body .wp_home .search_sec .wp_btn:hover { background: var(--aw-green-dark); border-color: var(--aw-green-dark); }
+.body .appear_disappear_sec { padding: 8px 12px; }
+.body .appear_disappear_sec a {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 15px;
+  border: 1px solid var(--aw-line); border-radius: 4px; background: var(--aw-cream-soft); color: var(--aw-heading); text-decoration: none;
+}
+.body .appear_disappear_sec a:hover { border-color: var(--aw-green); color: var(--aw-green); }
+
+/* ---------- sidebar ---------- */
+.body .side_wp .block { margin-bottom: 16px; }
+.body .side_wp .block .data { border-radius: 0 0 var(--aw-radius) var(--aw-radius); box-shadow: var(--aw-shadow-card); }
+.body .side_wp .block .data .item { padding: 12px 14px; border-top: 1px solid var(--aw-line); }
+.body .side_wp .block .data .item:first-child { border-top: 0; }
+.body .side_wp .block .data .name {
+  font-size: 15px; line-height: 1.6; margin-bottom: 4px; color: var(--aw-heading);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.body .side_wp .block .data .item:hover .name { color: var(--aw-green); }
+.body .side_wp .block .data .icon { color: var(--aw-muted); font-size: 12px; }
+.body .side_wp .block .data .view { text-align: start; }
+
+/* ---------- book / category / maker cards ---------- */
+.body .wp_home > .row > [class*="col-"] { display: flex; }
+.body .wp_home > .row > [class*="col-"] > .book_block { width: 100%; }
+.body .book_block {
+  display: flex; flex-direction: column; position: relative; margin-bottom: 24px;
+  background: var(--aw-surface); border: 1px solid var(--aw-line); border-radius: var(--aw-radius);
+  box-shadow: var(--aw-shadow-card); overflow: hidden; transition: box-shadow .2s ease, border-color .2s ease;
+}
+.body .book_block:hover, .body .book_block:focus-within { box-shadow: var(--aw-shadow-card-hover); border-color: #d9d9e3; }
+.body .book_block .item {
+  position: relative; flex: 1 1 auto; display: flex; flex-direction: column; padding: 12px 12px 8px;
+  box-shadow: none; background: transparent; border-radius: 0;
+}
+.body .book_block .item:focus-visible { box-shadow: inset var(--aw-focus); }
+.body .book_block .item .img-block {
+  height: auto; aspect-ratio: 4 / 5; margin-bottom: 12px; padding: 8px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--aw-bg); border-radius: 4px;
+}
+.body .book_block .item .img-block img { height: 100%; width: 100%; max-width: 100%; object-fit: contain; }
+/* no recovered cover: show the brand mark at a sensible size instead of a stretched/lost image */
+.body .book_block .item .img-block.is-placeholder { background: #fff; border: 1px solid var(--aw-line); }
+.body .book_block .item .img-block.is-placeholder { padding: 0; }
+.body .book_block .item .img-block.is-placeholder img { width: 62%; height: auto; max-height: 62%; object-fit: contain; }
+/* the legacy default cover is a 635x952 white canvas with a small brand mark: crop to the mark (source stays >= 1x) */
+.body .book_block .item .img-block img[src$="default-cover.webp"] { width: 100%; height: 100%; max-height: none; object-fit: cover; transform: scale(1.3); }
+.body .product_wp .product_img img[src$="default-cover.webp"] { object-fit: cover; transform: scale(1.25); }
+.body .book_block .item .info { flex: 1 1 auto; }
+.body .book_block .item .info .name {
+  text-align: start; font-size: 15px; line-height: 1.6; min-height: calc(1.6em * 2); margin: 0; color: var(--aw-heading);
+  white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;
+}
+.body .book_block .item:hover .info .name { color: var(--aw-green); }
+.body .book_block .item .type_book {
+  top: 20px; left: 20px; right: auto; z-index: 1; padding: 2px 10px; font-size: 12px; line-height: 1.6;
+  border-radius: 3px; box-shadow: 0 1px 2px rgba(0, 0, 0, .18);
+}
+.body .book_block .item .type_book.paid { background: var(--aw-gold); color: var(--aw-gold-text); }
+.body .book_block .item .type_book.free { background: var(--aw-free); color: #fff; }
+.body .book_block .under { padding: 10px 12px; background: var(--aw-surface); border-top: 1px solid var(--aw-line); }
+.body .book_block .under .row { margin: 0; align-items: center; justify-content: space-between; flex-wrap: nowrap; }
+.body .book_block .under .row > [class*="col-"] { width: auto; max-width: none; flex: 0 0 auto; padding: 0; }
+.body .book_block .under .price { display: flex; align-items: baseline; gap: 6px; margin: 0; }
+.body .book_block .under .price .cost { font-size: 18px; line-height: 1.4; color: var(--aw-heading); }
+.body .book_block .under .price .cost.cost--free { color: var(--aw-free); font-size: 16px; }
+.body .book_block .under .price .currency { top: 0; font-size: 12px; color: var(--aw-muted); }
+.body .book_block .under .cart {
+  width: 44px; height: 40px; line-height: 38px; padding: 0; border-radius: 4px; font-size: 16px;
+  display: inline-flex; align-items: center; justify-content: center; transition: background-color .2s ease, border-color .2s ease;
+}
+.body .book_block .under .addToCartBtn:hover { background: var(--aw-green-dark) !important; color: #fff !important; border-color: var(--aw-green-dark); }
+.body .book_block .under .disable_btn { opacity: .45; cursor: not-allowed; }
+/* category / maker tiles: the "عرض الكتب" action */
+.body .book_block > .wp_btn.cart { height: 44px; line-height: 44px; border-radius: 0; margin-top: auto; }
+
+/* ---------- product details ---------- */
+.body .product_wp .product_img {
+  height: auto; aspect-ratio: 4 / 5; display: flex; align-items: center; justify-content: center; padding: 12px;
+  background: var(--aw-bg); border: 1px solid var(--aw-line); border-radius: var(--aw-radius); box-shadow: var(--aw-shadow-card);
+}
+.body .product_wp .product_img img { height: 100%; width: 100%; object-fit: contain; }
+
+/* ---------- pagination ---------- */
+.body .wp_page_number .pagination .page-link { min-width: 40px; min-height: 40px; line-height: 24px; text-align: center; }
+
+/* ---------- forms / buttons shared ---------- */
+.body .wp_form .form-control, .body .search_sec .form-control { border-radius: 4px; }
+.body .wp_btn { transition: background-color .2s ease, border-color .2s ease; }
+.body .wp_btn:hover:not(.addToCartBtn):not(.disable_btn) { background: var(--aw-green-dark); border-color: var(--aw-green-dark); }
+
+/* ---------- responsive ---------- */
+@media (max-width: 991.98px) {
+  .body .wp_h3 { font-size: 18px; }
+  .body .book_block .item .info .name { font-size: 14px; }
+}
+@media (max-width: 767.98px) {
+  .body .body-content { margin: 12px 0; }
+  .body .wp_home .search_sec > form .row > [class*="col-"] { flex: 0 0 100%; max-width: 100%; }
+  .body .book_block { margin-bottom: 16px; }
+  .body .book_block .item { padding: 8px 8px 6px; }
+  .body .book_block .item .img-block { padding: 6px; margin-bottom: 8px; }
+  .body .book_block .item .type_book { top: 14px; left: 14px; font-size: 11px; padding: 1px 8px; }
+  .body .book_block .item .info .name { font-size: 13px; }
+  .body .book_block .under { padding: 8px; }
+  .body .book_block .under .price .cost { font-size: 16px; }
+  .body .book_block .under .cart { width: 40px; height: 40px; }
+  .body .wp_page_number .pagination .page-link { min-width: 44px; min-height: 44px; }
+}
+@media (max-width: 575.98px) {
+  .body .wp_home .row > [class*="col-"] { padding-inline: 6px; }
+  .body .wp_home .row { margin-inline: -6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .body * { transition: none !important; }
+}
+
+/* ---------- product info rows: label/value spacing (legacy glued them together) ---------- */
+.body .product_wp .item > span { margin-inline-end: 8px; }
+.body .product_wp .item > a, .body .product_wp .item > .tag { margin-inline-start: 2px; }

@@ -1,0 +1,61 @@
+# --- dependencies & build output
+node_modules/
+.nuxt/
+.output/
+.data/
+dist/
+.nitro/
+.cache/
+*.log
+*.tsbuildinfo
+
+# --- secrets & environment (only .env.example is tracked)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+supabase/.env
+supabase/.temp/
+supabase/.branches/
+supabase/.volumes/
+
+# --- recovered legacy material and private data: NEVER commit (public repository)
+.quarantine/
+.staging/
+migration-output/
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.7z
+*.rar
+*.pdf
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.dump
+*.bak
+backup*/
+dumps/
+legacy-source/
+legacy-uploads/
+
+# --- test / tooling artefacts
+test-results/
+playwright-report/
+coverage/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- third-party licensed legacy assets: not redistributed in this public repository.
+# Copy them locally from the recovered ui-reference/ with `npm run assets:sync` (see docs/implementation/README.md).
+public/assets/css/plugins/janna-*.ttf
+public/assets/css/admin.css
+
+# --- bulky derived screenshots (regenerate with `npm run ui:shots`); curated before/after kept in ui-refinement/
+docs/implementation/ui-validation/ref/
+docs/implementation/ui-validation/diff/

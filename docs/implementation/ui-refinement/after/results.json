@@ -1,0 +1,532 @@
+[
+  {
+    "page": "home",
+    "viewport": 1440,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "cards": 20,
+    "columns": 4,
+    "cardW": 240,
+    "cardH": 411,
+    "unevenRows": 0,
+    "badgeOutside": 0,
+    "tinyTargets": 0,
+    "distorted": 0,
+    "titleClipped": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "search",
+    "viewport": 1440,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "cards": 20,
+    "columns": 4,
+    "cardW": 240,
+    "cardH": 411,
+    "unevenRows": 0,
+    "badgeOutside": 0,
+    "tinyTargets": 0,
+    "distorted": 0,
+    "titleClipped": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "categories",
+    "viewport": 1440,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "authors",
+    "viewport": 1440,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "book-details",
+    "viewport": 1440,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "cart",
+    "viewport": 1440,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "login",
+    "viewport": 1440,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "register",
+    "viewport": 1440,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "library",
+    "viewport": 1440,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "affiliate-dashboard",
+    "viewport": 1440,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "admin-dashboard",
+    "viewport": 1440,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "home",
+    "viewport": 1024,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "cards": 20,
+    "columns": 3,
+    "cardW": 226,
+    "cardH": 393,
+    "unevenRows": 0,
+    "badgeOutside": 0,
+    "tinyTargets": 0,
+    "distorted": 0,
+    "titleClipped": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "search",
+    "viewport": 1024,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "cards": 20,
+    "columns": 3,
+    "cardW": 226,
+    "cardH": 393,
+    "unevenRows": 0,
+    "badgeOutside": 0,
+    "tinyTargets": 0,
+    "distorted": 0,
+    "titleClipped": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "categories",
+    "viewport": 1024,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "authors",
+    "viewport": 1024,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "book-details",
+    "viewport": 1024,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "cart",
+    "viewport": 1024,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "login",
+    "viewport": 1024,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "register",
+    "viewport": 1024,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "library",
+    "viewport": 1024,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "affiliate-dashboard",
+    "viewport": 1024,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "admin-dashboard",
+    "viewport": 1024,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "home",
+    "viewport": 768,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "cards": 20,
+    "columns": 2,
+    "cardW": 226,
+    "cardH": 390,
+    "unevenRows": 0,
+    "badgeOutside": 0,
+    "tinyTargets": 0,
+    "distorted": 0,
+    "titleClipped": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "search",
+    "viewport": 768,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "cards": 20,
+    "columns": 2,
+    "cardW": 226,
+    "cardH": 390,
+    "unevenRows": 0,
+    "badgeOutside": 0,
+    "tinyTargets": 0,
+    "distorted": 0,
+    "titleClipped": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "categories",
+    "viewport": 768,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "authors",
+    "viewport": 768,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "book-details",
+    "viewport": 768,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "cart",
+    "viewport": 768,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "login",
+    "viewport": 768,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "register",
+    "viewport": 768,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "library",
+    "viewport": 768,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "affiliate-dashboard",
+    "viewport": 768,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "admin-dashboard",
+    "viewport": 768,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "home",
+    "viewport": 390,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "cards": 20,
+    "columns": 2,
+    "cardW": 174,
+    "cardH": 318,
+    "unevenRows": 0,
+    "badgeOutside": 0,
+    "tinyTargets": 0,
+    "distorted": 0,
+    "titleClipped": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "search",
+    "viewport": 390,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "cards": 20,
+    "columns": 2,
+    "cardW": 174,
+    "cardH": 318,
+    "unevenRows": 0,
+    "badgeOutside": 0,
+    "tinyTargets": 0,
+    "distorted": 0,
+    "titleClipped": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "categories",
+    "viewport": 390,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "authors",
+    "viewport": 390,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "book-details",
+    "viewport": 390,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "cart",
+    "viewport": 390,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "login",
+    "viewport": 390,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "register",
+    "viewport": 390,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "library",
+    "viewport": 390,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "affiliate-dashboard",
+    "viewport": 390,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "admin-dashboard",
+    "viewport": 390,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "home",
+    "viewport": 360,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "cards": 20,
+    "columns": 2,
+    "cardW": 159,
+    "cardH": 299,
+    "unevenRows": 0,
+    "badgeOutside": 0,
+    "tinyTargets": 0,
+    "distorted": 0,
+    "titleClipped": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "search",
+    "viewport": 360,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "cards": 20,
+    "columns": 2,
+    "cardW": 159,
+    "cardH": 299,
+    "unevenRows": 0,
+    "badgeOutside": 0,
+    "tinyTargets": 0,
+    "distorted": 0,
+    "titleClipped": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "categories",
+    "viewport": 360,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "authors",
+    "viewport": 360,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "book-details",
+    "viewport": 360,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "cart",
+    "viewport": 360,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "login",
+    "viewport": 360,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "register",
+    "viewport": 360,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "library",
+    "viewport": 360,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "affiliate-dashboard",
+    "viewport": 360,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  },
+  {
+    "page": "admin-dashboard",
+    "viewport": 360,
+    "status": 200,
+    "dir": "rtl",
+    "overflowPx": 0,
+    "pageErrors": []
+  }
+]

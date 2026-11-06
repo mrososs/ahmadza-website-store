@@ -1,6 +1,6 @@
-# VPS storage integration plan (next phase — NOT implemented)
+# VPS storage integration plan
 
-Nothing in this repository connects to, configures or assumes anything about the Hostinger VPS. This document is the contract the next phase will implement.
+**Status (2026-11-06):** the contract below is implemented **locally and tested** — `VpsStorageAdapter` (`server/services/storage/adapters.ts`), the HMAC module (`vpsSignature.ts`), the private media service (`services/media-server/server.mjs`) and the admin-upload path (VPS preferred when `vps` is enabled). It is **not deployed anywhere**, and nothing here connects to the Hostinger VPS. Deployment is gated: `VPS_SECURITY_GATE.md` (verdict: NO-GO on the legacy host until its read-only inspection clears it; GO for a new clean host). The sections below remain the contract; §9 items 1–2 (adapter, config) and the signature/entitlement tests are done, the bulk loader (`stage-media.mjs` VPS target), observability and host deployment are not.
 Principle: **metadata and entitlements stay in Supabase; bytes live on the VPS; Nuxt server code decides who may fetch what.**
 
 ## 1. What already exists (ready for the VPS)

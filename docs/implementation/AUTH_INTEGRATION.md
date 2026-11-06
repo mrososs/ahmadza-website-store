@@ -35,6 +35,27 @@ The script has no password option, refuses unconfirmed users, refuses any projec
 | Rate limits | keep defaults at minimum; review sign-in/OTP limits after SMTP is set |
 | JWT / sessions | defaults (1 h access token, refresh rotation on); the cookie max-age in `nuxt.config.ts` is 8 h |
 
+## Hosted state — verified 2026-11-06 (`scripts/admin/verify-hosted-auth.mjs`; sends no e-mail, deletes its synthetic user)
+| Check | Result |
+|---|---|
+| E-mail provider enabled · sign-ups enabled · **e-mail confirmation required** (autoconfirm off) | ✅ |
+| Phone, social/SSO, anonymous sign-ins | ✅ all off |
+| Foreign redirect URL (`https://attacker.invalid/…`) | ✅ not honoured — replaced by the Site URL |
+| `http://127.0.0.1:3000/confirm?next=/reset-password`, `http://localhost:3000/confirm` | allowed (development) |
+| Effective Site URL | `http://localhost:3000` (Supabase default — **not yet the real domain**) |
+| Login with a confirmed account over the Data API + the Nuxt session cookie, admin vs customer vs guest on the admin API | ✅ (`tests/hosted/*`) |
+
+## Settings that need YOUR input (the agent cannot read or change them: no Management API token, and it must not guess)
+| Item | What I need / what to do (Dashboard → Authentication) |
+|---|---|
+| **First administrator** | give me the e-mail address (I will not assume one). Then: `node scripts/admin/bootstrap-admin.mjs --email <address> --invite --env .env.hosted --confirm-project ubjuyeccioflhpcpnhmo --yes`; after they open the link and set their OWN password: same command with `--grant`. No password is ever created by us. |
+| Redirect allow-list | confirm it contains only the exact `/confirm` URLs (dev now; the production one later) and **no wildcard** — the allow-list contents cannot be read from here |
+| Site URL | set to the real production origin once it exists (until then keep the local value) |
+| SMTP | custom provider with SPF/DKIM before launch (the built-in sender is rate-limited, testing only). I need: host, port, user, sender address — enter the password in the dashboard yourself |
+| Password policy / leaked-password protection | minimum length 8; enable leaked-password protection if your plan supports it |
+| MFA | TOTP is enabled; the enrolment screen is not built — do **not** set `site_settings.require_admin_mfa` until it is |
+| E-mail templates | review the Arabic wording of confirm / recovery / invite templates |
+
 ## What changes at deployment
 1. `NUXT_PUBLIC_SITE_URL` → real origin (referral links, redirects).
 2. Add the production `/confirm` redirect URL and Site URL in the hosted Auth settings.

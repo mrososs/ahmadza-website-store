@@ -3,9 +3,16 @@
 ## 0. Blocking the hosted Supabase integration (owner action)
 | # | Blocker | Action |
 |---|---|---|
-| 0.1 | No authorised access to hosted project `ubjuyeccioflhpcpnhmo` from this environment: CLI is logged in to another account; project MCP (`.mcp.json`) is pending the owner's OAuth approval | owner runs `claude` → `/mcp` → supabase → authenticate with the account that owns the project; creates `.env.hosted` (see `HOSTED_SUPABASE_SETUP.md`) |
-| 0.2 | Hosted migrations, advisors, Auth settings, first admin invitation not done | run the procedure in `HOSTED_SUPABASE_SETUP.md` (migration inventory: `MIGRATION_INVENTORY.md`) |
-| 0.3 | VPS storage (paid PDFs cannot be downloaded in hosted environments until it exists) | `VPS_STORAGE_INTEGRATION_PLAN.md` |
+| 0.1 | ~~CLI on the wrong account / MCP write blocked~~ **Resolved 2026-11-06**: CLI authenticated with the owning account, linked to `ubjuyeccioflhpcpnhmo`; the owner ran `db push --remote` (15/15 applied, verified by CLI and MCP). Still open: the **secret key** must be pasted into `.env.hosted` by the owner | owner fills `NUXT_SUPABASE_SECRET_KEY` in `.env.hosted` (never in chat) |
+| 0.2 | Hosted schema applied and fingerprint-compared (11 of 12 sections identical; `functions` differs only by `service_role` EXECUTE on 8 trigger functions = Supabase hosted default grants, harmless). **Not done:** hosted RLS suite (needs the secret key), Auth settings (`AUTH_INTEGRATION.md` §Hosted), first admin invitation, `rls_auto_enable()` hardening decision | `HOSTED_MIGRATION_RUNBOOK.md` §6, `AUTH_INTEGRATION.md`, `scripts/admin/bootstrap-admin.mjs` |
+| 0.2b | **Migrations 16–17 written + tested locally, NOT on hosted** (revoke `rls_auto_enable()` EXECUTE; single `payout_methods` SELECT policy). The CLI refuses hosted writes in agent mode without `--yes` | owner runs the two commands in `HOSTED_MIGRATION_RUNBOOK.md` §6c |
+| 0.2c | Auth: first admin invitation (needs the owner e-mail), SMTP, Site URL, redirect allow-list review, e-mail templates | table in `AUTH_INTEGRATION.md` "Settings that need YOUR input" |
+| 0.3 | VPS storage: adapter + service built and tested locally; **not deployed**; the legacy VPS is NO-GO until inspected | `VPS_SECURITY_GATE.md`; owner runs `scripts/vps/readonly-inspect.sh` and returns the sanitised output |
+
+## 0b. Defects found this phase (not hosted-specific)
+| # | Defect | Note |
+|---|---|---|
+| D1 | Vue hydration mismatches in dev: `BookListing` on the empty hosted home page; `SiteHeader` on the seeded local home page ("Hydration children mismatch") | pre-existing; pages still render correctly after hydration; fix by making server/client render identical (auth-dependent header markup, `v-if` on async data) and re-check with `list_console_messages` |
 
 ## A. Blocking real data (owner / external)
 | # | Blocker | Impact | Action |

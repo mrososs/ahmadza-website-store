@@ -72,6 +72,25 @@ PREVIEW_PASSWORD=<the password> node scripts/preview/verify-preview.mjs https://
 ```
 It checks, over the network: https, a 401 challenge with no content and a noindex header for anonymous visitors (pages, admin, API), an open `robots.txt` that disallows everything, wrong credentials refused, valid credentials reaching the site with no-store, checkout, webhooks and downloads answering 503, and the admin API still demanding a session. Exit code 0 means every check passed; anything else means do not share the link.
 
+## 5b. Deploying on Vercel
+
+**Status (checked 2026-11-07, read-only): the Vercel account has one team and one project, `xperience-hotels`, which is unrelated to AAWRAQ and was not touched. There is no AAWRAQ Vercel project, so nothing has been deployed.** A new project is yours to create (it publishes the application and needs your server secret key in its environment).
+
+What the repository already does for Vercel:
+* **A protected production build carries no shared-cache rules.** On Vercel an `swr` route rule becomes an edge-cached page that is served *without* running the password gate. The default (protected) build therefore has none. If a protected deployment is ever started from a build that was made with page caching, the server **refuses to start on Vercel** (`protected_build_has_page_caching`).
+* `.vercelignore` keeps env files, recovery output, PDFs and build folders out of a CLI upload.
+* Responses carry `Cache-Control: private, no-store` (forced, including error pages), `X-Robots-Tag: noindex`.
+
+Steps (yours):
+1. Create the project from this repository (root directory = repository root, framework Nuxt, Node 22, install `npm ci`, build `npx nuxt build`). Do **not** set `NUXT_PREVIEW_MODE`.
+2. Add the environment variables of section 3 in the project settings (Preview and Production targets as you need). Enter secrets in the dashboard or with `vercel env add NAME` (hidden prompt); never paste them into a chat or commit them.
+3. Deploy, then run the check of section 5 against the real URL. The deployment is not ready to share until it prints `All checks passed`.
+
+Properties of Vercel you should know (they cannot be changed from inside the application):
+* **Static files are served by the CDN before the application runs**: the JavaScript and CSS bundle, fonts and images under `/_nuxt/` and `/assets/` are reachable without the password. They contain the application's code and design, no data. Everything with content (HTML, API, sitemap) is behind the gate. If that is not acceptable, also turn on Vercel's own Deployment Protection for the project.
+* Serverless instances do not share memory, so the login-attempt limiter is **per instance**. The scrypt password cost and the 20-attempt window still apply per instance; use a long password and Vercel's firewall rate limiting if you want a global limit.
+* The payment webhook endpoints answer 503 behind the gate by design; sandbox payment tests need a separate deployment (`PAYMENTS_GO_LIVE_CHECKLIST.md`).
+
 ## 6. After deployment
 
 1. Sign in as the administrator, enrol the authenticator, then review `Catalogue recovery` and `Payments` in the admin.

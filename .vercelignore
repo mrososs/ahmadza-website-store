@@ -1,0 +1,19 @@
+# Never upload these to a hosting provider. (A Git-connected deployment uses the repository itself; this file protects `vercel deploy` from a local folder.)
+.env
+.env.*
+!.env.example
+!.env.hosted.example
+.nuxt
+.nuxt-hosted
+.nuxt-recovery
+.output
+migration-output
+test-results
+node_modules
+# recovered material and evidence never travel with a deployment
+**/*.pdf
+**/*.dump
+**/*.sql.gz
+quarantine
+docs/implementation/ui-validation
+docs/implementation/ui-refinement

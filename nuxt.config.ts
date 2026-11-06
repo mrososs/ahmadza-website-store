@@ -7,6 +7,12 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/supabase', '@pinia/nuxt'],
   typescript: { strict: true, typeCheck: false },
 
+  // Keep each page's data INLINE in its own HTML. With extraction on, `/_payload.json` is a separate response (and, under the
+  // `swr` rules below, a separate cache entry), so the HTML and the data the browser hydrates from could be produced at
+  // different moments: any catalogue change in between made the client render differ from the server HTML (hydration
+  // mismatch; measured 39/40 page loads while data changed, 0/50 when it did not). Inline payloads are always consistent.
+  experimental: { payloadExtraction: false },
+
   // The legacy stylesheets are linked from the layouts (same order as the Blade masters) so their
   // relative font/image URLs keep working. See app/layouts and docs/implementation/05-legacy-ui-fidelity.md.
   css: [],
@@ -38,8 +44,13 @@ export default defineNuxtConfig({
     allowDevPaymentSimulator: process.env.NODE_ENV !== 'production',
     signedUrlTtlSeconds: 120,
     // Which media backends may serve/accept files in THIS environment (override: NUXT_MEDIA_ENABLED_PROVIDERS).
-    // Local dev: Supabase Storage + external links. Hosted/production default: external links only until the VPS adapter exists.
+    // Local dev: Supabase Storage + external links. Hosted/production default: external links only; add `vps` only after the
+    // private media service passed its security gate (docs/implementation/VPS_SECURITY_GATE.md).
     mediaEnabledProviders: process.env.NODE_ENV === 'production' ? 'external' : 'supabase,external',
+    // private media service (services/media-server); overrides: NUXT_VPS_STORAGE_BASE_URL / _SIGNING_SECRET / _UPLOAD_TOKEN. Never public.
+    vpsStorageBaseUrl: '',
+    vpsStorageSigningSecret: '',
+    vpsStorageUploadToken: '',
     public: {
       siteUrl: 'http://127.0.0.1:3000',
     },

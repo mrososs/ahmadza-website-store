@@ -142,6 +142,18 @@ df -h "$DD" 2>/dev/null | tail -1; df -i "$DD" 2>/dev/null | tail -1
 ls -la "$DD"/*.pid "$DD"/*.sock /run/mariadb /var/run/mysqld 2>&1 | head -10
 echo "  InnoDB / recovery / corruption lines in the error log (last 20):"
 for f in "$DD"/*.err /var/log/mariadb/mariadb.log /var/log/mysqld.log; do [ -r "$f" ] && { grep -iE 'innodb|crash|corrupt|recover|abort|disk full|no space|error' "$f" | tail -n 20; break; }; done
+echo "--- MariaDB version and the settings that decide whether a file-level copy can be recovered on another machine (state only)"
+rpm -qa 2>/dev/null | grep -iE '^(mariadb|mysql)' | head -8
+MDB_VER_LINE=$( (mariadbd --version || mysqld --version) 2>&1 | head -1 )   # prints the version and exits; it does NOT start a server
+echo "$MDB_VER_LINE"
+MDB_VER=$(printf '%s' "$MDB_VER_LINE" | grep -oE 'Ver [0-9]+\.[0-9]+\.[0-9]+' | head -1 | cut -d' ' -f2)
+echo "--- server configuration files (comments and blank lines removed; secrets are masked by the sanitiser)"
+grep -hvE '^[[:space:]]*(#|;|$)' /etc/my.cnf /etc/my.cnf.d/*.cnf 2>/dev/null | head -80
+echo "--- encryption indicators (encrypted tablespaces cannot be read on another machine without the key files)"
+ENC_HINT=no
+if grep -rqiE 'file_key_management|innodb[_-]encrypt|encrypt[_-]tables|encrypt[_-]log|aria[_-]encrypt|key_management' /etc/my.cnf /etc/my.cnf.d 2>/dev/null; then ENC_HINT=yes; grep -rniE 'file_key_management|innodb[_-]encrypt|encrypt[_-]tables|encrypt[_-]log|aria[_-]encrypt|key_management' /etc/my.cnf /etc/my.cnf.d 2>/dev/null | head -8; else echo "none found in /etc/my.cnf*"; fi
+echo "--- InnoDB system files in the datadir (name, size, mtime): these must be copied together with the .ibd files"
+ls -la --time-style=long-iso "$DD"/ibdata* "$DD"/ib_logfile* "$DD"/undo* "$DD"/ibtmp* "$DD"/aria_log* "$DD"/ddl_recovery* "$DD"/mysql_upgrade_info 2>/dev/null | awk '{print $5, $6, $7, $8}' | head -20
 
 sec "4b. WHERE THE DISK GOES"
 df -h -x tmpfs -x devtmpfs | head -8; df -i -x tmpfs -x devtmpfs | head -6
@@ -225,6 +237,10 @@ echo "FLAG env_present=$([ -r "$AAWRAQ_ROOT/.env" ] && echo yes || echo no)"
 MA=$(systemctl is-active mariadb 2>/dev/null | head -1); echo "FLAG mariadb_active=${MA:-unknown}"
 MP=$($T mysqladmin ping 2>/dev/null | head -1 | tr ' ' '_' | cut -c1-40); echo "FLAG mariadb_ping=${MP:-no_response}"
 echo "FLAG datadir=$DD"
+echo "FLAG mariadb_version=${MDB_VER:-unknown}"
+echo "FLAG encryption_hint=${ENC_HINT:-unknown}"
+echo "FLAG datadir_size_mb=$($LOW du -sm "$DD" 2>/dev/null | cut -f1)"
+echo "FLAG ib_system_files=$(ls "$DD"/ibdata1 "$DD"/ib_logfile0 2>/dev/null | wc -l)"
 echo "FLAG db_dirs=$DB_DIRS"
 echo "FLAG books_table_file=${BOOKS_FILE:-none}"
 echo "FLAG dump_candidates=$n_dumps"

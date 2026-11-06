@@ -1,0 +1,333 @@
+
+=== 0. HOST ===
+Fri Nov  6 18:53:54 UTC 2026
+7733f45a0c95
+Ubuntu 22.04.5 LTS
+6.18.33.x-microsoft-standard-WSL2
+ 18:53:54 up  6:53,  0 users,  load average: 1.18, 0.51, 0.27
+Filesystem     Type     Size  Used Avail Use% Mounted on
+overlay        overlay 1007G   16G  940G   2% /
+/dev/sde       ext4    1007G   16G  940G   2% /etc/hosts
+               total        used        free      shared  buff/cache   available
+Mem:            7762        1832        4756         105        1173        5642
+Swap:           2048           0        2048
+whoami: root  (read-only run; no changes are made)
+
+=== 1. SERVICES (state only) ===
+mariadb      /s/readonly-inspect.sh: line 53: systemctl: command not found / enabled=/s/readonly-inspect.sh: line 53: systemctl: command not found
+mysql        /s/readonly-inspect.sh: line 53: systemctl: command not found / enabled=/s/readonly-inspect.sh: line 53: systemctl: command not found
+lsws         /s/readonly-inspect.sh: line 53: systemctl: command not found / enabled=/s/readonly-inspect.sh: line 53: systemctl: command not found
+lscpd        /s/readonly-inspect.sh: line 53: systemctl: command not found / enabled=/s/readonly-inspect.sh: line 53: systemctl: command not found
+pure-ftpd    /s/readonly-inspect.sh: line 53: systemctl: command not found / enabled=/s/readonly-inspect.sh: line 53: systemctl: command not found
+postfix      /s/readonly-inspect.sh: line 53: systemctl: command not found / enabled=/s/readonly-inspect.sh: line 53: systemctl: command not found
+dovecot      /s/readonly-inspect.sh: line 53: systemctl: command not found / enabled=/s/readonly-inspect.sh: line 53: systemctl: command not found
+firewalld    /s/readonly-inspect.sh: line 53: systemctl: command not found / enabled=/s/readonly-inspect.sh: line 53: systemctl: command not found
+csf          /s/readonly-inspect.sh: line 53: systemctl: command not found / enabled=/s/readonly-inspect.sh: line 53: systemctl: command not found
+lfd          /s/readonly-inspect.sh: line 53: systemctl: command not found / enabled=/s/readonly-inspect.sh: line 53: systemctl: command not found
+fail2ban     /s/readonly-inspect.sh: line 53: systemctl: command not found / enabled=/s/readonly-inspect.sh: line 53: systemctl: command not found
+sshd         /s/readonly-inspect.sh: line 53: systemctl: command not found / enabled=/s/readonly-inspect.sh: line 53: systemctl: command not found
+crond        /s/readonly-inspect.sh: line 53: systemctl: command not found / enabled=/s/readonly-inspect.sh: line 53: systemctl: command not found
+--- mariadb unit (last status lines)
+timeout: failed to run command 'systemctl': No such file or directory
+--- mariadb ping (socket, no credentials)
+mysqladmin: connect to server at 'localhost' failed
+error: 'Can't connect to local server through socket '/run/mysqld/mysqld.sock' (2)'
+Check that mariadbd is running and that the socket: '/run/mysqld/mysqld.sock' exists!
+--- listening sockets
+--- firewalld
+timeout: failed to run command 'firewall-cmd': No such file or directory
+--- OpenLiteSpeed
+/s/readonly-inspect.sh: line 59: /usr/local/lsws/bin/lshttpd: No such file or directory
+
+=== 2. SITES ON THIS SERVER (names only; others are out of scope) ===
+total     
+drwxr-xr-x root root Apr 18 .
+drwxr-xr-x root root Nov 6 ..
+--- AAWRAQ site home: /srv/fake/home/aawraq.com
+total 0
+drwxrwxrwx 1 root root 4096 Nov  6 17:11 .
+drwxrwxrwx 1 root root 4096 Nov  6 17:11 ..
+drwxrwxrwx 1 root root 4096 Nov  6 17:11 backup
+drwxrwxrwx 1 root root 4096 Nov  6 17:11 logs
+drwxrwxrwx 1 root root 4096 Nov  6 17:11 public_html
+--- web root top level: /srv/fake/home/aawraq.com/public_html
+total 0
+drwxrwxrwx 1 root root 4096 Nov  6 17:11 .
+drwxrwxrwx 1 root root 4096 Nov  6 17:11 ..
+-rwxrwxrwx 1 root root  303 Nov  6 17:11 .env
+drwxrwxrwx 1 root root 4096 Nov  6 17:11 app
+-rwxrwxrwx 1 root root    0 Nov  6 17:11 artisan
+drwxrwxrwx 1 root root 4096 Nov  6 17:11 bootstrap
+-rwxrwxrwx 1 root root    0 Nov  6 17:11 composer.json
+drwxrwxrwx 1 root root 4096 Nov  6 17:11 public
+drwxrwxrwx 1 root root 4096 Nov  6 17:11 routes
+drwxrwxrwx 1 root root 4096 Nov  6 17:11 storage
+--- Laravel markers
+present: artisan
+present: composer.json
+present: .env
+present: public/index.php
+absent:  bootstrap/app.php
+--- .env: KEY NAMES ONLY, plus non-secret values
+APP_NAME APP_ENV APP_DEBUG APP_KEY DB_CONNECTION DB_HOST DB_DATABASE DB_USERNAME DB_PASSWORD MAIL_USERNAME MAIL_PASSWORD PAYMOB_HMAC 
+APP_ENV=production
+APP_DEBUG=false
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_DATABASE=aawraq_db
+.env mode/owner: 777 root:root 2026-11-06 17:11:47.629807500 +0000
+--- is .env or storage reachable from the web? (vhost docRoot + symlink)
+ls: cannot access '/srv/fake/home/aawraq.com/public_html/public/storage': No such file or directory
+drwxrwxrwx 1 root root 4096 Nov  6 17:11 /srv/fake/home/aawraq.com/public_html/public/uploads
+drwxrwxrwx 1 root root 4096 Nov  6 17:11 /srv/fake/home/aawraq.com/public_html/storage
+/srv/fake/home/aawraq.com/public_html/public/storage
+--- sizes (depth 1)
+0	/srv/fake/home/aawraq.com/logs
+296K	/srv/fake/home/aawraq.com/backup
+6.1M	/srv/fake/home/aawraq.com/public_html
+6.3M	/srv/fake/home/aawraq.com
+0	/srv/fake/home/aawraq.com/public_html/public/uploads
+0	/srv/fake/home/aawraq.com/public_html/public/uploads/editor
+8.0K	/srv/fake/home/aawraq.com/public_html/storage/app/public
+6.0M	/srv/fake/home/aawraq.com/public_html/storage/app/backup
+6.1M	/srv/fake/home/aawraq.com/public_html/storage
+6.1M	/srv/fake/home/aawraq.com/public_html/storage/app
+--- everything inside /srv/fake/home/aawraq.com, two levels deep (type perms owner bytes date path; capped at 200)
+d drwxrwxrwx root 4096 2026-11-06 backup
+f -rwxrwxrwx root 300068 2026-11-06 backup/aawraq_db.sql.gz
+d drwxrwxrwx root 4096 2026-11-06 logs
+d drwxrwxrwx root 4096 2026-11-06 public_html
+f -rwxrwxrwx root 303 2026-11-06 public_html/.env
+d drwxrwxrwx root 4096 2026-11-06 public_html/app
+f -rwxrwxrwx root 0 2026-11-06 public_html/artisan
+d drwxrwxrwx root 4096 2026-11-06 public_html/bootstrap
+f -rwxrwxrwx root 0 2026-11-06 public_html/composer.json
+d drwxrwxrwx root 4096 2026-11-06 public_html/public
+d drwxrwxrwx root 4096 2026-11-06 public_html/routes
+d drwxrwxrwx root 4096 2026-11-06 public_html/storage
+--- sizes inside /srv/fake/home/aawraq.com, two levels deep (largest 40)
+0	/srv/fake/home/aawraq.com/logs
+0	/srv/fake/home/aawraq.com/public_html/app
+0	/srv/fake/home/aawraq.com/public_html/bootstrap
+0	/srv/fake/home/aawraq.com/public_html/public
+0	/srv/fake/home/aawraq.com/public_html/routes
+296K	/srv/fake/home/aawraq.com/backup
+6.1M	/srv/fake/home/aawraq.com/public_html
+6.1M	/srv/fake/home/aawraq.com/public_html/storage
+6.3M	/srv/fake/home/aawraq.com
+
+=== 3. MEDIA FOLDERS (original book media, covers, branding, requests) ===
+[product_media] /srv/fake/home/aawraq.com/public_html/storage/app/public/product_media  files=2  bytes=9105
+      ext       2 pdf
+      mtime 2026-11-06
+      mtime 2026-11-06
+[product_cover] /srv/fake/home/aawraq.com/public_html/storage/app/public/product_cover  files=1  bytes=4596
+      ext       1 webp
+      mtime 2026-11-06
+      mtime 2026-11-06
+[editor] /srv/fake/home/aawraq.com/public_html/public/uploads/editor  files=2  bytes=4129
+      ext       1 png
+      ext       1 php
+      mtime 2026-11-06
+      mtime 2026-11-06
+--- legacy-named archives that may hold the other folders
+
+=== 4. DATABASE AND BACKUPS (names/sizes/dates only) ===
+--- dump / backup candidates
+
+--- CyberPanel / provider backup directories
+ls: cannot access '/home/backup': No such file or directory
+ls: cannot access '/backup': No such file or directory
+ls: cannot access '/home/cyberpanel/backups': No such file or directory
+/srv/fake/home/aawraq.com/backup:
+total 296
+drwxrwxrwx 1 root root   4096 Nov  6 17:11 .
+drwxrwxrwx 1 root root   4096 Nov  6 17:11 ..
+-rwxrwxrwx 1 root root 300068 Nov  6 17:11 aawraq_db.sql.gz
+
+/var/backups:
+total 8
+drwxr-xr-x 2 root root 4096 Apr 18  2022 .
+drwxr-xr-x 1 root root 4096 Oct 20 17:15 ..
+--- application / site backup archives (zip, tar*, 7z, xz, zst, rar) over 5 MB in readable locations (size, date, path)
+--- Laravel / CyberPanel backup folders (type size date path)
+d 4096 2026-11-06 /srv/fake/home/aawraq.com/public_html/storage/app/backup
+--- file type of the 10 largest archives above (reads only the first bytes; nothing is opened or extracted)
+(file(1) not installed)
+--- scheduled jobs (commands sanitised)
+/s/readonly-inspect.sh: line 113: crontab: command not found
+total 12
+drwxr-xr-x 2 root root 4096 Oct 20 17:15 .
+drwxr-xr-x 1 root root 4096 Nov  6 18:53 ..
+-rw-r--r-- 1 root root  201 Jan  8  2022 e2scrub_all
+30 3 * * 0 root test -e /run/systemd/system || SERVICE_MODE=1 /usr/lib/x86_64-linux-gnu/e2fsprogs/e2scrub_all_cron
+10 3 * * * root test -e /run/systemd/system || SERVICE_MODE=1 /sbin/e2scrub_all -A -r
+--- MariaDB datadir (names only)
+datadir=/srv/fake/mysql
+2.8M	/srv/fake/mysql
+total    
+drwxrwxrwx 4096 Nov 6 .
+drwxrwxrwx 4096 Nov 6 ..
+drwxrwxrwx 4096 Nov 6 aawraq_db
+-rwxrwxrwx 156 Nov 6 host.err
+-rwxrwxrwx 500000 Nov 6 ib_logfile0
+-rwxrwxrwx 2000000 Nov 6 ibdata1
+drwxrwxrwx 4096 Nov 6 mysql
+--- tables of the AAWRAQ database 'aawraq_db' (file name, size) — shows whether the data files survive
+ 
+4096 .
+4096 ..
+50000 book_media.ibd
+80000 books.ibd
+90000 users.ibd
+--- ALL non-system databases in the datadir (does the AAWRAQ data survive?)
+aawraq_db  files=3  size=220K
+    table file books          80000 bytes
+    table file book_media     50000 bytes
+    table file users          90000 bytes
+--- MariaDB error log tail (last 30 lines)
+[/srv/fake/mysql/host.err]
+2026-11-01 InnoDB: Starting crash recovery.
+2026-11-01 [ERROR] InnoDB: Corrupted page
+2026-11-01 [ERROR] Aborting
+from 203.0.113.x user <email>@evil.example
+--- journal (mariadb, last 25)
+timeout: failed to run command 'journalctl': No such file or directory
+--- MariaDB health WITHOUT restarting anything (state only)
+/s/readonly-inspect.sh: line 138: systemctl: command not found
+    PID STAT     ELAPSED %CPU %MEM COMMAND
+  (STAT D = stuck waiting on disk, Z = zombie, no mysqld/mariadbd row = not running)
+ls: cannot access '/srv/fake/mysql/*.pid': No such file or directory
+ls: cannot access '/srv/fake/mysql/*.sock': No such file or directory
+ls: cannot access '/run/mariadb': No such file or directory
+/var/run/mysqld:
+total 8
+drwxrwxrwt 2 mysql mysql 4096 Oct 26 23:25 .
+drwxr-xr-x 1 root  root  4096 Oct 26 23:25 ..
+  InnoDB / recovery / corruption lines in the error log (last 20):
+2026-11-01 InnoDB: Starting crash recovery.
+2026-11-01 [ERROR] InnoDB: Corrupted page
+2026-11-01 [ERROR] Aborting
+--- MariaDB version and the settings that decide whether a file-level copy can be recovered on another machine (state only)
+mariadbd  Ver 10.6.28-MariaDB-ubu2204 for debian-linux-gnu on x86_64 (mariadb.org binary distribution)
+--- server configuration files (comments and blank lines removed; secrets are masked by the sanitiser)
+[mariadb]
+innodb_encrypt_tables=ON
+--- encryption indicators (encrypted tablespaces cannot be read on another machine without the key files)
+/etc/my.cnf.d/t.cnf:2:innodb_encrypt_tables=ON
+--- InnoDB system files in the datadir (name, size, mtime): these must be copied together with the .ibd files
+500000 2026-11-06 18:53 /srv/fake/mysql/ib_logfile0
+2000000 2026-11-06 18:53 /srv/fake/mysql/ibdata1
+
+=== 4b. WHERE THE DISK GOES ===
+Filesystem      Size  Used Avail Use% Mounted on
+overlay        1007G   16G  940G   2% /
+/dev/sde       1007G   16G  940G   2% /etc/hosts
+Filesystem       Inodes   IUsed    IFree IUse% Mounted on
+overlay        67108864  449363 66659501    1% /
+/dev/sde       67108864  449363 66659501    1% /etc/hosts
+--- largest consumers, two levels deep across the filesystem (nice + idle IO)
+0	/srv/empty
+--- files over 200 MB (largest 30: size, date, path)
+--- logs and journal
+692K	/var/log
+/s/readonly-inspect.sh: line 163: journalctl: command not found
+
+=== 5. FILE INTEGRITY — suspicious artefact NAMES (never contents, never executed) ===
+--- script-like files inside upload/storage trees (should be ZERO)
+/srv/fake/home/aawraq.com/public_html/public/uploads/editor/shell.php  32 bytes  mode=777  root  2026-11-06
+--- executable bit on upload files
+/srv/fake/home/aawraq.com/public_html/storage/app/backup/aawraq-2026-03-01.zip mode=777
+/srv/fake/home/aawraq.com/public_html/storage/app/public/product_cover/cover1.webp mode=777
+/srv/fake/home/aawraq.com/public_html/storage/app/public/product_media/AAWRAQ-1666180000.pdf mode=777
+/srv/fake/home/aawraq.com/public_html/storage/app/public/product_media/AAWRAQ-1700000000.pdf mode=777
+/srv/fake/home/aawraq.com/public_html/public/uploads/editor/shell.php mode=777
+/srv/fake/home/aawraq.com/public_html/public/uploads/editor/tiny.png mode=777
+--- files in uploads whose first bytes contain a PHP open tag (names only)
+/srv/fake/home/aawraq.com/public_html/public/uploads/editor/shell.php
+--- tiny image files (probe/polyglot candidates), count only
+1
+--- app code touched in the last 120 days (php/htaccess outside vendor; name+date)
+2026-11-06 /srv/fake/home/aawraq.com/public_html/public/index.php
+2026-11-06 /srv/fake/home/aawraq.com/public_html/public/uploads/editor/shell.php
+--- webshell-style function patterns in app/public code (names only)
+--- upload folder .htaccess / OpenLiteSpeed rules
+
+=== 6. HOST COMPROMISE INDICATORS (metadata) ===
+--- UID 0 accounts
+root
+--- login-capable accounts
+root 0 /root /bin/bash
+mysql 999 /var/lib/mysql /bin/sh
+--- authorized_keys fingerprints (no key bodies)
+--- recent logins
+
+wtmp begins Fri Nov  6 17:16:09 2026
+--- failed SSH logins, last 30 days (count) and top sources
+0
+--- accepted SSH logins, last 30 days (user + masked source)
+--- top CPU processes (command name only)
+USER         PID %CPU %MEM     ELAPSED COMMAND
+root          10  3.4  0.0       00:05 bash
+root           1  2.0  0.0       00:05 bash
+root           8  0.2  0.0       00:05 bash
+root          12  0.2  0.0       00:05 sed
+root          11  0.0  0.0       00:05 bash
+root          14  0.0  0.0       00:05 perl
+root         399  0.0  0.0       00:00 ps
+root         400  0.0  0.0       00:00 head
+--- SUID files outside system paths
+--- world-writable dirs inside the site
+/srv/fake/home/aawraq.com
+/srv/fake/home/aawraq.com/backup
+/srv/fake/home/aawraq.com/logs
+/srv/fake/home/aawraq.com/public_html
+/srv/fake/home/aawraq.com/public_html/app
+/srv/fake/home/aawraq.com/public_html/bootstrap
+/srv/fake/home/aawraq.com/public_html/public
+/srv/fake/home/aawraq.com/public_html/public/uploads
+/srv/fake/home/aawraq.com/public_html/public/uploads/editor
+/srv/fake/home/aawraq.com/public_html/routes
+--- user cron files
+--- web access logs present (rotation/size/date only)
+No such file directory
+No such file directory
+--- TLS certificate served on 443
+Could not read certificate from <stdin>
+Unable to load certificate
+--- OpenLiteSpeed vhost (docRoot, contexts, rewrite) for aawraq
+--- PHP limits
+
+=== 6b. PREREQUISITES AND RISKS FOR A NEW FILE SERVICE ON THIS HOST (state only) ===
+SELinux: /s/readonly-inspect.sh: line 209: getenforce: command not found
+node: not installed
+               total        used        free      shared  buff/cache   available
+Mem:            7762        1844        4744         105        1173        5630
+cpus: 12
+--- most recent package changes (rpm install dates)
+--- kernel / last boot
+6.18.33.x-microsoft-standard-WSL2
+--- OpenLiteSpeed external apps / proxy definitions (names only)
+--- ports listening on non-loopback addresses (each one is exposure)
+
+=== 8. NOT CHECKABLE FROM INSIDE THE VPS (do in hPanel) ===
+Hostinger hPanel -> VPS -> Backups & Snapshots: list available snapshots/backups with dates (do NOT restore over this server).
+
+=== 9. QUICK FLAGS (machine-readable; used by scripts/vps/classify-inspection.mjs — details are in the sections above) ===
+FLAG env_present=yes
+FLAG mariadb_active=unknown
+FLAG mariadb_ping=no_response
+FLAG datadir=/srv/fake/mysql
+FLAG mariadb_version=10.6.28
+FLAG encryption_hint=yes
+FLAG datadir_size_mb=3
+FLAG ib_system_files=2
+FLAG db_dirs=1
+FLAG books_table_file=aawraq_db/books:80000
+FLAG dump_candidates=0
+FLAG backup_archives_over_5mb=0
+FLAG product_media_files=2
+FLAG script_like_in_uploads=1
+FLAG php_tag_in_uploads=1
+FLAG uid0_accounts=1
+=== END ===

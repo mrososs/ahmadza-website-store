@@ -14,7 +14,7 @@ const docTx = () => ({
 const DOC_STRING = '1000002024-06-13T11:33:44.592345EGPfalsefalse1920364654097558truefalsefalsefalsetruefalse217503754302852false2346MasterCardcardtrue'
 
 const runtime = (over: Record<string, unknown> = {}): GatewayRuntime => ({
-  paymentsEnabledProviders: 'paymob,tap', paymentsLiveEnabled: false,
+  paymentsEnabledProviders: 'paymob,tap', paymentsLiveEnabled: false, paymobCurrency: 'USD', // the owner has confirmed the integration charges in USD
   paymobTestSecretKey: 'sk_test_x', paymobTestPublicKey: 'pk_test_x', paymobTestHmacSecret: 'test-hmac', paymobTestIntegrationIds: '1256, 1257',
   paymobLiveSecretKey: 'sk_live_x', paymobLivePublicKey: 'pk_live_x', paymobLiveHmacSecret: 'live-hmac', paymobLiveIntegrationIds: '9001',
   ...over,
@@ -177,11 +177,48 @@ describe('availability and status (nothing live without two explicit owner switc
   it('refuses when the gateway currency differs from the store currency: no conversion is ever applied', () => {
     const s = paymob.status(settings(), runtime({ paymobCurrency: 'SAR' }))
     expect(s.available).toBe(false)
-    expect(s.currency).toEqual({ store: 'USD', gateway: 'SAR', matches: false })
+    expect(s.currency).toMatchObject({ store: 'USD', gateway: 'SAR', matches: false, confirmed: true })
     expect(paymob.status(settings({ base_currency: 'SAR' }), runtime({ paymobCurrency: 'sar' })).currency.matches).toBe(true)
   })
   it('is unavailable when the provider is not enabled', () => {
     expect(paymob.status(settings(), runtime({ paymentsEnabledProviders: 'tap' })).available).toBe(false)
+  })
+})
+
+describe('currency confirmation and regions (nothing is assumed, nothing is converted)', () => {
+  it('is UNAVAILABLE until the owner confirms the account currency, even with every credential present, and says exactly which variable to set', () => {
+    const s = paymob.status(settings(), runtime({ paymobCurrency: '' }))
+    expect(s.available).toBe(false)
+    expect(s.reason).toMatch(/NUXT_PAYMOB_CURRENCY/)
+    expect(s.reason).toMatch(/store currency USD/)
+    expect(s.currency).toMatchObject({ confirmed: false, matches: false, gateway: 'not confirmed' })
+    expect(s.currency.note).toMatch(/does not list which currencies a regional account can charge/)
+    expect(failure(() => paymob.assertAvailable(settings(), runtime({ paymobCurrency: '' })))?.statusCode).toBe(503)
+  })
+  it('a confirmed currency that differs from the store currency is refused, and one that equals it is accepted (case-insensitive)', () => {
+    expect(paymob.status(settings(), runtime({ paymobCurrency: 'SAR' })).reason).toMatch(/differs from the store currency USD/)
+    expect(paymob.status(settings(), runtime({ paymobCurrency: 'usd' })).available).toBe(true)
+  })
+  it('the regional account decides the hosts: KSA by default (the legacy store), Egypt, UAE and Oman from the docs, and an unknown region is refused', async () => {
+    const calls: string[] = []
+    const fetchImpl: FetchLike = async (url) => { calls.push(url); return { ok: true, status: 201, json: async () => ({ client_secret: 'cs', intention_order_id: 5 }) } }
+    const req = { payment: { id: 'p', reference: REF, amount: 5, currency: 'USD', mode: 'test' as const }, items: [{ name: 'b', amount: 5 }], customer: { name: 'A B', email: 'a@b.invalid', phone: null }, urls: { webhook: 'https://x.invalid/w', redirect: 'https://x.invalid/r' } }
+    const hosts: [string | undefined, string, string][] = [[undefined, 'https://ksa.paymob.com/v1/intention/', 'https://ksa.checkout.paymob.com'], ['egypt', 'https://accept.paymob.com/v1/intention/', 'https://eg.checkout.paymob.com'], ['uae', 'https://uae.paymob.com/v1/intention/', 'https://uae.checkout.paymob.com'], ['oman', 'https://oman.paymob.com/v1/intention/', 'https://om.checkout.paymob.com']]
+    for (const [region, intention, checkout] of hosts) {
+      const r = await createPaymob(fetchImpl).createSession(req, runtime(region ? { paymobRegion: region } : {}))
+      expect(calls.at(-1)).toBe(intention)
+      expect(r.redirectUrl.startsWith(checkout + '/?publicKey=')).toBe(true)
+    }
+    expect(paymob.status(settings(), runtime({ paymobRegion: 'mars' })).reason).toMatch(/NUXT_PAYMOB_REGION/)
+    expect((await asyncFailure(() => createPaymob(fetchImpl).createSession(req, runtime({ paymobRegion: 'mars' }))))?.statusCode).toBe(503)
+    expect(paymob.status(settings(), runtime({ paymobRegion: 'UAE' })).region).toBe('uae')
+  })
+  it('explicit URLs still override the region (sandbox mocks, proxies)', async () => {
+    const calls: string[] = []
+    const fetchImpl: FetchLike = async (url) => { calls.push(url); return { ok: true, status: 201, json: async () => ({ client_secret: 'cs', intention_order_id: 5 }) } }
+    const req = { payment: { id: 'p', reference: REF, amount: 5, currency: 'USD', mode: 'test' as const }, items: [{ name: 'b', amount: 5 }], customer: { name: 'A B', email: 'a@b.invalid', phone: null }, urls: { webhook: 'https://x.invalid/w', redirect: 'https://x.invalid/r' } }
+    await createPaymob(fetchImpl).createSession(req, runtime({ paymobBaseUrl: 'https://proxy.example.invalid' }))
+    expect(calls[0]).toBe('https://proxy.example.invalid/v1/intention/')
   })
 })
 

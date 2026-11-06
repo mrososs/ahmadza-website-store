@@ -64,6 +64,7 @@ async function startApp() {
       NUXT_PAYMOB_BASE_URL: `${mock.url}/paymob`, NUXT_PAYMOB_CHECKOUT_URL: `${mock.url}/paymob-checkout`,
       NUXT_PAYMOB_TEST_SECRET_KEY: SECRETS.paymobSk, NUXT_PAYMOB_TEST_PUBLIC_KEY: SECRETS.paymobPk, NUXT_PAYMOB_TEST_HMAC_SECRET: SECRETS.testHmac, NUXT_PAYMOB_TEST_INTEGRATION_IDS: '1256,1257',
       NUXT_PAYMOB_LIVE_SECRET_KEY: 'sk_live_mock', NUXT_PAYMOB_LIVE_PUBLIC_KEY: 'pk_live_mock', NUXT_PAYMOB_LIVE_HMAC_SECRET: SECRETS.liveHmac, NUXT_PAYMOB_LIVE_INTEGRATION_IDS: '9001',
+      NUXT_PAYMOB_CURRENCY: 'USD', NUXT_TAP_CURRENCY: 'USD', // the owner's confirmation of the account currency: without it neither gateway is offered
       NUXT_TAP_BASE_URL: `${mock.url}/tap`, NUXT_TAP_TEST_SECRET_KEY: SECRETS.tapTest, NUXT_TAP_LIVE_SECRET_KEY: SECRETS.tapLive,
     },
   })
@@ -126,7 +127,7 @@ describe('Paymob: session creation', () => {
   it('lists the methods that are available; credentials and reasons are not exposed', async () => {
     const r = await (await fetch(`${BASE}/api/checkout/methods`)).json()
     expect(r.methods.map((m: { id: string }) => m.id)).toEqual(['paymob', 'tap'])
-    expect(r.methods.every((m: { available: boolean }) => m.available)).toBe(true)
+    expect(r.methods.every((m: { available: boolean }) => m.available)).toBe(true) // only usable methods are ever listed
     expect(JSON.stringify(r)).not.toMatch(/sk_test|hmac|missing|NUXT_/i)
   })
   it('prices from the database, sends the gateway an intention it can verify, stores the gateway order id, and ignores any browser-supplied total', async () => {

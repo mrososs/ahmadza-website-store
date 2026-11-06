@@ -34,7 +34,7 @@ export function useCheckout() {
   async function loadMethods() {
     try {
       const r = await $fetch<{ methods: { id: string; label: string; available: boolean }[]; testMode: boolean }>('/api/checkout/methods')
-      methods.value = r.methods
+      methods.value = r.methods.filter((m) => m.available) // the server already lists only usable methods; never trust that a client shows an unusable one
       testMode.value = r.testMode
       if (!methods.value.some((m) => m.id === selected.value && m.available)) selected.value = methods.value.find((m) => m.available)?.id ?? ''
     } catch { methods.value = [] } finally { methodsLoaded.value = true } // e.g. the protected preview switches checkout off

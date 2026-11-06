@@ -7,7 +7,7 @@ import type { FetchLike, GatewayRuntime } from '../../server/services/payments/t
 const REF = '3f1c2b4a-5d6e-4f70-8a91-b2c3d4e5f607'
 const CHG = 'chg_TS012520220955Rr950709475'
 const runtime = (over: Record<string, unknown> = {}): GatewayRuntime => ({
-  paymentsEnabledProviders: 'paymob,tap', paymentsLiveEnabled: false, tapTestSecretKey: 'sk_test_tap', tapLiveSecretKey: 'sk_live_tap', ...over,
+  paymentsEnabledProviders: 'paymob,tap', paymentsLiveEnabled: false, tapCurrency: 'USD', tapTestSecretKey: 'sk_test_tap', tapLiveSecretKey: 'sk_live_tap', ...over,
 })
 const settings = (over = {}) => ({ allow_test_payments: true, payment_mode: 'test' as const, base_currency: 'USD', ...over })
 const charge = (over: Record<string, unknown> = {}) => ({
@@ -164,6 +164,20 @@ describe('availability and status', () => {
     expect(tap.status(live, runtime({ paymentsLiveEnabled: true })).reason).toMatch(/NOT VERIFIED/)
     expect(tap.status(live, runtime({ paymentsLiveEnabled: true, tapVerified: 'true' })).available).toBe(true)
     expect(tap.status(settings(), runtime({ tapCurrency: 'SAR' })).available).toBe(false)
+  })
+})
+
+describe('currency confirmation (nothing is assumed, nothing is converted)', () => {
+  it('is UNAVAILABLE until the owner confirms the merchant account currency, and names the variable', () => {
+    const s = tap.status(settings(), runtime({ tapCurrency: '' }))
+    expect(s.available).toBe(false)
+    expect(s.reason).toMatch(/NUXT_TAP_CURRENCY/)
+    expect(s.currency).toMatchObject({ confirmed: false, matches: false })
+    expect(s.currency.note).toMatch(/does not list its supported currencies/)
+  })
+  it('a confirmed currency must equal the store currency', () => {
+    expect(tap.status(settings(), runtime({ tapCurrency: 'KWD' })).reason).toMatch(/differs from the store currency USD/)
+    expect(tap.status(settings(), runtime({ tapCurrency: 'usd' })).available).toBe(true)
   })
 })
 

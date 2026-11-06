@@ -41,7 +41,8 @@ export interface ProviderStatus {
   available: boolean
   reason: string | null
   verified: boolean            // true only after the owner attests an authorised end-to-end sandbox test passed
-  currency: { store: string; gateway: string; matches: boolean }
+  currency: { store: string; gateway: string; matches: boolean; confirmed: boolean; note: string }
+  region?: string | null       // Paymob only: the regional account (ksa, egypt, uae, oman)
 }
 
 export interface PaymentProvider {

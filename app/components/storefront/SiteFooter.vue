@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Port of resources/views/front/footer.blade.php. Contact values and CMS footer pages come from the database.
 const { data: shell } = await useShell()
+const paymentsOffered = usePaymentsOffered() // the payment logos appear only when a method can really be used
 const s = computed(() => shell.value?.settings)
 const footerPages = computed(() => (shell.value?.pages ?? []).filter((p) => p.positions?.includes('footer')))
 
@@ -47,7 +48,7 @@ const social = computed(() => [
         </div>
       </div>
     </div>
-    <div class="two">
+    <div v-if="paymentsOffered" class="two">
       <div class="container-fluid">
         <div class="row">
           <div class="col-12">

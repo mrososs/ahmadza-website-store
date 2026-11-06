@@ -1,5 +1,8 @@
 // AAWRAQ platform — Nuxt 4 application (storefront + account + affiliate + admin in one deployment).
 const isProd = process.env.NODE_ENV === 'production'
+// A PROTECTED production build (the default; see server/utils/previewGate.ts) must carry NO shared-cache rules: on a platform such as Vercel an `swr` rule becomes an edge-cached page that is
+// served WITHOUT running the password gate. Only a build made with NUXT_PREVIEW_MODE=open (a public launch) or a development server gets the public-page caching below.
+const cachePublicPages = !isProd || (process.env.NUXT_PREVIEW_MODE ?? '').trim().toLowerCase() === 'open'
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-11-01',
@@ -42,6 +45,7 @@ export default defineNuxtConfig({
     // server-only
     // Administrators must pass a second factor (TOTP, Supabase Auth aal2) to use /api/admin/**. Production default true (NUXT_ADMIN_REQUIRE_MFA); local development false.
     adminRequireMfa: process.env.NODE_ENV === 'production',
+    previewBuildCachesPages: isProd && cachePublicPages, // read at start-up: a protected deployment built WITH page caching is refused on Vercel (see shared/utils/productionEnv.ts)
     // ---- payments (server-only; credentials ONLY from the environment, never the database or the browser). See docs/implementation/PAYMENTS_GO_LIVE_CHECKLIST.md
     paymentProvider: '', // optional default (paymob | tap | dev_simulator); empty = the first available enabled provider (legacy default order: Paymob, then Tap)
     // which providers may be offered at all (override NUXT_PAYMENTS_ENABLED_PROVIDERS). Production never lists the simulator by default.
@@ -49,13 +53,15 @@ export default defineNuxtConfig({
     paymentsLiveEnabled: false, // NUXT_PAYMENTS_LIVE_ENABLED=true is the owner's explicit switch; live ALSO needs the provider's *_VERIFIED=true
     paymentsPublicBaseUrl: '', // https origin the gateways call back to (NUXT_PAYMENTS_PUBLIC_BASE_URL); falls back to NUXT_PUBLIC_SITE_URL
     // Paymob (KSA). Test and live key sets are separate; the active set follows site_settings.payment_mode.
-    paymobBaseUrl: 'https://ksa.paymob.com', paymobCheckoutUrl: 'https://ksa.checkout.paymob.com',
-    paymobCurrency: '', // optional assertion: must equal the store currency (no conversion is ever applied); empty = store currency
+    paymobRegion: 'ksa', // the regional Paymob account: ksa | egypt | uae | oman (legacy store: KSA). Base and checkout hosts follow it unless the two URLs below are set
+    paymobBaseUrl: '', paymobCheckoutUrl: '',
+    paymobCurrency: '', // REQUIRED confirmation of the currency the integration charges in: must equal the store currency (no conversion is ever applied); empty = Paymob unavailable
     paymobFallbackPhone: '', paymobVerified: false,
     paymobTestSecretKey: '', paymobTestPublicKey: '', paymobTestHmacSecret: '', paymobTestIntegrationIds: '',
     paymobLiveSecretKey: '', paymobLivePublicKey: '', paymobLiveHmacSecret: '', paymobLiveIntegrationIds: '',
     // Tap
-    tapBaseUrl: 'https://api.tap.company/v2', tapCurrency: '', tapMerchantId: '', tapVerified: false,
+    tapBaseUrl: 'https://api.tap.company/v2', tapCurrency: '', // tapCurrency: REQUIRED confirmation of the currency the merchant account charges in (must equal the store currency); empty = Tap unavailable
+    tapMerchantId: '', tapVerified: false,
     tapTestSecretKey: '', tapLiveSecretKey: '',
     allowDevPaymentSimulator: process.env.NODE_ENV !== 'production',
     signedUrlTtlSeconds: 120,
@@ -79,10 +85,7 @@ export default defineNuxtConfig({
 
   routeRules: {
     // public SEO pages: SSR with a short shared cache. Personalised content is never rendered server-side into these.
-    '/': { swr: 60 },
-    '/book/**': { swr: 60 },
-    '/post/**': { swr: 120 },
-    '/p/**': { swr: 300 },
+    ...(cachePublicPages ? { '/': { swr: 60 }, '/book/**': { swr: 60 }, '/post/**': { swr: 120 }, '/p/**': { swr: 300 } } : {}),
     // personalised areas: never cached by a shared cache
     '/cart': { headers: { 'cache-control': 'private, no-store' } },
     '/library': { headers: { 'cache-control': 'private, no-store' } },

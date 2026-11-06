@@ -37,6 +37,21 @@ describe('production environment check', () => {
     const open = good(); open.previewMode = 'open'
     expect(codes(checkProductionEnv(open, true)).w).toContain('site_is_public')
   })
+  it('refuses a protected preview on Vercel that was built with shared page caching, because the edge would serve pages without the password gate', () => {
+    const c = good(); c.previewBuildCachesPages = true
+    expect(codes(checkProductionEnv(c, true, { vercel: true })).e).toContain('protected_build_has_page_caching')
+    expect(codes(checkProductionEnv(c, true)).e).not.toContain('protected_build_has_page_caching') // other hosts apply swr inside the app, after the gate
+    c.previewBuildCachesPages = false
+    expect(codes(checkProductionEnv(c, true, { vercel: true })).e).toEqual([])
+    const open = good(); open.previewMode = 'open'; open.previewBuildCachesPages = true
+    expect(codes(checkProductionEnv(open, true, { vercel: true })).e).toEqual([]) // a deliberate public launch may cache
+  })
+  it('warns when an enabled gateway has no confirmed account currency (it would silently never be offered)', () => {
+    const c = good(); c.paymentsEnabledProviders = 'paymob,tap'; c.paymentsPublicBaseUrl = 'https://preview.example.com'
+    expect(codes(checkProductionEnv(c, true)).w).toEqual(expect.arrayContaining(['paymob_currency_unconfirmed', 'tap_currency_unconfirmed']))
+    c.paymobCurrency = 'USD'; c.tapCurrency = 'USD'
+    expect(codes(checkProductionEnv(c, true)).w).toEqual([])
+  })
   it('warns when payment gateways cannot be reached by their callbacks, and when live is on without an attested gateway', () => {
     const c = good(); c.paymentsEnabledProviders = 'paymob,tap'; c.paymentsPublicBaseUrl = 'http://internal.example'; c.paymentsLiveEnabled = true
     const r = codes(checkProductionEnv(c, true))

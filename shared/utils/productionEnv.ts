@@ -8,7 +8,7 @@ const text = (v: unknown) => (typeof v === 'string' ? v.trim() : typeof v === 'n
 const isLocalHost = (u: string) => /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/i.test(u)
 
 /** @param cfg the runtimeConfig object (server side, so server-only keys are present). */
-export function checkProductionEnv(cfg: Record<string, unknown> & { public?: Record<string, unknown> }, production: boolean): EnvReport {
+export function checkProductionEnv(cfg: Record<string, unknown> & { public?: Record<string, unknown> }, production: boolean, opts: { vercel?: boolean } = {}): EnvReport {
   const errors: EnvFinding[] = [], warnings: EnvFinding[] = []
   const E = (code: string, message: string) => errors.push({ code, message })
   const W = (code: string, message: string) => warnings.push({ code, message })
@@ -28,6 +28,8 @@ export function checkProductionEnv(cfg: Record<string, unknown> & { public?: Rec
   if (protectedMode && (!text(cfg.previewUser) || !text(cfg.previewPasswordHash))) {
     W('preview_without_credentials', 'the preview is protected but NUXT_PREVIEW_USER / NUXT_PREVIEW_PASSWORD_HASH are missing: the site answers 503 to every request until they are set')
   }
+  // On Vercel an `swr` route rule is served from the edge WITHOUT running the password gate, so a protected deployment must have been built without those rules.
+  if (protectedMode && opts.vercel && truthy(cfg.previewBuildCachesPages)) E('protected_build_has_page_caching', 'this protected preview was built WITH shared page caching: Vercel would serve those pages without the password gate. Rebuild with NUXT_PREVIEW_MODE unset (protected) so the build carries no swr rules')
   if (mode === 'open') W('site_is_public', 'NUXT_PREVIEW_MODE=open: the site is served without a password')
   if (!truthy(cfg.adminRequireMfa)) W('admin_mfa_off', 'NUXT_ADMIN_REQUIRE_MFA is not true: administrators are not asked for a second factor')
   if (truthy(cfg.allowDevPaymentSimulator)) W('simulator_enabled', 'the development payment simulator is enabled in production (it still refuses to run)')
@@ -38,6 +40,9 @@ export function checkProductionEnv(cfg: Record<string, unknown> & { public?: Rec
   if (gateways.length) {
     const origin = text(cfg.paymentsPublicBaseUrl) || site
     if (!origin.startsWith('https://')) W('payments_origin_not_https', 'payment gateways are enabled but NUXT_PAYMENTS_PUBLIC_BASE_URL (or the site URL) is not https: callbacks cannot reach this server')
+  }
+  for (const [id, key, name] of [['paymob', 'paymobCurrency', 'NUXT_PAYMOB_CURRENCY'], ['tap', 'tapCurrency', 'NUXT_TAP_CURRENCY']] as const) {
+    if (enabled.includes(id) && !text(cfg[key])) W(`${id}_currency_unconfirmed`, `${id} is enabled but ${name} is not set: it will not be offered until you confirm the currency your account charges in`)
   }
   if (truthy(cfg.paymentsLiveEnabled)) {
     const verified = [enabled.includes('paymob') && truthy(cfg.paymobVerified), enabled.includes('tap') && truthy(cfg.tapVerified)].some(Boolean)

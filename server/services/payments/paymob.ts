@@ -4,7 +4,7 @@
 // with the stored payment. Everything below is NOT VERIFIED end to end until an authorised sandbox run passes: it is covered by contract tests only.
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { createError } from 'h3'
-import { gatewayCurrency, httpsBase, paymobKeys, paymobMissing, refuse, unavailableReason } from './config'
+import { PAYMOB_REGIONS, currencyAssurance, httpsBase, paymobRegion, paymobKeys, paymobMissing, refuse, unavailableReason } from './config'
 import type { DataMode, FetchLike, GatewayRuntime, ParsedWebhook, PaymentProvider, ProviderStatus, SessionRequest, SessionResult } from './types'
 
 /** Order is the documented one. Concatenate the VALUES in this order with no separator, HMAC-SHA512 with the HMAC secret, compare with ?hmac=. */
@@ -69,14 +69,14 @@ export function createPaymob(fetchImpl: FetchLike = (url, init) => fetch(url, in
   const status = (settings: Parameters<PaymentProvider['status']>[0], runtime: GatewayRuntime): ProviderStatus => {
     const mode = settings.payment_mode
     const missing = paymobMissing(runtime, mode)
-    const gw = gatewayCurrency(runtime.paymobCurrency, settings)
-    const store = settings.base_currency.toUpperCase()
+    const currency = currencyAssurance('Paymob', runtime.paymobCurrency, settings)
     const verified = runtime.paymobVerified === true || String(runtime.paymobVerified).toLowerCase() === 'true'
-    const reason = unavailableReason({ id: 'paymob', runtime, settings, configured: !missing.length, verified, currencyOk: gw === store })
+    const region = paymobRegion(runtime)
+    const reason = !region ? 'NUXT_PAYMOB_REGION must be one of ksa, egypt, uae, oman' : unavailableReason({ id: 'paymob', runtime, settings, configured: !missing.length, verified, currency, currencyVar: 'NUXT_PAYMOB_CURRENCY' })
     const enabled = String(runtime.paymentsEnabledProviders ?? '').split(',').map((s) => s.trim()).includes('paymob')
     return {
       id: 'paymob', label: 'Paymob', enabled, configured: !missing.length, missing, mode, liveAllowed: mode === 'live' && !reason, available: !reason, reason, verified,
-      currency: { store, gateway: gw, matches: gw === store },
+      currency, region: region ?? String(runtime.paymobRegion ?? ''),
     }
   }
 
@@ -90,8 +90,10 @@ export function createPaymob(fetchImpl: FetchLike = (url, init) => fetch(url, in
     async createSession(req: SessionRequest, runtime: GatewayRuntime): Promise<SessionResult> {
       const keys = paymobKeys(runtime, req.payment.mode)
       if (!keys) refuse(`credentials for ${req.payment.mode} mode are not configured`)
-      const base = httpsBase(runtime.paymobBaseUrl, 'https://ksa.paymob.com')
-      const checkout = httpsBase(runtime.paymobCheckoutUrl, 'https://ksa.checkout.paymob.com')
+      const region = paymobRegion(runtime)
+      if (!region) refuse('NUXT_PAYMOB_REGION must be one of ksa, egypt, uae, oman')
+      const base = httpsBase(runtime.paymobBaseUrl, PAYMOB_REGIONS[region].base)
+      const checkout = httpsBase(runtime.paymobCheckoutUrl, PAYMOB_REGIONS[region].checkout)
       const cents = (n: number) => Math.round(n * 100)
       const items = req.items.map((i) => ({ name: i.name.slice(0, 50), amount: cents(i.amount), description: i.name.slice(0, 50), quantity: 1 }))
       // Paymob rejects an intention whose items do not add up to the amount: refuse here rather than send a wrong total.

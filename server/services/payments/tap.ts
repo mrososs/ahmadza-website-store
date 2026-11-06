@@ -5,7 +5,7 @@
 // NOT VERIFIED end to end until an authorised sandbox run passes: covered by contract tests only.
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { createError } from 'h3'
-import { gatewayCurrency, httpsBase, refuse, tapKeys, tapMissing, unavailableReason } from './config'
+import { currencyAssurance, httpsBase, refuse, tapKeys, tapMissing, unavailableReason } from './config'
 import type { DataMode, FetchLike, GatewayRuntime, ParsedWebhook, PaymentProvider, ProviderStatus, SessionRequest, SessionResult } from './types'
 
 /** Decimal places per currency, from Tap's webhook documentation. */
@@ -70,12 +70,11 @@ export function createTap(fetchImpl: FetchLike = (url, init) => fetch(url, init)
   const status = (settings: Parameters<PaymentProvider['status']>[0], runtime: GatewayRuntime): ProviderStatus => {
     const mode = settings.payment_mode
     const missing = tapMissing(runtime, mode)
-    const gw = gatewayCurrency(runtime.tapCurrency, settings)
-    const store = settings.base_currency.toUpperCase()
+    const currency = currencyAssurance('Tap', runtime.tapCurrency, settings)
     const verified = runtime.tapVerified === true || String(runtime.tapVerified).toLowerCase() === 'true'
-    const reason = unavailableReason({ id: 'tap', runtime, settings, configured: !missing.length, verified, currencyOk: gw === store })
+    const reason = unavailableReason({ id: 'tap', runtime, settings, configured: !missing.length, verified, currency, currencyVar: 'NUXT_TAP_CURRENCY' })
     const enabled = String(runtime.paymentsEnabledProviders ?? '').split(',').map((x) => x.trim()).includes('tap')
-    return { id: 'tap', label: 'Tap', enabled, configured: !missing.length, missing, mode, liveAllowed: mode === 'live' && !reason, available: !reason, reason, verified, currency: { store, gateway: gw, matches: gw === store } }
+    return { id: 'tap', label: 'Tap', enabled, configured: !missing.length, missing, mode, liveAllowed: mode === 'live' && !reason, available: !reason, reason, verified, currency }
   }
 
   async function fetchCharge(id: string, secretKey: string, runtime: GatewayRuntime): Promise<unknown> {

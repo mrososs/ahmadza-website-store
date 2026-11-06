@@ -49,7 +49,7 @@ These are points the public documentation leaves open or that the adapters had t
 
 ## 5. Owner decisions that cannot be inferred
 
-1. **Currency.** The store currency is USD. Paymob KSA integrations are normally SAR. The platform will **not** convert. Choose one: (a) change the store currency to SAR in site settings (all prices are then read as SAR), or (b) obtain a USD-enabled integration. Set `NUXT_PAYMOB_CURRENCY` / `NUXT_TAP_CURRENCY` to the same value as an assertion: if they differ from the store currency the gateway is refused with that reason.
+1. **Currency (USD is preserved; nothing is converted).** The store currency is USD, as in the original store, and stays USD unless verified business records say otherwise. Neither provider's public documentation lists which currencies a regional account can charge, or says whether a KSA account can charge USD (checked 2026-11-07). What the docs do say: Paymob requires the request currency to match the currency of the integration id, and Paymob accounts are regional ("no global account"). So the platform makes **you confirm it in configuration**: a gateway stays **unavailable** until `NUXT_PAYMOB_CURRENCY` / `NUXT_TAP_CURRENCY` is set to the currency your account really charges in, and that value must equal the store currency (USD). If your Paymob KSA integration is SAR, it stays unavailable (the admin panel says why). Your options then: obtain a USD-capable integration or merchant account from the provider, or change the store currency in site settings to the account's currency (every price is then read in that currency). Ask the provider in writing before you choose.
 2. Whether Tap is wanted at all (it may never have been live).
 3. Refunds: handled in the gateways' own dashboards. A refund or void reported after fulfilment flags the payment; it does not revoke the library entry automatically.
 
@@ -62,18 +62,50 @@ These are points the public documentation leaves open or that the adapters had t
 | `NUXT_PAYMENTS_LIVE_ENABLED` | the owner's explicit live switch. Default false |
 | `NUXT_PAYMOB_TEST_SECRET_KEY`, `_PUBLIC_KEY`, `_HMAC_SECRET`, `_INTEGRATION_IDS` (comma list) | Paymob sandbox set |
 | `NUXT_PAYMOB_LIVE_SECRET_KEY`, `_PUBLIC_KEY`, `_HMAC_SECRET`, `_INTEGRATION_IDS` | Paymob live set |
-| `NUXT_PAYMOB_BASE_URL` (default `https://ksa.paymob.com`), `NUXT_PAYMOB_CHECKOUT_URL` (default `https://ksa.checkout.paymob.com`), `NUXT_PAYMOB_CURRENCY`, `NUXT_PAYMOB_FALLBACK_PHONE`, `NUXT_PAYMOB_VERIFIED` | tuning and attestation |
-| `NUXT_TAP_TEST_SECRET_KEY`, `NUXT_TAP_LIVE_SECRET_KEY`, `NUXT_TAP_MERCHANT_ID` (optional), `NUXT_TAP_BASE_URL` (default `https://api.tap.company/v2`), `NUXT_TAP_CURRENCY`, `NUXT_TAP_VERIFIED` | Tap |
+| `NUXT_PAYMOB_REGION` (`ksa` default, `egypt`, `uae`, `oman`: selects the regional base and checkout hosts), `NUXT_PAYMOB_BASE_URL` / `NUXT_PAYMOB_CHECKOUT_URL` (optional overrides), **`NUXT_PAYMOB_CURRENCY` (required confirmation, must equal the store currency)**, `NUXT_PAYMOB_FALLBACK_PHONE`, `NUXT_PAYMOB_VERIFIED` | region, currency confirmation, tuning and attestation |
+| `NUXT_TAP_TEST_SECRET_KEY`, `NUXT_TAP_LIVE_SECRET_KEY`, `NUXT_TAP_MERCHANT_ID` (optional), `NUXT_TAP_BASE_URL` (default `https://api.tap.company/v2`), **`NUXT_TAP_CURRENCY` (required confirmation, must equal the store currency)**, `NUXT_TAP_VERIFIED` | Tap |
 
 The active key set follows the **payment mode** in site settings (test or live). Test payments additionally need `allow_test_payments` in site settings.
 
-## 7. Enable sandbox testing (no real money)
+## 7. Configure the merchant sandbox accounts (exact steps), then test (no real money)
 
-1. Obtain sandbox credentials from the owner's own Paymob and Tap accounts. Never reuse any key found in the legacy code: treat those as exposed.
-2. Put them in the **server environment** (not in a file in the repository). Set `NUXT_PAYMENTS_PUBLIC_BASE_URL` to the public https origin of the preview. A protected preview blocks the webhook endpoint, so for a sandbox test the gateway callbacks need the site reachable by the gateways: use a separate, short-lived test deployment, or run the preview with preview protection **off** for the duration of the sandbox test only (`NUXT_PREVIEW_MODE=open`), with live mode off.
-3. In the admin payments page, check the gateway panel: status "ready", NOT VERIFIED, webhook URL shown.
-4. Register in the gateway dashboards if you want dashboard-level callbacks as a fallback (the session already sends per-payment notification and redirect URLs): Paymob "Transaction processed callback" and "Transaction response callback" to the URLs shown in the panel; Tap needs nothing (the webhook URL is sent with each charge).
-5. Buy a book with the gateways' **test cards** (listed in each gateway's docs). Verify, for each gateway: a successful payment creates one order and one library entry; a declined card does not; closing the browser before the redirect still settles via the webhook; resending the same webhook does nothing. Work through section 4 and record the answers.
+Do this in your own provider dashboards. Nothing here uses, or needs, any key from the legacy code (treat those as exposed and never reuse them). Values go into the **server environment** of a deployment, never into the repository, a chat or a screenshot.
+
+### Paymob (sandbox)
+1. Sign in to the Paymob dashboard of the **region your account was opened in** (KSA: `ksa.paymob.com`; the other regions use their own host; accounts are regional, there is no global account). Switch the dashboard to **Test** mode.
+2. Developers, Payment Integrations: create or open an **online card** integration in Test mode. Note its **Integration ID** and the **currency shown for it**. That currency is what you confirm below; it must be USD to be used with this store. If it is not USD, stop and ask Paymob for a USD integration (the docs do not say whether your region allows it).
+3. Developers, API/credentials: copy the Test **Secret Key** (`egy_sk_test...` style prefix varies by region), the Test **Public Key** and the **HMAC secret** (Settings, Account Info). Keys and integration ids are mode-specific: the table refreshes when you switch Test/Live.
+4. Environment variables (sandbox deployment only):
+   ```
+   NUXT_PAYMENTS_ENABLED_PROVIDERS=paymob
+   NUXT_PAYMENTS_PUBLIC_BASE_URL=https://<sandbox deployment origin>
+   NUXT_PAYMOB_REGION=ksa                      # ksa | egypt | uae | oman
+   NUXT_PAYMOB_CURRENCY=USD                    # ONLY if step 2 showed USD
+   NUXT_PAYMOB_TEST_SECRET_KEY=...
+   NUXT_PAYMOB_TEST_PUBLIC_KEY=...
+   NUXT_PAYMOB_TEST_HMAC_SECRET=...
+   NUXT_PAYMOB_TEST_INTEGRATION_IDS=<id>[,<id>]
+   ```
+5. Test cards and test wallet: Paymob's page "Test credentials" (`developers.paymob.com`, under Need Help, FAQ). Use only Test mode credentials with Test keys.
+
+### Tap (sandbox)
+1. Sign in to the Tap dashboard (`os.tap.company`), Accounts, open the ID under **Operators**, **MERCHANT** section: copy the default **Test Secret Key** (keep the secret key on the server; the public key is not used by this integration).
+2. Find out from Tap which currencies your merchant account can charge (the public docs do not list them, nor whether a Saudi account can charge USD). The currency you confirm below must be USD to be used with this store.
+3. Environment variables (sandbox deployment only):
+   ```
+   NUXT_PAYMENTS_ENABLED_PROVIDERS=tap
+   NUXT_PAYMENTS_PUBLIC_BASE_URL=https://<sandbox deployment origin>
+   NUXT_TAP_CURRENCY=USD                       # ONLY if Tap confirmed your account charges USD
+   NUXT_TAP_TEST_SECRET_KEY=...
+   # NUXT_TAP_MERCHANT_ID=...                  # optional
+   ```
+4. Test cards: Tap's "Testing cards" page (`developers.tap.company/reference/testing-cards`). In test mode the source is not charged.
+
+### Sandbox deployment and test run
+1. The gateways must reach your webhook and redirect URLs, so the sandbox deployment needs a public **https** origin (set `NUXT_PAYMENTS_PUBLIC_BASE_URL`). A protected preview blocks the webhook endpoint by design, so use a **separate, short-lived sandbox deployment** (or open the preview for the duration of the test with `NUXT_PREVIEW_MODE=open` and live mode off). Test payments also need `allow_test_payments` in site settings (admin) and the payment mode `test`.
+2. In the admin payments page the gateway panel must say "ready" (not "unavailable"), NOT VERIFIED, with the webhook URL shown. A gateway that is not ready is never offered to customers.
+3. Register dashboard-level callbacks only if you want a fallback (sessions already send per-payment notification and redirect URLs): Paymob "Transaction processed callback" and "Transaction response callback" to the URLs shown in the panel; Tap needs nothing.
+4. Buy a book with the providers' **test cards**. For each gateway verify: a successful payment creates one order and one library entry; a declined card does not; closing the browser before the redirect still settles via the webhook; resending the same webhook does nothing; a refund made in the dashboard shows up as **needs review**. Work through section 4 and record the answers.
 
 ## 8. Enable real purchases (only after section 7 passes for the gateway)
 

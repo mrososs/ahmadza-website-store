@@ -7,7 +7,7 @@ interface Row {
   id: string; reference: string; provider: string; provider_transaction_id: string | null; status: string; amount: number; currency: string; mode: string
   created_at: string; paid_at: string | null; order_no: number | null; events: number; stale: boolean; needs_review: boolean; review_reason: string | null; profiles: { display_name: string } | null
 }
-interface Gateway { id: string; label: string; enabled: boolean; configured: boolean; missing: string[]; available: boolean; reason: string | null; verified: boolean; currency: { store: string; gateway: string; matches: boolean } }
+interface Gateway { id: string; label: string; enabled: boolean; configured: boolean; missing: string[]; available: boolean; reason: string | null; verified: boolean; region?: string | null; currency: { store: string; gateway: string; matches: boolean; confirmed: boolean; note: string } }
 interface Gateways { mode: string; currency: string; allowTestPayments: boolean; liveEnabled: boolean; origin: { value: string; https: boolean; problem: string | null; note: string }; webhookUrls: Record<string, string>; providers: Gateway[] }
 const { data: gateways } = useFetch<Gateways>('/api/admin/payments/gateways', { server: false })
 const showGateways = ref(true)
@@ -53,7 +53,7 @@ const PROVIDER: Record<string, string> = { paymob: 'Paymob', tap: 'Tap', dev_sim
           <div v-if="!gateways.origin.https" class="alert alert-warning" role="status">{{ gateways.origin.note }}</div>
           <div class="table-responsive">
             <table class="table table-sm mb-2">
-              <thead><tr><th>البوابة</th><th>الحالة</th><th>ما ينقص (أسماء المتغيرات فقط)</th><th>التحقق</th><th>رابط الـ Webhook</th></tr></thead>
+              <thead><tr><th>البوابة</th><th>الحالة</th><th>ما ينقص (أسماء المتغيرات فقط)</th><th>العملة</th><th>التحقق</th><th>رابط الـ Webhook</th></tr></thead>
               <tbody>
                 <tr v-for="g in gateways.providers" :key="g.id">
                   <td>{{ g.label }}</td>
@@ -62,6 +62,11 @@ const PROVIDER: Record<string, string> = { paymob: 'Paymob', tap: 'Tap', dev_sim
                     <small v-if="g.reason" class="d-block text-muted" dir="ltr">{{ g.reason }}</small>
                   </td>
                   <td dir="ltr"><code v-for="m in g.missing" :key="m" class="d-block">{{ m }}</code><span v-if="!g.missing.length">—</span></td>
+                  <td>
+                    <span class="badge" :class="g.currency.matches ? 'badge-success' : 'badge-warning'" dir="ltr">{{ g.currency.store }} / {{ g.currency.gateway }}</span>
+                    <small v-if="g.region" class="d-block" dir="ltr">region: {{ g.region }}</small>
+                    <small v-if="g.id !== 'dev_simulator' && !g.currency.matches" class="d-block text-muted" dir="ltr">{{ g.currency.note }}</small>
+                  </td>
                   <td><span class="badge" :class="g.verified ? 'badge-success' : 'badge-warning'">{{ g.verified ? 'تم التحقق' : 'NOT VERIFIED' }}</span></td>
                   <td dir="ltr"><code v-if="gateways.webhookUrls[g.id]">{{ gateways.webhookUrls[g.id] }}</code><span v-else>—</span></td>
                 </tr>

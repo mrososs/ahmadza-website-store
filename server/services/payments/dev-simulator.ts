@@ -28,7 +28,7 @@ export const devSimulator: PaymentProvider = {
   status(settings, runtime): ProviderStatus {
     const reason = simulatorReason(settings, runtime) ?? (enabledProviders(runtime).includes('dev_simulator') ? null : 'provider is not in NUXT_PAYMENTS_ENABLED_PROVIDERS')
     return { id: 'dev_simulator', label: 'Development simulator', enabled: enabledProviders(runtime).includes('dev_simulator'), configured: true, missing: [], mode: 'test', liveAllowed: false, available: !reason, reason, verified: false,
-      currency: { store: settings.base_currency, gateway: settings.base_currency, matches: true } }
+      currency: { store: settings.base_currency, gateway: settings.base_currency, matches: true, confirmed: true, note: 'Development simulator: no gateway and no real money.' } }
   },
   assertAvailable(settings, runtime) {
     const enabled = runtime.allowDevPaymentSimulator === true || runtime.allowDevPaymentSimulator === 'true'

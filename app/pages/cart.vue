@@ -138,10 +138,9 @@ async function confirmPledge() {
               </div>
               <fieldset v-if="methodsLoaded && methods.length" class="pay-methods">
                 <legend class="sr-only">طريقة الدفع</legend>
-                <label v-for="m in methods" :key="m.id" class="pay-method" :class="{ disabled: !m.available }">
-                  <input v-model="selected" type="radio" name="pay_method" :value="m.id" :disabled="!m.available">
+                <label v-for="m in methods" :key="m.id" class="pay-method">
+                  <input v-model="selected" type="radio" name="pay_method" :value="m.id">
                   <span>{{ m.label }}</span>
-                  <small v-if="!m.available"> — غير متاح حالياً</small>
                 </label>
               </fieldset>
               <p v-if="methodsLoaded && !canPay" class="pay-unavailable" role="status">الدفع الإلكتروني غير متاح حالياً. لن يتم خصم أي مبلغ.</p>

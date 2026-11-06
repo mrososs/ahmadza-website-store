@@ -54,16 +54,46 @@ export function callbackOrigin(runtime: GatewayRuntime, publicSiteUrl: unknown):
   return httpsBase(runtime.paymentsPublicBaseUrl || publicSiteUrl, 'http://127.0.0.1:3000')
 }
 
-export const gatewayCurrency = (configured: unknown, settings: PaymentSettings) => str(configured).toUpperCase() || settings.base_currency.toUpperCase()
+/** Paymob accounts are regional (the docs: no global account). Base and Unified Checkout hosts per region, from the Paymob documentation. */
+export const PAYMOB_REGIONS = {
+  ksa: { base: 'https://ksa.paymob.com', checkout: 'https://ksa.checkout.paymob.com' },
+  egypt: { base: 'https://accept.paymob.com', checkout: 'https://eg.checkout.paymob.com' },
+  uae: { base: 'https://uae.paymob.com', checkout: 'https://uae.checkout.paymob.com' },
+  oman: { base: 'https://oman.paymob.com', checkout: 'https://om.checkout.paymob.com' },
+} as const
+export type PaymobRegion = keyof typeof PAYMOB_REGIONS
+/** The region of the owner's Paymob account (the legacy store was KSA, so that is the default). null = an unknown value, which makes the provider unavailable. */
+export function paymobRegion(runtime: GatewayRuntime): PaymobRegion | null {
+  const r = str(runtime.paymobRegion).toLowerCase() || 'ksa'
+  return r in PAYMOB_REGIONS ? (r as PaymobRegion) : null
+}
+
+export interface CurrencyAssurance { store: string; gateway: string; matches: boolean; confirmed: boolean; note: string }
+
+const NOTES = {
+  Paymob: 'Paymob requires the request currency to equal the currency of the integration id, and its public documentation does not list which currencies a regional account can charge (including whether a KSA account can charge USD). Read the currency shown for your integration in the Paymob dashboard (Developers, Payment Integrations) and confirm it with Paymob.',
+  Tap: 'The public Tap documentation does not list its supported currencies or say whether a Saudi merchant account can charge USD. Confirm the currency your merchant account can charge with Tap.',
+} as const
+
+/**
+ * The owner must CONFIRM, in configuration, the currency the provider account really charges in. Nothing is assumed from the store currency and nothing is converted:
+ * until the confirmation equals the store currency the provider stays unavailable.
+ */
+export function currencyAssurance(provider: keyof typeof NOTES, configured: unknown, settings: PaymentSettings): CurrencyAssurance {
+  const store = settings.base_currency.toUpperCase()
+  const gateway = str(configured).toUpperCase()
+  return { store, gateway: gateway || 'not confirmed', matches: gateway !== '' && gateway === store, confirmed: gateway !== '', note: NOTES[provider] }
+}
 
 /** Shared availability rules for the real gateways. Returns the reason it is NOT available, or null. */
 export function unavailableReason(args: {
-  id: string; runtime: GatewayRuntime; settings: PaymentSettings; configured: boolean; verified: boolean; currencyOk: boolean
+  id: string; runtime: GatewayRuntime; settings: PaymentSettings; configured: boolean; verified: boolean; currency: CurrencyAssurance; currencyVar: string
 }): string | null {
-  const { id, runtime, settings, configured, verified, currencyOk } = args
+  const { id, runtime, settings, configured, verified, currency, currencyVar } = args
   if (!enabledProviders(runtime).includes(id)) return 'provider is not in NUXT_PAYMENTS_ENABLED_PROVIDERS'
   if (!configured) return `credentials for ${settings.payment_mode} mode are not configured`
-  if (!currencyOk) return 'the configured gateway currency differs from the store currency (no conversion is ever applied)'
+  if (!currency.confirmed) return `the account currency is not confirmed: set ${currencyVar} to the currency your ${id} account really charges in (it must equal the store currency ${currency.store}; no conversion is ever applied)`
+  if (!currency.matches) return `the confirmed account currency ${currency.gateway} differs from the store currency ${currency.store} (no conversion is ever applied)`
   if (settings.payment_mode === 'test' && !settings.allow_test_payments) return 'test payments are disabled in site settings (allow_test_payments)'
   if (settings.payment_mode === 'live') {
     if (!liveEnabled(runtime)) return 'live payments are disabled (NUXT_PAYMENTS_LIVE_ENABLED is not true)'

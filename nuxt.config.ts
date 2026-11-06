@@ -40,7 +40,23 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     // server-only
-    paymentProvider: 'dev_simulator', // dev_simulator | paymob | tap  (real gateways are NOT wired — docs/10-remaining-blockers)
+    // Administrators must pass a second factor (TOTP, Supabase Auth aal2) to use /api/admin/**. Production default true (NUXT_ADMIN_REQUIRE_MFA); local development false.
+    adminRequireMfa: process.env.NODE_ENV === 'production',
+    // ---- payments (server-only; credentials ONLY from the environment, never the database or the browser). See docs/implementation/PAYMENTS_GO_LIVE_CHECKLIST.md
+    paymentProvider: '', // optional default (paymob | tap | dev_simulator); empty = the first available enabled provider (legacy default order: Paymob, then Tap)
+    // which providers may be offered at all (override NUXT_PAYMENTS_ENABLED_PROVIDERS). Production never lists the simulator by default.
+    paymentsEnabledProviders: process.env.NODE_ENV === 'production' ? 'paymob,tap' : 'dev_simulator,paymob,tap',
+    paymentsLiveEnabled: false, // NUXT_PAYMENTS_LIVE_ENABLED=true is the owner's explicit switch; live ALSO needs the provider's *_VERIFIED=true
+    paymentsPublicBaseUrl: '', // https origin the gateways call back to (NUXT_PAYMENTS_PUBLIC_BASE_URL); falls back to NUXT_PUBLIC_SITE_URL
+    // Paymob (KSA). Test and live key sets are separate; the active set follows site_settings.payment_mode.
+    paymobBaseUrl: 'https://ksa.paymob.com', paymobCheckoutUrl: 'https://ksa.checkout.paymob.com',
+    paymobCurrency: '', // optional assertion: must equal the store currency (no conversion is ever applied); empty = store currency
+    paymobFallbackPhone: '', paymobVerified: false,
+    paymobTestSecretKey: '', paymobTestPublicKey: '', paymobTestHmacSecret: '', paymobTestIntegrationIds: '',
+    paymobLiveSecretKey: '', paymobLivePublicKey: '', paymobLiveHmacSecret: '', paymobLiveIntegrationIds: '',
+    // Tap
+    tapBaseUrl: 'https://api.tap.company/v2', tapCurrency: '', tapMerchantId: '', tapVerified: false,
+    tapTestSecretKey: '', tapLiveSecretKey: '',
     allowDevPaymentSimulator: process.env.NODE_ENV !== 'production',
     signedUrlTtlSeconds: 120,
     // Protected client preview (server/utils/previewGate.ts): in production the site is PROTECTED unless NUXT_PREVIEW_MODE=open is set explicitly.

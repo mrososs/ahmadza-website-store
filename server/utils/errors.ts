@@ -4,6 +4,8 @@ export const badRequest = (message: string, data?: unknown) => createError({ sta
 export const unauthorized = () => createError({ statusCode: 401, statusMessage: 'تسجيل الدخول مطلوب' })
 export const forbidden = (message = 'غير مصرح') => createError({ statusCode: 403, statusMessage: message })
 export const notFound = (message = 'غير موجود') => createError({ statusCode: 404, statusMessage: message })
+/** An administrator whose session has not passed the second factor yet (assurance level aal1 where aal2 is required). */
+export const mfaRequired = () => createError({ statusCode: 403, statusMessage: 'يلزم التحقق بخطوتين للدخول إلى لوحة التحكم', data: { code: 'mfa_required' } })
 export const tooMany = () => createError({ statusCode: 429, statusMessage: 'طلبات كثيرة، حاول لاحقاً' })
 
 /** Map an error raised by one of our trusted SQL functions to an HTTP error (no internals leaked). */

@@ -11,8 +11,8 @@ import { requireAdmin, serviceClient, type AuthedUser } from './supabase'
 export const adminDb = (event: H3Event) => serviceClient(event) as unknown as SupabaseClient
 
 /** Guard for admin READ routes: 401 guest / 403 non-admin (role from public.user_roles, never from the JWT metadata). */
-export async function adminRead(event: H3Event): Promise<AuthedUser> {
-  return requireAdmin(event)
+export async function adminRead(event: H3Event, opts: { allowAal1?: boolean } = {}): Promise<AuthedUser> {
+  return requireAdmin(event, opts)
 }
 
 /** Guard for admin MUTATIONS: same as adminRead plus a light per-IP rate limit. */

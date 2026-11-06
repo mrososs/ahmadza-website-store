@@ -16,7 +16,9 @@ export async function adminFetch<T = unknown>(url: string, opts: Parameters<type
     return (await $fetch(url, opts)) as T
   } catch (e) {
     const status = (e as { statusCode?: number; status?: number }).statusCode ?? (e as { status?: number }).status
-    if (status === 401 || status === 403) await navigateTo('/admin/login')
+    const code = (e as { data?: { data?: { code?: string } } }).data?.data?.code
+    if (code === 'mfa_required') await navigateTo('/admin/security') // password passed, second factor not yet
+    else if (status === 401 || status === 403) await navigateTo('/admin/login')
     throw new Error(adminErrorMessage(e))
   }
 }

@@ -14,13 +14,9 @@ The agent has no access to the VPS. You run the read-only steps in the Hostinger
 `D:\mostqel\backups\aawraq-local-pre-recovery-20261106-185805.dump` (+ `.sha256` `9e3679d0…18f3`): verified `pg_restore -l` readable, outside the repo. Local Docker stack untouched.
 
 ## Step 1 — read-only inspection on the VPS (you)
-```bash
-# Hostinger Web Console, as root. Writes only the two files you name.
-bash readonly-inspect.sh > /tmp/aawraq-inspect.txt 2>&1
-MANIFEST=/tmp/aawraq-manifest.tsv bash readonly-inspect.sh > /tmp/aawraq-inspect2.txt 2>&1     # add HASH=1 for sha256 (slow, idle IO priority)
-```
-Get the script from `scripts/vps/readonly-inspect.sh` in the repository (paste it into a file via WinSCP). Download `/tmp/aawraq-inspect.txt` and `/tmp/aawraq-manifest.tsv` with WinSCP and send me the **inspect text** (it is sanitised: credentials, e-mails and last IP octets are masked). Review it first.
+**Follow `VPS_INSPECTION_STEPS.md`** (exact copy-paste blocks: upload via WinSCP in Binary mode, verify the SHA-256 and line endings, run in the background with `nohup`, optional manifest, download to `D:\mostqel\vps-inspection\` — outside the repository, never pasted or committed). `NO_CONTENT_SCAN=1` skips the only two checks that read upload files, if you want zero chance of touching access times.
 In hPanel → VPS → **Backups & Snapshots**: write down which snapshots/backups exist and their dates (do not restore anything).
+Then the agent runs `node scripts/vps/classify-inspection.mjs D:\mostqel\vps-inspection\aawraq-inspect.txt`, which recommends A / B / C mechanically from the report (tested on simulated servers for all three outcomes) and lists the dump candidates, the media folders (covers!) and the blocking findings for the file-service gate.
 
 ## Step 2 — decide the database path from the inspection output (section 4)
 | What section 4 shows | Path |
@@ -38,17 +34,13 @@ In hPanel → VPS → **Backups & Snapshots**: write down which snapshots/backup
 **C — escalate**: no further step until a restorable source exists. The catalogue cannot be imported without it.
 
 ## Step 3 — restore locally into a throw-away MariaDB (me, after the dump is in quarantine)
-Bind to loopback only; keep the data directory on D: (Docker's own data root on C: has little free space):
+One script does it, with guards (tested end to end on a synthetic dump; it has never seen real data):
 ```powershell
-docker run -d --name aawraq-legacy-restore -p 127.0.0.1:33306:3306 `
-  -v D:\mostqel\aawraq-legacy-restore\data:/var/lib/mysql -e MARIADB_ROOT_PASSWORD=<throwaway> `
-  mariadb:10.6 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-docker cp D:\mostqel\aawraq-quarantine\db\aawraq.sql.gz aawraq-legacy-restore:/tmp/
-docker exec aawraq-legacy-restore sh -c 'zcat /tmp/aawraq.sql.gz | mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" aawraq'
-# select-only user for the importer:  CREATE USER 'importer_ro'@'%' IDENTIFIED BY '<throwaway>'; GRANT SELECT ON aawraq.* TO 'importer_ro'@'%';
+powershell -NoProfile -File scripts/migration/restore-legacy-db.ps1 -Dump D:\mostqel\aawraq-quarantine\db\aawraq.sql.gz
 npm i -D mysql2
+# when the import work is finished:  powershell -NoProfile -File scripts/migration/restore-legacy-db.ps1 -Remove
 ```
-`docker cp` + in-container import avoids PowerShell re-encoding the Arabic text.
+What it enforces: only `.sql` / `.sql.gz` whose first bytes look like a dump (a PHP/HTML/executable disguised as a dump is refused); free space on the work drive ≥ 4× the dump; never overwrites an existing container or a non-empty data directory; the container binds to `127.0.0.1` only (verified after start); data lives on D: (`D:\mostqel\aawraq-legacy-restore`, not Docker's small C: volume); random passwords written to `credentials.txt` there (outside the repo, never printed); utf8mb4; import by `docker cp` + in-container read (no PowerShell re-encoding of Arabic); a **SELECT-only** account `importer_ro` created and proven (a write attempt must fail); exact row counts per table printed. The first start on a Windows bind mount takes minutes (the script waits up to 10 minutes and says so).
 
 ## Step 4 — profile, then dry-run (no writes)
 Real record counts per table (books, book_media, categories, makers, users, orders, payments, withdraws, request_books), charset/timezone, orphan rates, and the open mapping decisions in `docs/legacy-audit/16`. Then:
@@ -59,6 +51,7 @@ node scripts/migration/import-legacy.mjs --dump <file> --dry-run
 The report must show legacy-vs-planned counts (V1) and the rejects list; you review it with me before any write. Timestamps are read as UTC until the Laravel timezone is confirmed.
 
 ## Step 5 — catalogue into LOCAL Supabase, then book-to-PDF mapping
+**Target choice first** (see `LOCAL_DATA_PROVENANCE.md`): the current local database holds 113 synthetic books and 312 test users and must not be mixed with real records. Import into a **separate** local Supabase stack (own project id and ports) or a freshly reset database after a fresh backup — decided with you at this step, not before. Nothing local is ever promoted to hosted.
 1. `import-legacy.mjs` (no `--sensitive`): settings, categories, makers, books, book_media, related_books, articles, pages. Idempotent; records `migration_runs`, `migration_rejects`, `legacy_id_map`.
 2. **Mapping rule** (existing, tested): `book_media.file` (e.g. `product_media/<site>-<time>.pdf`) → `legacy_path = storage/app/public/<file>` → matched to the staged object by that path (SHA-256 object key); `is_free` 0/2 → `preview`, 1 → `after_purchase`; `external = 1` + https URL → external link; otherwise a **placeholder row** with `migration_status = 'missing'`.
 3. Reconcile (`npm run migrate:reconcile`): books imported vs legacy, media rows linked / placeholder / external, **orphan files** (recovered PDFs no row points to — listed in `UNMAPPED_MEDIA`, never turned into products), duplicate groups (recovered: 1,060 files, 1,039 unique blobs), rejected files (never imported). Success criteria: every legacy book accounted for; every unmapped item listed with a reason.

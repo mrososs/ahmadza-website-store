@@ -10,6 +10,11 @@ export const tooMany = () => createError({ statusCode: 429, statusMessage: 'طل
 export function fromDbError(err: { code?: string; message?: string } | null | undefined) {
   if (!err) return createError({ statusCode: 500, statusMessage: 'خطأ غير متوقع' })
   switch (err.code) {
+    case 'AW001': {
+      // publication guard: "book_not_eligible: reason_a,reason_b" -> 409 with the reason codes in `data`
+      const reasons = (err.message ?? '').replace(/^book_not_eligible:\s*/, '').split(',').map((r) => r.trim()).filter(Boolean)
+      return createError({ statusCode: 409, statusMessage: 'الكتاب غير مؤهل للنشر بعد', data: { code: 'book_not_eligible', reasons } })
+    }
     case '42501': return forbidden(err.message)
     case 'P0002': return notFound(err.message)
     case '22023':

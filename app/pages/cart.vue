@@ -7,7 +7,6 @@ import { loginSchema } from '~~/shared/schemas'
 useHead({ style: [{ innerHTML: '#credit-card-details{min-height:190px;padding:10px;border:1px solid #e5e5e5;border-radius:4px;background:#fff}#error-handler{min-height:22px;margin-top:8px;color:#dc3545;direction:ltr;text-align:center}' }] })
 
 const cart = useCartStore()
-const { publicUrl } = useMediaUrl()
 const { isAuthed } = useSessionInfo()
 const client = useSupabaseClient()
 const { quote, loading, error, notices, refreshQuote, startPayment } = useCheckout()
@@ -95,7 +94,7 @@ async function confirmPledge() {
             <div v-for="b in items" :key="b.id" class="block">
               <div class="row">
                 <div class="col-3">
-                  <div class="img-block"><img :src="publicUrl(b.cover_path)" :alt="b.title" :title="b.title" class="img-fluid"></div>
+                  <div class="img-block"><CoverImage :path="b.cover_path" :alt="b.title" :title="b.title" class="img-fluid" /></div>
                 </div>
                 <div class="col-9">
                   <span class="price">{{ price(b.unit_price) }} <sub>دولار</sub></span>

@@ -1,9 +1,13 @@
 // Thin helpers for the admin area. All data goes through /api/admin/** (server checks the role on every call).
 import type { LocationQueryValue } from 'vue-router'
+import { readinessReasonLabel } from '~~/shared/constants/recovery'
 
 export function adminErrorMessage(e: unknown, fallback = 'حدث خطأ غير متوقع'): string {
-  const err = e as { data?: { statusMessage?: string; message?: string }; statusMessage?: string; message?: string } | null
-  return err?.data?.statusMessage ?? err?.statusMessage ?? err?.data?.message ?? fallback
+  const err = e as { data?: { statusMessage?: string; message?: string; data?: { reasons?: string[] } }; statusMessage?: string; message?: string } | null
+  const base = err?.data?.statusMessage ?? err?.statusMessage ?? err?.data?.message ?? fallback
+  // a refused publication carries the machine reasons; show them in plain Arabic
+  const reasons = err?.data?.data?.reasons
+  return Array.isArray(reasons) && reasons.length ? `${base}: ${reasons.map(readinessReasonLabel).join('، ')}` : base
 }
 
 /** $fetch wrapper that throws an Error with a user-facing Arabic message. */

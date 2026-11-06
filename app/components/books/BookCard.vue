@@ -5,7 +5,6 @@ import type { BookCardData } from '~~/shared/types/app'
 import { BOOK_KIND_LABEL } from '~~/shared/constants'
 
 const props = withDefaults(defineProps<{ book: BookCardData; variant?: 'shop' | 'plain'; to?: string }>(), { variant: 'shop' })
-const { publicUrl } = useMediaUrl()
 const cart = useCartStore()
 const added = ref(false)
 
@@ -28,7 +27,7 @@ function addToCart() {
       <NuxtLink class="item" :to="href" :aria-label="book.title">
         <span class="type_book" :class="book.kind">{{ BOOK_KIND_LABEL[book.kind] }}</span>
         <div class="img-block" :class="{ 'is-placeholder': !hasCover }">
-          <img class="img-fluid lazyload" loading="lazy" :src="publicUrl(book.cover_path)" :alt="book.title">
+          <CoverImage class="img-fluid lazyload" loading="lazy" :path="book.cover_path" :alt="book.title" />
         </div>
         <div class="info"><h3 class="name">{{ book.title }}</h3></div>
       </NuxtLink>

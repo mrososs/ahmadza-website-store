@@ -21,12 +21,16 @@ const globalError = ref('')
 const saved = ref(false)
 const busy = ref(false)
 const loading = ref(!!props.id)
+interface RecoveryInfo { provenance: string; readiness: { eligible: boolean; reasons: string[] }; legacyId: number | null; legacyStatusRaw: string | null; legacyCostRaw: string | null; verifiedAt: string | null; media: { media_id: number; name: string; kind: string; migration_status: string; storage_provider: string; is_external: boolean; has_hash: boolean; validated: boolean }[] }
+const recovery = ref<RecoveryInfo | null>(null)
 
 if (props.id) {
   try {
     const b = await adminFetch<{
       title: string; kind: 'paid' | 'free'; status: typeof form.status; price_amount: number | string; pages: number; description_html: string | null
       cover_path: string | null; category_ids: number[]; maker_ids: { id: number; role: string }[]; tags: string[]; related_ids: number[]
+      provenance: string; legacy_id: number | null; legacy_status_raw: string | null; legacy_cost_raw: string | null; legacy_verified_at: string | null
+      readiness: RecoveryInfo['readiness']; media_readiness: RecoveryInfo['media']
     }>(`/api/admin/books/${props.id}`)
     Object.assign(form, {
       title: b.title, kind: b.kind, status: b.status, price_amount: Number(b.price_amount), pages: b.pages, description_html: b.description_html ?? '',
@@ -35,6 +39,7 @@ if (props.id) {
       writer: b.maker_ids.find((m) => m.role === 'writer')?.id ?? null,
     })
     currentCover.value = b.cover_path
+    if (b.provenance === 'legacy') recovery.value = { provenance: b.provenance, readiness: b.readiness, legacyId: b.legacy_id, legacyStatusRaw: b.legacy_status_raw, legacyCostRaw: b.legacy_cost_raw, verifiedAt: b.legacy_verified_at, media: b.media_readiness }
   } catch (e) { globalError.value = (e as Error).message } finally { loading.value = false }
 }
 
@@ -79,6 +84,7 @@ async function submit() {
     <div class="row justify-content-center">
       <div class="col-12 text-right"><NuxtLink to="/admin/makers/create" target="_blank" class="text-info">إضافة مؤلف جديد</NuxtLink></div>
       <div class="col-lg-10 col-12">
+        <AdminRecoveryPanel v-if="recovery" v-bind="recovery" />
         <div v-if="globalError" class="alert alert-danger" role="alert">{{ globalError }}</div>
         <div v-if="saved" class="alert alert-success" role="status">تم الحفظ بنجاح</div>
         <div class="form-layout">

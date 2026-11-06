@@ -105,7 +105,7 @@ useHead({
     <section class="product_wp">
       <div class="row">
         <div class="col-xl-3 col-lg-4 col-sm-6">
-          <div class="product_img"><img :src="publicUrl(book.cover_path)" :alt="book.title" :title="book.title" class="img-fluid"></div>
+          <div class="product_img"><CoverImage :path="book.cover_path" :alt="book.title" :title="book.title" class="img-fluid" /></div>
         </div>
         <div class="col-xl-5 col-lg-4 col-sm-6">
           <div class="item">

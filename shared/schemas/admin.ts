@@ -47,3 +47,11 @@ export const adminReportQuerySchema = z.object({
   mode: z.enum(['live', 'test', 'all']).default('live'),
   format: z.enum(['json', 'csv']).default('json'),
 })
+
+export const adminBooksListQuerySchema = adminListQuerySchema.extend({
+  recovery: z.enum(['all', 'recovered', 'not_ready', 'ready', 'missing_media']).default('all'),
+})
+
+export const recoveryRunSchema = z.object({ run: z.coerce.number().int().positive() })
+export const recoveryVerifySchema = recoveryRunSchema.extend({ confirm: z.string().trim().max(120) })
+export const recoveryPromoteSchema = z.object({ run: z.coerce.number().int().positive().optional() })

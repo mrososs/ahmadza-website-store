@@ -4,7 +4,7 @@ import vue from 'eslint-plugin-vue'
 import globals from 'globals'
 
 export default tseslint.config(
-  { ignores: ['.nuxt/**', '.nuxt-hosted/**', '.output/**', 'node_modules/**', 'public/**', 'migration-output/**', 'test-results/**', 'shared/types/database.types.ts', 'docs/**'] },
+  { ignores: ['.nuxt/**', '.nuxt-hosted/**', '.nuxt-recovery/**', '.output/**', 'node_modules/**', 'public/**', 'migration-output/**', 'test-results/**', 'shared/types/database.types.ts', 'docs/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...vue.configs['flat/recommended'],

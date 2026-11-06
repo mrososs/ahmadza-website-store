@@ -34,6 +34,7 @@
     "test:hosted": "vitest run -c vitest.hosted.config.ts",
     "db:fingerprint": "node scripts/db/fingerprint.mjs",
     "db:compare": "node scripts/db/compare-fingerprint.mjs",
+    "dev:recovery": "nuxt dev --dotenv .env.recovery --port 3100 --extends ./scripts/dev/recovery-layer",
     "dev:hosted:3100": "nuxt dev --dotenv .env.hosted --port 3100 --extends ./scripts/dev/hosted-layer"
   },
   "dependencies": {

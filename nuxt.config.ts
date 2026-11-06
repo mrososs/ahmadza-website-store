@@ -43,6 +43,11 @@ export default defineNuxtConfig({
     paymentProvider: 'dev_simulator', // dev_simulator | paymob | tap  (real gateways are NOT wired — docs/10-remaining-blockers)
     allowDevPaymentSimulator: process.env.NODE_ENV !== 'production',
     signedUrlTtlSeconds: 120,
+    // Protected client preview (server/utils/previewGate.ts): in production the site is PROTECTED unless NUXT_PREVIEW_MODE=open is set explicitly.
+    // Credentials: NUXT_PREVIEW_USER + NUXT_PREVIEW_PASSWORD_HASH (made with scripts/preview/hash-password.mjs). Missing credentials => nothing is served.
+    previewMode: process.env.NODE_ENV === 'production' ? 'protected' : 'open',
+    previewUser: '',
+    previewPasswordHash: '',
     // Which media backends may serve/accept files in THIS environment (override: NUXT_MEDIA_ENABLED_PROVIDERS).
     // Local dev: Supabase Storage + external links. Hosted/production default: external links only; add `vps` only after the
     // private media service passed its security gate (docs/implementation/VPS_SECURITY_GATE.md).

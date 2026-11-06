@@ -132,7 +132,7 @@ describe('payments are NOT active on hosted', () => {
   it('checkout is refused (simulator off, gateways not integrated) and no payment row is created', async () => {
     const before = (await svc.from('payments').select('id', { count: 'exact', head: true })).count
     const res = await customer('/api/checkout/session', { method: 'POST', json: { bookIds: [paidBook] } })
-    expect([403, 501]).toContain(res.status)
+    expect([403, 501, 503]).toContain(res.status) // 503: no payment method is available (gateways need credentials, the simulator is off)
     expect((await svc.from('payments').select('id', { count: 'exact', head: true })).count).toBe(before)
     expect((await guest('/api/checkout/session', { method: 'POST', json: { bookIds: [paidBook] } })).status).toBe(401)
     expect((await customer(`/api/checkout/simulate/${crypto.randomUUID()}`, { method: 'POST', json: { outcome: 'success' } })).status).not.toBe(200)
@@ -140,7 +140,9 @@ describe('payments are NOT active on hosted', () => {
   it('the webhook endpoint rejects unsigned or unknown-provider calls', async () => {
     for (const p of ['paymob', 'tap', 'dev_simulator', 'nope']) {
       const res = await guest(`/api/webhooks/payments/${p}`, { method: 'POST', json: { id: 'x' } })
-      expect([400, 401, 403, 404, 501], p).toContain(res.status)
+      expect([200, 400, 401, 403, 404, 501, 503], p).toContain(res.status)
+      // the only 200 allowed is the acknowledgement of an object that is not a payment (nothing is settled, nothing is written)
+      if (res.status === 200) expect((await res.json()).outcome, p).toBe('ignored')
     }
     expect((await svc.from('payments').select('id', { count: 'exact', head: true })).count).toBe(0)
   })

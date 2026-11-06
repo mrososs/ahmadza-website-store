@@ -48,6 +48,7 @@ const groups = computed<{ id: string; icon: string; label: string; items: Item[]
             <span v-if="b?.comments" class="badge badge-danger float-right mt-1">{{ b.comments }}</span></NuxtLink>
         </li>
         <li><NuxtLink to="/admin/orders"><i class="ti-shopping-cart" /><span class="right-nav-text">الطلبات</span> </NuxtLink></li>
+        <li><NuxtLink to="/admin/payments"><i class="ti-credit-card" /><span class="right-nav-text">المدفوعات</span> </NuxtLink></li>
         <li v-for="g in groups" :key="g.id">
           <a href="javascript:void(0);" data-toggle="collapse" :data-target="`#${g.id}`">
             <div class="pull-left"><i :class="g.icon" /><span class="right-nav-text">{{ g.label }}</span></div>

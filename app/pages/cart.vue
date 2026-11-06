@@ -4,12 +4,12 @@
 // "sign in or register first" — no password is ever generated, stored or mailed.
 import { loginSchema } from '~~/shared/schemas'
 
-useHead({ style: [{ innerHTML: '#credit-card-details{min-height:190px;padding:10px;border:1px solid #e5e5e5;border-radius:4px;background:#fff}#error-handler{min-height:22px;margin-top:8px;color:#dc3545;direction:ltr;text-align:center}' }] })
+useHead({ style: [{ innerHTML: '.pay-methods{border:0;margin:0 0 10px;padding:0}.pay-method{display:flex;gap:8px;align-items:center;margin:4px 0;cursor:pointer}.pay-method.disabled{opacity:.55;cursor:not-allowed}.pay-unavailable{color:#a94442;margin:8px 0}.pay-test{color:#8a6d3b;margin:8px 0}#credit-card-details{min-height:190px;padding:10px;border:1px solid #e5e5e5;border-radius:4px;background:#fff}#error-handler{min-height:22px;margin-top:8px;color:#dc3545;direction:ltr;text-align:center}' }] })
 
 const cart = useCartStore()
 const { isAuthed } = useSessionInfo()
 const client = useSupabaseClient()
-const { quote, loading, error, notices, refreshQuote, startPayment } = useCheckout()
+const { quote, loading, error, notices, methods, methodsLoaded, testMode, selected, refreshQuote, loadMethods, startPayment } = useCheckout()
 
 const ready = ref(false)
 const paying = ref(false)
@@ -23,13 +23,14 @@ const { errors: loginErrors, busy: loginBusy, failure: loginFailure, validate: v
 
 onMounted(async () => {
   cart.hydrate()
-  await refreshQuote()
+  await Promise.all([refreshQuote(), loadMethods()])
   ready.value = true
 })
 watch(() => cart.ids.length, () => { if (ready.value) void refreshQuote() })
 
 const items = computed(() => quote.value?.items ?? [])
 const empty = computed(() => ready.value && !cart.ids.length)
+const canPay = computed(() => !!selected.value && methods.value.some((m) => m.id === selected.value && m.available))
 const price = (n: number) => n.toFixed(2)
 
 function remove(id: number) {
@@ -135,8 +136,18 @@ async function confirmPledge() {
                   <NuxtLink :to="{ path: '/register', query: { redirect: '/cart' } }" class="wp_link" style="text-decoration: underline">إنشاء حساب جديد</NuxtLink>
                 </p>
               </div>
+              <fieldset v-if="methodsLoaded && methods.length" class="pay-methods">
+                <legend class="sr-only">طريقة الدفع</legend>
+                <label v-for="m in methods" :key="m.id" class="pay-method" :class="{ disabled: !m.available }">
+                  <input v-model="selected" type="radio" name="pay_method" :value="m.id" :disabled="!m.available">
+                  <span>{{ m.label }}</span>
+                  <small v-if="!m.available"> — غير متاح حالياً</small>
+                </label>
+              </fieldset>
+              <p v-if="methodsLoaded && !canPay" class="pay-unavailable" role="status">الدفع الإلكتروني غير متاح حالياً. لن يتم خصم أي مبلغ.</p>
+              <p v-else-if="testMode" class="pay-test" role="status">وضع تجريبي: لا يتم أي خصم حقيقي.</p>
               <div id="error-handler" role="alert">{{ payError }}</div>
-              <button class="wp_btn btn-block" type="submit" :disabled="paying || !items.length || loading">
+              <button class="wp_btn btn-block" type="submit" :disabled="paying || !items.length || loading || !canPay">
                 <i class="fa" :class="paying ? 'fa-spinner fa-spin' : 'fa-lock'" />
                 أدفع الان
                 <span id="btn_pay_cost">{{ price(quote?.total ?? 0) }}</span>

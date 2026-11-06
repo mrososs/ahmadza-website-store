@@ -47,7 +47,7 @@ export function sessionCookieHeader(session: { access_token: string; refresh_tok
   return parts.join('; ')
 }
 
-export async function apiAs(email: string | null) {
+export async function apiAs(email: string | null, baseUrl: string = APP_URL) {
   // each client gets its own source IP so the per-IP in-memory rate limiter does not couple unrelated tests
   const ip = `10.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.${1 + Math.floor(Math.random() * 250)}`
   let cookie = ''
@@ -63,6 +63,6 @@ export async function apiAs(email: string | null) {
     if (cookie) headers.set('cookie', [cookie, headers.get('cookie')].filter(Boolean).join('; ')) // merge extra cookies (e.g. aw_aff)
     let body = init.body
     if (init.json !== undefined) { headers.set('content-type', 'application/json'); body = JSON.stringify(init.json) }
-    return fetch(`${APP_URL}${path}`, { ...init, headers, body, redirect: 'manual' })
+    return fetch(`${baseUrl}${path}`, { redirect: 'manual', ...init, headers, body })
   }
 }

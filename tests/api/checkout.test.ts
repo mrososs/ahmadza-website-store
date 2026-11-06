@@ -161,7 +161,7 @@ describe('simulator guard', () => {
       const sim = await api(`/api/checkout/simulate/${body.reference}`, { method: 'POST', json: { outcome: 'success' } })
       expect(sim.status).toBe(403)
       const session = await startCheckout(u.email, [book!.id])
-      expect(session.res.status).toBe(403)
+      expect(session.res.status).toBe(503) // with test payments off no method is available at all
       const raw = JSON.stringify({ event_id: randomUUID(), reference: body.reference, status: 'succeeded', transaction_id: 'x', amount: body.amount, currency: 'USD' })
       const hook = await fetch('http://localhost:3000/api/webhooks/payments/dev_simulator', { method: 'POST', body: raw, headers: { 'content-type': 'application/json', 'x-aawraq-signature': sign(raw) } })
       expect(hook.status).toBe(403)
@@ -169,10 +169,10 @@ describe('simulator guard', () => {
     expect((await admin.from('orders').select('id').eq('user_id', u.id)).data).toHaveLength(0)
   })
 
-  it('real gateways answer 501 and unknown providers 404', async () => {
+  it('real gateways refuse an unsigned or malformed webhook (never 200) and unknown providers are 404', async () => {
     const hook = (p: string) => fetch(`http://localhost:3000/api/webhooks/payments/${p}`, { method: 'POST', body: '{}' })
-    expect((await hook('paymob')).status).toBe(501)
-    expect((await hook('tap')).status).toBe(501)
+    expect([400, 401]).toContain((await hook('paymob')).status)
+    expect([400, 401]).toContain((await hook('tap')).status)
     expect((await hook('nope')).status).toBe(404)
   })
 })
@@ -205,12 +205,15 @@ describe('webhook', () => {
     expect((await admin.from('payment_events').select('id').eq('payment_id', (await admin.from('payments').select('id').eq('reference', body.reference).single()).data!.id)).data).toHaveLength(1)
   })
 
-  it('a webhook with a wrong amount is refused and creates nothing', async () => {
+  it('a webhook with a wrong amount creates nothing: the payment is flagged for the admin and the gateway gets a 200 so it stops retrying', async () => {
     const [book] = await demoPaidBooks(1)
     const buyer = await createTestUser()
     const body = await (await (await apiAs(buyer.email))('/api/checkout/session', { method: 'POST', json: { bookIds: [book!.id] } })).json()
     const raw = JSON.stringify({ event_id: `evt-${randomUUID()}`, reference: body.reference, status: 'succeeded', transaction_id: 'TX', amount: 0.01, currency: 'USD' })
-    expect((await post(raw)).status).toBe(409)
+    const res = await post(raw)
+    expect(res.status).toBe(200)
+    expect((await res.json()).outcome).toBe('needs_review')
     expect((await admin.from('orders').select('id').eq('user_id', buyer.id)).data).toHaveLength(0)
+    expect((await admin.from('payments').select('needs_review,status').eq('reference', body.reference).single()).data).toMatchObject({ needs_review: true, status: 'pending' })
   })
 })

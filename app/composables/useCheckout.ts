@@ -10,6 +10,11 @@ export function useCheckout() {
   const loading = ref(false)
   const error = ref('')
   const notices = ref<string[]>([])
+  // payment methods the server says can be used right now (nothing is offered that cannot start a real session)
+  const methods = ref<{ id: string; label: string; available: boolean }[]>([])
+  const methodsLoaded = ref(false)
+  const testMode = ref(false)
+  const selected = ref('')
 
   async function refreshQuote() {
     error.value = ''
@@ -26,10 +31,19 @@ export function useCheckout() {
     } catch { error.value = 'تعذر تحميل السلة، حاول مرة أخرى' } finally { loading.value = false }
   }
 
+  async function loadMethods() {
+    try {
+      const r = await $fetch<{ methods: { id: string; label: string; available: boolean }[]; testMode: boolean }>('/api/checkout/methods')
+      methods.value = r.methods
+      testMode.value = r.testMode
+      if (!methods.value.some((m) => m.id === selected.value && m.available)) selected.value = methods.value.find((m) => m.available)?.id ?? ''
+    } catch { methods.value = [] } finally { methodsLoaded.value = true } // e.g. the protected preview switches checkout off
+  }
+
   /** Creates the payment server-side and returns where the browser must go next. */
   async function startPayment(): Promise<{ ok: true; redirectUrl: string } | { ok: false; message: string }> {
     try {
-      const r = await $fetch<{ redirectUrl: string }>('/api/checkout/session', { method: 'POST', body: { bookIds: cart.ids } })
+      const r = await $fetch<{ redirectUrl: string }>('/api/checkout/session', { method: 'POST', body: { bookIds: cart.ids, provider: selected.value || undefined } })
       return { ok: true, redirectUrl: r.redirectUrl }
     } catch (e) {
       const err = e as { statusCode?: number; data?: { message?: string; statusMessage?: string } }
@@ -38,5 +52,5 @@ export function useCheckout() {
     }
   }
 
-  return { quote, loading, error, notices, refreshQuote, startPayment }
+  return { quote, loading, error, notices, methods, methodsLoaded, testMode, selected, refreshQuote, loadMethods, startPayment }
 }

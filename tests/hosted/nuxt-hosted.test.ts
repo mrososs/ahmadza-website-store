@@ -31,6 +31,9 @@ beforeAll(async () => {
   await media('pending', paidBook, 'preview', {})
   await media('free', freeBook, 'after_purchase', { is_external: true, external_url: 'https://example.invalid/free.pdf' })
   ;[guest, customer, admin, affiliate] = await Promise.all([appAs(null), appAs(alice), appAs(boss), appAs(aff)])
+  // Warm-up: the first request after a dev-server start compiles the page and can exceed a test's own 60 s timeout. Doing it here
+  // (the hook allows 120 s) keeps cold start from being reported as a test failure.
+  await guest('/')
 })
 afterAll(async () => { await cleanupFixtures(svc) })
 

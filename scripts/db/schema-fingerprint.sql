@@ -21,7 +21,10 @@ with fp(section, entries) as (
       from pg_policies where schemaname in ('public', 'storage') and (schemaname = 'public' or policyname !~ '^(Allow|supabase)'))),
   ('functions', (select coalesce(jsonb_object_agg(n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')',
         jsonb_build_array(p.prosecdef, coalesce(p.proconfig::text, ''), md5(p.prosrc),
-          has_function_privilege('anon', p.oid, 'execute'), has_function_privilege('authenticated', p.oid, 'execute'), has_function_privilege('service_role', p.oid, 'execute'))), '{}'::jsonb)
+          has_function_privilege('anon', p.oid, 'execute'), has_function_privilege('authenticated', p.oid, 'execute'),
+          -- hosted projects keep Supabase's default EXECUTE grant to service_role on trigger functions, local stacks do not; that grant is
+          -- harmless (trigger functions cannot be called outside a trigger), so it is excluded for trigger functions only
+          case when p.prorettype = 'trigger'::regtype then null else has_function_privilege('service_role', p.oid, 'execute') end)), '{}'::jsonb)
       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
      where n.nspname in ('public', 'private') and p.prokind = 'f' and p.proname <> 'rls_auto_enable')),   -- rls_auto_enable is a Supabase-provided hosted default
   ('triggers', (select coalesce(jsonb_object_agg(n.nspname || '.' || c.relname || '.' || t.tgname, pg_get_triggerdef(t.oid)), '{}'::jsonb)

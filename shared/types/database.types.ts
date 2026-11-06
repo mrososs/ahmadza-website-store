@@ -271,14 +271,14 @@ isOneToOne: false
                   ]
                 },"books": {
                   Row: {
-                    "cover_path": string | null,"created_at": string,"deleted_at": string | null,"description_html": string | null,"id": number,"import_run_id": number | null,"is_demo": boolean,"kind": Database["public"]['Enums']["book_kind"],"legacy_cost_raw": string | null,"legacy_id": number | null,"legacy_status_raw": string | null,"legacy_verified_at": string | null,"legacy_verified_by": string | null,"owner_id": string | null,"pages": number,"price_amount": number,"price_currency": string,"provenance": string,"slug": string,"status": Database["public"]['Enums']["content_status"],"title": string,"title_norm": string,"updated_at": string,"view_count": number,"book_readiness_row": (string)[] | null
+                    "cover_path": string | null,"created_at": string,"deleted_at": string | null,"description_html": string | null,"id": number,"import_run_id": number | null,"is_demo": boolean,"kind": Database["public"]['Enums']["book_kind"],"legacy_cost_raw": string | null,"legacy_id": number | null,"legacy_status_raw": string | null,"legacy_verified_at": string | null,"legacy_verified_by": string | null,"owner_id": string | null,"pages": number,"price_amount": number,"price_currency": string,"provenance": string,"recovery_evidence": Json | null,"slug": string,"status": Database["public"]['Enums']["content_status"],"title": string,"title_norm": string,"updated_at": string,"view_count": number,"book_readiness_row": (string)[] | null
                   }
                   ComputedFields: "book_readiness_row"
                   Insert: {
-                    "cover_path"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"description_html"?: string | null,"id"?: never,"import_run_id"?: number | null,"is_demo"?: boolean,"kind"?: Database["public"]['Enums']["book_kind"],"legacy_cost_raw"?: string | null,"legacy_id"?: number | null,"legacy_status_raw"?: string | null,"legacy_verified_at"?: string | null,"legacy_verified_by"?: string | null,"owner_id"?: string | null,"pages"?: number,"price_amount"?: number,"price_currency"?: string,"provenance"?: string,"slug"?: string,"status"?: Database["public"]['Enums']["content_status"],"title": string,"title_norm"?: string,"updated_at"?: string,"view_count"?: number
+                    "cover_path"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"description_html"?: string | null,"id"?: never,"import_run_id"?: number | null,"is_demo"?: boolean,"kind"?: Database["public"]['Enums']["book_kind"],"legacy_cost_raw"?: string | null,"legacy_id"?: number | null,"legacy_status_raw"?: string | null,"legacy_verified_at"?: string | null,"legacy_verified_by"?: string | null,"owner_id"?: string | null,"pages"?: number,"price_amount"?: number,"price_currency"?: string,"provenance"?: string,"recovery_evidence"?: Json | null,"slug"?: string,"status"?: Database["public"]['Enums']["content_status"],"title": string,"title_norm"?: string,"updated_at"?: string,"view_count"?: number
                   }
                   Update: {
-                    "cover_path"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"description_html"?: string | null,"id"?: never,"import_run_id"?: number | null,"is_demo"?: boolean,"kind"?: Database["public"]['Enums']["book_kind"],"legacy_cost_raw"?: string | null,"legacy_id"?: number | null,"legacy_status_raw"?: string | null,"legacy_verified_at"?: string | null,"legacy_verified_by"?: string | null,"owner_id"?: string | null,"pages"?: number,"price_amount"?: number,"price_currency"?: string,"provenance"?: string,"slug"?: string,"status"?: Database["public"]['Enums']["content_status"],"title"?: string,"title_norm"?: string,"updated_at"?: string,"view_count"?: number
+                    "cover_path"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"description_html"?: string | null,"id"?: never,"import_run_id"?: number | null,"is_demo"?: boolean,"kind"?: Database["public"]['Enums']["book_kind"],"legacy_cost_raw"?: string | null,"legacy_id"?: number | null,"legacy_status_raw"?: string | null,"legacy_verified_at"?: string | null,"legacy_verified_by"?: string | null,"owner_id"?: string | null,"pages"?: number,"price_amount"?: number,"price_currency"?: string,"provenance"?: string,"recovery_evidence"?: Json | null,"slug"?: string,"status"?: Database["public"]['Enums']["content_status"],"title"?: string,"title_norm"?: string,"updated_at"?: string,"view_count"?: number
                   }
                   Relationships: [
                     {
@@ -407,14 +407,14 @@ isOneToOne: false
                   ]
                 },"entitlements": {
                   Row: {
-                    "book_id": number,"granted_at": string,"id": number,"is_test": boolean,"order_item_id": number | null,"revoked_at": string | null,"user_id": string
+                    "book_id": number,"granted_at": string,"id": number,"is_test": boolean,"order_item_id": number | null,"revoked_at": string | null,"source": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "book_id": number,"granted_at"?: string,"id"?: never,"is_test"?: boolean,"order_item_id"?: number | null,"revoked_at"?: string | null,"user_id": string
+                    "book_id": number,"granted_at"?: string,"id"?: never,"is_test"?: boolean,"order_item_id"?: number | null,"revoked_at"?: string | null,"source"?: string,"user_id": string
                   }
                   Update: {
-                    "book_id"?: number,"granted_at"?: string,"id"?: never,"is_test"?: boolean,"order_item_id"?: number | null,"revoked_at"?: string | null,"user_id"?: string
+                    "book_id"?: number,"granted_at"?: string,"id"?: never,"is_test"?: boolean,"order_item_id"?: number | null,"revoked_at"?: string | null,"source"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -546,6 +546,50 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"media_download_log": {
+                  Row: {
+                    "book_id": number | null,"created_at": string,"id": number,"media_id": number | null,"outcome": string,"reason": string | null,"user_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "book_id"?: number | null,"created_at"?: string,"id"?: never,"media_id"?: number | null,"outcome": string,"reason"?: string | null,"user_id"?: string | null
+                  }
+                  Update: {
+                    "book_id"?: number | null,"created_at"?: string,"id"?: never,"media_id"?: number | null,"outcome"?: string,"reason"?: string | null,"user_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "media_download_log_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "media_download_log_book_id_fkey"
+      columns: ["book_id"]
+isOneToOne: false
+      referencedRelation: "books_readiness"
+      referencedColumns: ["book_id"]
+    },{
+      foreignKeyName: "media_download_log_media_id_fkey"
+      columns: ["media_id"]
+isOneToOne: false
+      referencedRelation: "book_media"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "media_download_log_media_id_fkey"
+      columns: ["media_id"]
+isOneToOne: false
+      referencedRelation: "book_media_readiness"
+      referencedColumns: ["media_id"]
+    },{
+      foreignKeyName: "media_download_log_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"migration_rejects": {
                   Row: {
@@ -681,14 +725,14 @@ isOneToOne: false
                   ]
                 },"payments": {
                   Row: {
-                    "affiliate_id": string | null,"amount": number,"cart_snapshot": NonNullable<Json>,"created_at": string,"currency": string,"expires_at": string,"fulfilled_at": string | null,"fx_rate": number,"id": string,"mode": Database["public"]['Enums']["data_mode"],"order_id": string | null,"paid_at": string | null,"provider": string,"provider_transaction_id": string | null,"raw_response": Json | null,"reference": string,"status": Database["public"]['Enums']["payment_status"],"user_id": string
+                    "affiliate_id": string | null,"amount": number,"cart_snapshot": NonNullable<Json>,"created_at": string,"currency": string,"expires_at": string,"fulfilled_at": string | null,"fx_rate": number,"id": string,"mode": Database["public"]['Enums']["data_mode"],"needs_review": boolean,"order_id": string | null,"paid_at": string | null,"provider": string,"provider_order_id": string | null,"provider_transaction_id": string | null,"raw_response": Json | null,"reference": string,"review_flagged_at": string | null,"review_reason": string | null,"status": Database["public"]['Enums']["payment_status"],"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "affiliate_id"?: string | null,"amount": number,"cart_snapshot": NonNullable<Json>,"created_at"?: string,"currency": string,"expires_at"?: string,"fulfilled_at"?: string | null,"fx_rate"?: number,"id"?: string,"mode"?: Database["public"]['Enums']["data_mode"],"order_id"?: string | null,"paid_at"?: string | null,"provider": string,"provider_transaction_id"?: string | null,"raw_response"?: Json | null,"reference"?: string,"status"?: Database["public"]['Enums']["payment_status"],"user_id": string
+                    "affiliate_id"?: string | null,"amount": number,"cart_snapshot": NonNullable<Json>,"created_at"?: string,"currency": string,"expires_at"?: string,"fulfilled_at"?: string | null,"fx_rate"?: number,"id"?: string,"mode"?: Database["public"]['Enums']["data_mode"],"needs_review"?: boolean,"order_id"?: string | null,"paid_at"?: string | null,"provider": string,"provider_order_id"?: string | null,"provider_transaction_id"?: string | null,"raw_response"?: Json | null,"reference"?: string,"review_flagged_at"?: string | null,"review_reason"?: string | null,"status"?: Database["public"]['Enums']["payment_status"],"user_id": string
                   }
                   Update: {
-                    "affiliate_id"?: string | null,"amount"?: number,"cart_snapshot"?: NonNullable<Json>,"created_at"?: string,"currency"?: string,"expires_at"?: string,"fulfilled_at"?: string | null,"fx_rate"?: number,"id"?: string,"mode"?: Database["public"]['Enums']["data_mode"],"order_id"?: string | null,"paid_at"?: string | null,"provider"?: string,"provider_transaction_id"?: string | null,"raw_response"?: Json | null,"reference"?: string,"status"?: Database["public"]['Enums']["payment_status"],"user_id"?: string
+                    "affiliate_id"?: string | null,"amount"?: number,"cart_snapshot"?: NonNullable<Json>,"created_at"?: string,"currency"?: string,"expires_at"?: string,"fulfilled_at"?: string | null,"fx_rate"?: number,"id"?: string,"mode"?: Database["public"]['Enums']["data_mode"],"needs_review"?: boolean,"order_id"?: string | null,"paid_at"?: string | null,"provider"?: string,"provider_order_id"?: string | null,"provider_transaction_id"?: string | null,"raw_response"?: Json | null,"reference"?: string,"review_flagged_at"?: string | null,"review_reason"?: string | null,"status"?: Database["public"]['Enums']["payment_status"],"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -830,7 +874,7 @@ isOneToOne: false
                   ]
                 },"books_readiness": {
                   Row: {
-                    "book_id": number,"cover_path": string | null,"eligible": boolean | null,"import_run_id": number | null,"kind": Database["public"]['Enums']["book_kind"],"legacy_cost_raw": string | null,"legacy_id": number | null,"legacy_status_raw": string | null,"legacy_verified_at": string | null,"media_missing": number | null,"media_total": number | null,"media_validated": number | null,"price_amount": number,"provenance": string,"reasons": (string)[] | null,"status": Database["public"]['Enums']["content_status"],"title": string
+                    "book_id": number,"cover_path": string | null,"eligible": boolean | null,"import_run_id": number | null,"kind": Database["public"]['Enums']["book_kind"],"legacy_cost_raw": string | null,"legacy_id": number | null,"legacy_status_raw": string | null,"legacy_verified_at": string | null,"media_missing": number | null,"media_total": number | null,"media_validated": number | null,"price_amount": number,"provenance": string,"reasons": (string)[] | null,"status": Database["public"]['Enums']["content_status"],"title": string,"workflow_status": string | null
                   }
                   ComputedFields: never
                   Relationships: [
@@ -863,6 +907,9 @@ isOneToOne: false
 "approve_contributor_request":
 { Args: { "p_admin": string,"p_note"?: string,"p_request": string }; Returns: number
                            },
+"attach_provider_session":
+{ Args: { "p_payment_id": string,"p_provider_order_id": string }; Returns: undefined
+                           },
 "book_comments":
 { Args: { "p_book": number }; Returns: {
               "author_name": string,"body": string,"created_at": string,"id": number,"is_mine": boolean
@@ -878,6 +925,12 @@ isOneToOne: false
                            },
 "book_readiness_row":
 { Args: { "b": Omit<Database["public"]['Tables']["books"]['Row'], Database["public"]['Tables']["books"]['ComputedFields']> }; Returns: (string)[]
+                           },
+"book_workflow_status":
+{ Args: { "b": Omit<Database["public"]['Tables']["books"]['Row'], Database["public"]['Tables']["books"]['ComputedFields']>,"r": (string)[] }; Returns: string
+                           },
+"claim_free_book":
+{ Args: { "p_book": number,"p_user": string }; Returns: boolean
                            },
 "contributor_book_stats":
 { Args: { "p_user": string }; Returns: {
@@ -896,12 +949,16 @@ isOneToOne: false
 "fx_rate": number,
 "id": string,
 "mode": Database["public"]['Enums']["data_mode"],
+"needs_review": boolean,
 "order_id": string | null,
 "paid_at": string | null,
 "provider": string,
+"provider_order_id": string | null,
 "provider_transaction_id": string | null,
 "raw_response": Json | null,
 "reference": string,
+"review_flagged_at": string | null,
+"review_reason": string | null,
 "status": Database["public"]['Enums']["payment_status"],
 "user_id": string
             }
@@ -920,8 +977,14 @@ isOneToOne: false
 "fail_payment":
 { Args: { "p_payment_id": string,"p_raw"?: Json,"p_status": Database["public"]['Enums']["payment_status"] }; Returns: undefined
                            },
+"find_payment_for_callback":
+{ Args: { "p_provider": string,"p_provider_order_id": string,"p_reference": string }; Returns: string
+                           },
 "find_user_id_by_email":
 { Args: { "p_email": string }; Returns: string
+                           },
+"flag_payment_review":
+{ Args: { "p_payment_id": string,"p_reason": string }; Returns: undefined
                            },
 "fulfill_payment":
 { Args: { "p_amount": number,"p_currency": string,"p_payment_id": string,"p_provider_txn": string,"p_raw"?: Json }; Returns: string
@@ -937,6 +1000,9 @@ isOneToOne: false
                            },
 "is_affiliate":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"log_media_download":
+{ Args: { "p_book": number,"p_media": number,"p_outcome": string,"p_reason"?: string,"p_user": string }; Returns: undefined
                            },
 "normalize_ar":
 { Args: { "p": string }; Returns: string
@@ -962,6 +1028,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "articles": number,"books": number,"views": number
             }[]
+                           },
+"verify_book":
+{ Args: { "p_admin": string,"p_book": number }; Returns: boolean
                            },
 "verify_legacy_run":
 { Args: { "p_admin": string,"p_run": number }; Returns: number

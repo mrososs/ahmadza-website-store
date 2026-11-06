@@ -57,6 +57,7 @@ Open the `.txt` in an editor and read it once. It is sanitised, but it contains 
 | You want to know | Report section |
 |---|---|
 | The original MariaDB database and whether its data files survive | **4** ("ALL non-system databases in the datadir" + table-file sizes for `books`, `book_media`, `users`, `orders`…) and the `FLAG books_table_file` line in **9** |
+| Whether a physical-file recovery is possible at all: MariaDB **version**, server configuration, **encryption** settings, the InnoDB system files (`ibdata1`, redo/undo logs) and the datadir size | **4** ("MariaDB version and the settings that decide whether a file-level copy can be recovered on another machine") and the `FLAG mariadb_version`, `encryption_hint`, `datadir_size_mb`, `ib_system_files` lines in **9** |
 | Existing SQL dumps and database backups | **4** ("dump / backup candidates", CyberPanel/provider backup folders, cron jobs) |
 | Application backup archives | **4** ("application / site backup archives" over 5 MB with their type, "Laravel / CyberPanel backup folders") |
 | Missing covers and media | **3** (per-folder file counts, extensions, date ranges for `product_media`, `product_cover`, `category`, `maker`, `article`, `logo`, `request`, `withdraw`, `comment`, `editor`) + the manifest from Step 3 |

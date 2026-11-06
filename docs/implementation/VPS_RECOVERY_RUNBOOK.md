@@ -1,5 +1,7 @@
 # VPS recovery runbook — MariaDB catalogue and book-to-PDF mapping
 
+> **Superseded in part (2026-11-06):** the strategy is now *incremental recovery* — see `INCREMENTAL_RECOVERY_PLAN.md`. Its path names replace the A/B/C below: **A** existing dump, **B1** live table-limited dump, **B2** read-only copy of the physical files recovered by `recover-from-datadir.ps1`, **B3** a Hostinger backup restored to a *new* VPS only (never in place), **C** escalate. This runbook remains the reference for the restore, dry-run and mapping steps (Steps 3–5).
+
 Goal: obtain a **restorable copy** of the legacy database, rebuild the real catalogue from it (never from file names), and map every legacy book to its recovered PDF — without changing, restarting or trusting the legacy server.
 The agent has no access to the VPS. You run the read-only steps in the Hostinger Web Console / WinSCP and return **sanitised** outputs. Never send passwords, SSH keys, `.env` files, or the dump itself through chat.
 

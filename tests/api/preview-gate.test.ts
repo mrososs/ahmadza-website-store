@@ -37,13 +37,15 @@ beforeAll(async () => {
 }, 240_000)
 
 afterAll(() => {
+  if (process.env.GATE_DEBUG) console.log(log.slice(-4000)) // server output, on request, for diagnosing a failed run
   if (!server?.pid) return
   // only the process tree THIS test started
   if (process.platform === 'win32') spawnSync('taskkill', ['/pid', String(server.pid), '/T', '/F'])
   else server.kill('SIGTERM')
 })
 
-describe.skipIf(!hasRecoveryEnv)('protected preview over HTTP', () => {
+// pages compile on first request in a dev server, which can be slow on a busy machine
+describe.skipIf(!hasRecoveryEnv)('protected preview over HTTP', { timeout: 120_000 }, () => {
   it('anonymous visitors get a Basic-auth challenge on pages, assets and API, with no-index headers and no content', async () => {
     for (const path of ['/', '/book/1', '/admin', '/api/admin/books', '/sitemap.xml']) {
       const r = await fetch(`${BASE}${path}`)
@@ -83,6 +85,22 @@ describe.skipIf(!hasRecoveryEnv)('protected preview over HTTP', () => {
       const r = await fetch(`${BASE}${path}`, { method, headers: h, body: method === 'POST' ? '{}' : undefined, redirect: 'manual' })
       expect(r.status, `${method} ${path}`).toBe(503)
     }
+  })
+  it('the post-deploy verification script passes against a correctly protected server (and exits non-zero otherwise)', async () => {
+    // asynchronous on purpose: a blocking spawnSync freezes this process for ~25 s, the server drops idle keep-alive sockets after 5 s, and the next test
+    // would reuse a dead pooled connection (ECONNRESET)
+    const run = (password: string) => new Promise<{ status: number | null; stdout: string }>((resolve) => {
+      const child = spawn(process.execPath, ['scripts/preview/verify-preview.mjs', BASE, USER], { cwd: ROOT, env: { ...process.env, PREVIEW_PASSWORD: password } })
+      let stdout = ''
+      child.stdout.on('data', (d) => { stdout += String(d) })
+      child.on('close', (status) => resolve({ status, stdout }))
+    })
+    const ok = await run(PASSWORD)
+    expect(ok.stdout.split(/\r?\n/).filter((l) => l.startsWith('ok')).length).toBeGreaterThanOrEqual(8)
+    expect(ok.stdout).not.toContain(PASSWORD)
+    // plain http on localhost is the only expected deviation: the https check is the one that fails here, nothing else
+    expect(ok.stdout.split(/\r?\n/).filter((l) => l.startsWith('FAIL'))).toEqual([expect.stringContaining('the origin is https')])
+    expect((await run('wrong password')).status).toBe(1)
   })
   it('a flood of wrong passwords from one address is rate-limited (429)', async () => {
     const h = { ...auth(USER, 'guess'), 'x-forwarded-for': '203.0.113.77' }

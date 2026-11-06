@@ -7,13 +7,13 @@ original look (legacy CSS/markup ported 1:1), the verified business model, and f
 ## Status at a glance
 | | |
 |---|---|
-| Implemented | public storefront, Supabase auth, cart + server-priced checkout (dev simulator only), entitlement-based private downloads, library/favourites/invoices/profile, affiliate programme with append-only ledger and withdrawals, contributor submissions with admin review, full admin area, media quarantine/staging pipeline, MariaDB importer (cannot run: no dump) |
+| Implemented | public storefront, Supabase auth, cart + server-priced checkout with **Paymob and Tap** adapters (contract-tested against mocks; NOT VERIFIED against real gateways) and the dev simulator, entitlement-based private downloads with an audit log, free-book claims, library/favourites/invoices/profile, affiliate programme with append-only ledger and withdrawals, contributor submissions with admin review, full admin area incl. catalogue recovery dashboard, payment gateway status and admin MFA (TOTP), media quarantine/staging pipeline, protected client preview, MariaDB importer and independent validator (cannot run: no database copy) |
 | Verified | 221/221 tests, 0 type errors, 0 lint errors, production build, 45/45 UI validation runs (`09-testing-results.md`) |
-| **Not possible yet** | importing real client data — **no SQL dump exists**; real payments — no gateway credentials (`10-remaining-blockers.md`) |
+| **Not possible yet** | importing the real catalogue — **no consistent database copy exists** (`SAFE_ACQUISITION_PLAN.md`); real payments — no authorised merchant credentials (`PAYMENTS_GO_LIVE_CHECKLIST.md`) |
 
 ## Documents
 `01-architecture` · `02-frontend-structure` · `03-supabase-schema` · `04-auth-and-permissions` · `05-legacy-ui-fidelity` · `06-business-rule-coverage` ·
-`07-historical-data-import` · `08-security-decisions` · **hosted phase:** `HOSTED_SUPABASE_SETUP` · `MIGRATION_INVENTORY` · `RLS_PERMISSION_MATRIX` · `AUTH_INTEGRATION` · `HOSTED_INTEGRATION_TEST_RESULTS` · `VPS_STORAGE_INTEGRATION_PLAN` · · `09-testing-results` · `10-remaining-blockers` · `ui-validation/` · `data-availability-report.md` · `notes/` (per-slice detail).
+`07-historical-data-import` · `08-security-decisions` · **recovery and release:** `FINAL_COMPLETION_REPORT` · `PAYMENTS_GO_LIVE_CHECKLIST` · `PROTECTED_PREVIEW_DEPLOYMENT` · `INCREMENTAL_RECOVERY_PLAN` · `SAFE_ACQUISITION_PLAN` · `VPS_INSPECT_SCRIPT_CHANGES` · **hosted phase:** `HOSTED_SUPABASE_SETUP` · `MIGRATION_INVENTORY` · `RLS_PERMISSION_MATRIX` · `AUTH_INTEGRATION` · `HOSTED_INTEGRATION_TEST_RESULTS` · `VPS_STORAGE_INTEGRATION_PLAN` · · `09-testing-results` · `10-remaining-blockers` · `ui-validation/` · `data-availability-report.md` · `notes/` (per-slice detail).
 
 ## Local installation
 Prerequisites: Node ≥ 22 (tested 24), npm, Docker Desktop (running; ≥ 8 GB RAM for Docker; ~15 GB disk for images), Google Chrome (UI tests).

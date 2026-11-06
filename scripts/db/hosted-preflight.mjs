@@ -28,7 +28,13 @@ if (existsSync(envPath)) {
   if (!env.NUXT_PUBLIC_SUPABASE_KEY || env.NUXT_PUBLIC_SUPABASE_KEY.startsWith('<')) fail(`${envFile}: NUXT_PUBLIC_SUPABASE_KEY is not set`)
   if (!env.NUXT_SUPABASE_SECRET_KEY || env.NUXT_SUPABASE_SECRET_KEY.startsWith('<')) fail(`${envFile}: NUXT_SUPABASE_SECRET_KEY is not set`)
   if (String(env.NUXT_ALLOW_DEV_PAYMENT_SIMULATOR).toLowerCase() === 'true') fail(`${envFile}: the development payment simulator must be OFF against the hosted project`)
-  if (/supabase/.test(env.NUXT_MEDIA_ENABLED_PROVIDERS ?? '')) fail(`${envFile}: hosted environments must not enable the "supabase" media provider (VPS phase pending)`)
+  if (/supabase/.test(env.NUXT_MEDIA_ENABLED_PROVIDERS ?? '')) fail(`${envFile}: hosted environments must not enable the "supabase" media provider (use the private media service)`)
+  if (/\bvps\b/.test(env.NUXT_MEDIA_ENABLED_PROVIDERS ?? '')) {
+    // the private media service must be reachable over TLS and its two server-only secrets must be strong (docs/implementation/VPS_SECURITY_GATE.md)
+    if (!/^https:\/\//.test(env.NUXT_VPS_STORAGE_BASE_URL ?? '')) fail(`${envFile}: "vps" media provider needs NUXT_VPS_STORAGE_BASE_URL over https`)
+    if ((env.NUXT_VPS_STORAGE_SIGNING_SECRET ?? '').length < 32) fail(`${envFile}: NUXT_VPS_STORAGE_SIGNING_SECRET must be >= 32 chars`)
+    if ((env.NUXT_VPS_STORAGE_UPLOAD_TOKEN ?? '').length < 32) fail(`${envFile}: NUXT_VPS_STORAGE_UPLOAD_TOKEN must be >= 32 chars`)
+  }
 } else {
   console.log(`note  ${envFile} not found — nothing to validate yet (copy .env.hosted.example and fill the keys; never commit it)`)
 }

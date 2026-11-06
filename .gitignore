@@ -60,3 +60,6 @@ public/assets/css/admin.css
 # --- bulky derived screenshots (regenerate with `npm run ui:shots`); curated before/after kept in ui-refinement/
 docs/implementation/ui-validation/ref/
 docs/implementation/ui-validation/diff/
+
+# second dev server pointed at the hosted project (see docs/implementation/HOSTED_MIGRATION_RUNBOOK.md)
+.nuxt-hosted/

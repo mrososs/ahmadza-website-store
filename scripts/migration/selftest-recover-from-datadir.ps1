@@ -8,18 +8,31 @@ $repo = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $rec = Join-Path $PSScriptRoot 'recover-from-datadir.ps1'
 $T = 'D:\mostqel\aawraq-recover-selftest'
 $img = 'mariadb:10.6'
+$aliasTag = ''; $aliasCreated = $false   # the exact-version tag the recovery script requires; created locally from the same image if absent, removed again at the end
 $gen = 'aawraq-selftest-generator'
 $pass = 0; $fail = 0
 function Check($name, $cond) { if ($cond) { $script:pass++; Write-Host "PASS  $name" -ForegroundColor Green } else { $script:fail++; Write-Host "FAIL  $name" -ForegroundColor Red } }
-function Run-Recovery([string[]]$extra) { (& powershell -NoProfile -File $rec @extra 2>&1 | Out-String) }
+# every call carries the exact -SourceVersion (the script refuses to assume one); '-NoDefaultVersion' leaves it out to test that refusal
+function Run-Recovery([string[]]$extra) {
+  if ($extra -contains '-NoDefaultVersion') { $extra = @($extra | Where-Object { $_ -ne '-NoDefaultVersion' }) }
+  elseif ($extra -notcontains '-SourceVersion') { $extra = $extra + @('-SourceVersion', $script:ver) }
+  (& powershell -NoProfile -File $rec @extra 2>&1 | Out-String)
+}
 function Sh([string]$q) { & docker exec $gen mariadb -uroot -ptest-root --batch --skip-column-names -e $q 2>&1 | Out-String }
 function Cleanup {
   & docker rm -f $gen 2>$null | Out-Null
   & powershell -NoProfile -File $rec -Remove -WorkRoot "$T\wr" 2>$null | Out-Null
   & powershell -NoProfile -File (Join-Path $PSScriptRoot 'restore-legacy-db.ps1') -Remove -WorkDir "$T\wr\verify-restore" 2>$null | Out-Null
   if (Test-Path $T) { Remove-Item -Recurse -Force $T -ErrorAction SilentlyContinue }
+  if ($script:aliasCreated) { & docker rmi $script:aliasTag 2>$null | Out-Null; $script:aliasCreated = $false }
 }
 Cleanup
+$verOut = (& docker run --rm --network none --entrypoint sh $img -c 'mariadbd --version 2>&1 || mysqld --version 2>&1' 2>&1 | Out-String)
+$ver = $null; foreach ($l in ($verOut -split "`r?`n")) { if ($l -match 'Ver\s+(\d+\.\d+\.\d+)') { $ver = $Matches[1]; break } }
+if (-not $ver) { Write-Host "cannot determine the MariaDB version of $img"; exit 1 }
+$aliasTag = "mariadb:$ver"
+if (-not (& docker images -q $aliasTag)) { & docker tag $img $aliasTag; $aliasCreated = $true }
+Write-Host "local MariaDB image $img is $ver (exact tag $aliasTag$(if ($aliasCreated) { ', created for this test' }))"
 New-Item -ItemType Directory -Force -Path "$T\srcdata" | Out-Null
 
 Write-Host "=== building a synthetic crashed datadir"
@@ -77,6 +90,11 @@ Check 'T1 recovered the critical tables (all four clean)' ($o1 -match 'clean cri
 Check 'T1 fidelity verified (restored dump == recovered server)' ($o1 -match 'fidelity verified: True')
 $after = (Get-ChildItem "$T\copy" -Recurse -File | ForEach-Object { "$($_.FullName.Substring($T.Length))|$($_.Length)|$((Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName).Hash)" } | Sort-Object) -join "`n"
 Check 'T1 the downloaded copy is byte-for-byte untouched' ($before -eq $after)
+Check 'T1 the console output never names the other site database (only a count)' (($o1 -notmatch 'other_site') -and ($o1 -match 'application database folders in the copy: 2'))
+$man = Get-Content "$T\wr\out\manifest-source.csv" -Raw
+Check 'T1 the manifest has no other-site name; its folder is a hashed alias; our own database and the system folder stay readable' (($man -notmatch 'other_site') -and ($man -match 'other-db-[0-9a-f]{8}') -and ($man -match 'aawraq_selftest') -and ($man -match 'mysql'))
+$rootNames = @(Import-Csv "$T\wr\out\manifest-source.csv" | Where-Object { $_.path -notmatch '\\' } | ForEach-Object { $_.path })
+Check 'T1 root-level manifest entries are standard datadir files or hashed aliases (no host-named files)' (@($rootNames | Where-Object { $_ -notmatch '^(ibdata|ib_|ddl_|aria_log|mysql_upgrade_info|undo|ibtmp|multi-master|tc\.log|auto\.cnf|x-[0-9a-f]{8})' }).Count -eq 0)
 $dump = Get-ChildItem "$T\wr\out" -Filter 'core-dump-*.sql.gz' | Select-Object -First 1
 Check 'T1 a dump file exists' ($null -ne $dump)
 if ($dump) {
@@ -86,6 +104,7 @@ if ($dump) {
   Check 'T1 raw price strings and file names are preserved' (($txt -match "12\.50") -and ($txt -match 'product_media/selftest-16'))
 }
 $rep = Get-ChildItem "$T\wr\out" -Filter 'recovery-report-*.json' | Select-Object -First 1
+if ($rep) { $jv = Get-Content $rep.FullName -Raw | ConvertFrom-Json; Check 'T1 report records the exact versions (copy, image, running server) and only a COUNT of other databases' (($jv.source_version -eq $ver) -and ($jv.image_version -eq $ver) -and ($jv.recovery_server_version -like "$ver*") -and ($jv.other_application_database_folders -eq 2) -and ((Get-Content $rep.FullName -Raw) -notmatch 'other_site')) }
 if ($rep) { $j = Get-Content $rep.FullName -Raw | ConvertFrom-Json; Check "T1 report: row counts match the synthetic data ($counts)" ((($j.tables | Where-Object { $_.table -in 'books','book_media','categories','makers' } | ForEach-Object { $_.rows }) -join ', ') -eq ($counts -replace '\s+', ', ')) }
 & powershell -NoProfile -File $rec -Remove -WorkRoot "$T\wr" | Out-Null
 
@@ -98,6 +117,15 @@ $r = Run-Recovery @('-DataDirCopy', "$T\copy", '-WorkRoot', "$T\wr2", '-Encrypti
 $r = Run-Recovery @('-DataDirCopy', "$T\copy", '-Database', 'aawraq_selftest', '-WorkRoot', "$T\wr2", '-Tables', 'books,users');  Check 'T2 sensitive table without authorisation refused (comma list given as one string)' ($r -match 'needs -IncludeSensitive')
 $r = Run-Recovery @('-DataDirCopy', "$T\copy", '-Database', 'aawraq_selftest', '-WorkRoot', "$T\wr2", '-Tables', 'books;drop');   Check 'T2 injection-shaped table name refused' ($r -match 'invalid table name')
 $r = Run-Recovery @('-DataDirCopy', "$T\copy", '-WorkRoot', "$T\wr2", '-Database', 'not_there');                         Check 'T2 unknown database refused' ($r -match "no folder 'not_there'")
+$r = Run-Recovery @('-NoDefaultVersion', '-DataDirCopy', "$T\copy_noother", '-WorkRoot', "$T\wr2", '-EncryptionHint', 'no');   Check 'T2 a missing -SourceVersion is refused (the version is never assumed)' ($r -match 'SourceVersion X\.Y\.Z is required')
+$r = Run-Recovery @('-DataDirCopy', "$T\copy_noother", '-WorkRoot', "$T\wr2", '-SourceVersion', '10.6');                 Check 'T2 a version without a patch number is refused' ($r -match 'must look like')
+$r = Run-Recovery @('-DataDirCopy', "$T\copy_noother", '-WorkRoot', "$T\wr2", '-SourceVersion', '10.11.6', '-Image', $img); Check 'T2 a -SourceVersion that contradicts the datadir''s own mysql_upgrade_info is refused (wrong version family)' ($r -match 'mysql_upgrade_info says')
+New-Item -ItemType Directory -Force -Path "$T\copy_noupg" | Out-Null
+& robocopy "$T\copy_noother" "$T\copy_noupg" /E /XF mysql_upgrade_info /COPY:DAT /R:1 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null
+$r = Run-Recovery @('-DataDirCopy', "$T\copy_noupg", '-WorkRoot', "$T\wr2", '-SourceVersion', '10.11.6', '-Image', $img); Check 'T2 an image from another major.minor than the copy is refused (no upgrade info to lean on)' (($r -match 'different major\.minor') -and -not ($r -match 'mysql_upgrade_info says'))
+$r = Run-Recovery @('-DataDirCopy', "$T\copy_noother", '-WorkRoot', "$T\wr2", '-SourceVersion', '10.6.1', '-Image', $img); Check 'T2 patch drift is refused by default (not the exact version)' ($r -match 'not the exact version')
+$r = Run-Recovery @('-DataDirCopy', "$T\copy_noother", '-WorkRoot', "$T\wr2", '-SourceVersion', '10.6.1', '-Image', $img, '-AllowPatchDifference', '-Tables', 'books;drop'); Check 'T2 -AllowPatchDifference accepts patch drift loudly and still reaches the later checks' (($r -match 'patch-level difference accepted') -and ($r -match 'invalid table name'))
+$r = Run-Recovery @('-DataDirCopy', "$T\copy_noother", '-WorkRoot', "$T\wr2", '-Database', 'mysql');                      Check 'T2 the shared mysql schema can never be the target database' ($r -match 'system schema')
 Check 'T2 refusals created no container' (@(& docker ps -a --filter 'name=aawraq-datadir-recovery' --format '{{.Names}}').Count -eq 0)
 
 Write-Host "`n=== T3: one corrupted table must not stop the others"
@@ -136,6 +164,23 @@ if ($rep4) {
   Check 'T4 nothing from the other site is in the dump' (($x4 -notmatch 'other_site') -and ($x4 -notmatch 'other-site-private'))
 }
 & powershell -NoProfile -File $rec -Remove -WorkRoot "$T\wr4" | Out-Null
+
+Write-Host "`n=== T5: the redaction and anonymisation helpers, extracted from the script under test"
+$perr = $null; $ptok = $null
+$ast = [System.Management.Automation.Language.Parser]::ParseFile($rec, [ref]$ptok, [ref]$perr)
+$wantFns = @('Redact-Log', 'Anon-Name', 'Anon-Path', 'Parse-Version')
+foreach ($fn in @($ast.FindAll({ param($n) ($n -is [System.Management.Automation.Language.FunctionDefinitionAst]) -and ($wantFns -contains $n.Name) }, $true))) { Invoke-Expression $fn.Extent.Text }
+foreach ($as in @($ast.FindAll({ param($n) ($n -is [System.Management.Automation.Language.AssignmentStatementAst]) -and ($n.Left.Extent.Text -eq '$RootFileOk') }, $true))) { Invoke-Expression $as.Extent.Text }
+$sysDirs = @('mysql', 'performance_schema', 'sys', 'information_schema'); $Database = 'aawraq_selftest'
+Check 'T5 the helpers were found in the script' ((Get-Command Redact-Log -ErrorAction SilentlyContinue) -and (Get-Command Anon-Path -ErrorAction SilentlyContinue) -and $RootFileOk)
+$nasty = '2026-11-06 20:00:15 0 [ERROR] Access denied for user ''siteb_user''@''10.1.2.3'' (using password: YES) identified by Hunter2 on `other_db`.`wp_users` file ./other_db/wp_users.ibd and Table other_db/wp_options at /var/lib/mysql/other_db/x.frm'
+$red = (Redact-Log $nasty 6) -join ' | '
+Check 'T5 account names, hosts, IPs, passwords, db.table names and paths are redacted from server log lines' ($red -notmatch 'siteb_user|10\.1\.2\.3|Hunter2|other_db|wp_users|wp_options|/var/lib/mysql')
+Check 'T5 redaction keeps the useful part of the message (the error class)' ($red -match 'ERROR' -and $red -match 'Access denied')
+Check 'T5 another database folder and its files become stable hashed aliases' (((Anon-Path 'other_site\other_things.ibd') -match '^other-db-[0-9a-f]{8}\\x-[0-9a-f]{8}$') -and ((Anon-Path 'other_site\other_things.ibd') -eq (Anon-Path 'other_site\other_things.ibd')) -and ((Anon-Path 'other_site\a.ibd') -notmatch 'other_site'))
+Check 'T5 our database, the system folders and standard datadir files stay readable' (((Anon-Path 'aawraq_selftest\books.ibd') -eq 'aawraq_selftest\books.ibd') -and ((Anon-Path 'mysql\user.MAD') -eq 'mysql\user.MAD') -and ((Anon-Path 'ibdata1') -eq 'ibdata1') -and ((Anon-Path 'ib_logfile0') -eq 'ib_logfile0'))
+Check 'T5 host-named root files (pid, binlog, error log) are aliased' (((Anon-Path 'my-host-bin.000001') -match '^x-[0-9a-f]{8}$') -and ((Anon-Path 'my-host.pid') -match '^x-[0-9a-f]{8}$') -and ((Anon-Path 'my-host.err') -match '^x-[0-9a-f]{8}$'))
+Check 'T5 version parsing' (((Parse-Version '10.11.6-MariaDB').Text -eq '10.11.6') -and ((Parse-Version 'mariadbd Ver 10.6.28-MariaDB-ubu2204 for debian').Minor -eq 6) -and ($null -eq (Parse-Version '10.6')))
 
 Write-Host "`n=== cleanup"
 Cleanup

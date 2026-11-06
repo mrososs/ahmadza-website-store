@@ -1,0 +1,24 @@
+=== A. MariaDB UNIT and PROCESS STATE (read-only) ===
+unit: mariadb
+ActiveState=inactive
+SubState=dead
+--- mariadbd / mysqld processes
+no mariadbd/mysqld process
+
+=== G. SUMMARY FLAGS (machine-readable: scripts/vps/classify-inspection.mjs reads them) ===
+FLAG mariadb_active=inactive
+FLAG mariadb_unit_state=inactive/dead
+FLAG mariadb_process_state=none
+FLAG mariadb_threads_in_d_state=0
+FLAG mariadb_ping=no_response
+FLAG mariadb_version=10.6.28
+FLAG datadir=/var/lib/mysql
+FLAG force_recovery_in_config=none
+FLAG encryption_hint=no
+FLAG redo_layout=classic_ib_logfile
+FLAG undo_layout=in_ibdata1
+FLAG datadir_changing=no
+FLAG datadir_size_mb=8800
+FLAG db_dirs=4
+FLAG books_table_files=1
+FLAG dump_candidates=0

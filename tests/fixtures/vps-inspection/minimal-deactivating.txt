@@ -1,0 +1,32 @@
+=== A. MariaDB UNIT and PROCESS STATE (read-only) ===
+Fri Nov  6 20:05:35 UTC 2026
+unit: mariadb
+ActiveState=deactivating
+SubState=stop-sigterm
+Result=success
+MainPID=1234
+--- mariadbd / mysqld processes
+pid=1234 ppid=1 stat=Dsl age_s=864000 wchan=io_schedule threads=48 rss_kb=1820000
+threads in uninterruptible I/O wait (D state): 3
+--- does it answer? (one ping, 5 s timeout, socket, no credentials)
+mysqladmin: connect to server at 'localhost' failed
+
+=== G. SUMMARY FLAGS (machine-readable: scripts/vps/classify-inspection.mjs reads them) ===
+FLAG mariadb_active=deactivating
+FLAG mariadb_unit_state=deactivating/stop-sigterm
+FLAG mariadb_process_state=running_with_D_state_threads
+FLAG mariadb_threads_in_d_state=3
+FLAG mariadb_ping=no_response
+FLAG mariadb_version=10.6.28
+FLAG datadir=/var/lib/mysql
+FLAG force_recovery_in_config=none
+FLAG encryption_hint=no
+FLAG redo_layout=classic_ib_logfile
+FLAG undo_layout=in_ibdata1
+FLAG datadir_changing=yes
+FLAG datadir_size_mb=8800
+FLAG datadir_fs_free_mb=52000
+FLAG db_dirs=4
+FLAG books_table_files=1
+FLAG dump_candidates=0
+FLAG lvm_free_mb=none

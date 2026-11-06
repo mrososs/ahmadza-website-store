@@ -1,0 +1,10 @@
+=== G. SUMMARY FLAGS (machine-readable: scripts/vps/classify-inspection.mjs reads them) ===
+FLAG mariadb_active=inactive
+FLAG mariadb_unit_state=inactive/dead
+FLAG mariadb_process_state=none
+FLAG mariadb_threads_in_d_state=0
+FLAG mariadb_ping=no_response
+FLAG mariadb_version=10.6.28
+FLAG datadir=/var/lib/mysql
+FLAG datadir_changing=yes
+FLAG encryption_hint=no

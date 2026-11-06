@@ -2,6 +2,24 @@
 
 You need: WinSCP (already working for you) and the Hostinger **Web Console** (browser terminal, root). You will **not** share any password or key with anyone: the script never asks for one, and the output it produces is sanitised.
 
+## Step 0 — run the MINIMAL MariaDB check first (about 15 seconds)
+
+MariaDB on the production server is stuck in the *deactivating* state, so its files may be mid-write. Before the full inspection (which walks the whole filesystem) run the small script that answers only the safety questions: process state, exact version, data directory, redo/undo layout, whether the files are still changing, backup candidates, encryption. It is strictly read-only and sends no SQL. Everything about it, including the complete diff against the script version you reviewed, is in `VPS_INSPECT_SCRIPT_CHANGES.md`; the reasoning is in `SAFE_ACQUISITION_PLAN.md`.
+
+1. Upload `scripts/vps/minimal-mariadb-check.sh` to `/root/aawraq-inspect/` with WinSCP in **Binary** mode.
+2. In the Web Console (as root), verify and run:
+```bash
+cd /root/aawraq-inspect
+sha256sum minimal-mariadb-check.sh      # compare with the value in docs/implementation/VPS_INSPECT_SCRIPT_CHANGES.md
+bash -n minimal-mariadb-check.sh && echo SYNTAX_OK
+bash minimal-mariadb-check.sh > aawraq-mariadb-check.txt 2>&1
+tail -n 24 aawraq-mariadb-check.txt     # the FLAG lines
+```
+3. Look at the output yourself (it is sanitised, but check), download it with WinSCP, and on this PC run `node scripts/vps/classify-inspection.mjs aawraq-mariadb-check.txt`.
+4. **If it reports D-state threads, or a unit that is not `active`/`inactive`, stop here.** Do not run the full script and do not copy any database file. Send support the questions in `SAFE_ACQUISITION_PLAN.md` section 3.
+
+The remaining steps below are the full inspection; run them only if Step 0 shows MariaDB is not in a stuck I/O state.
+
 ## What it does and does not do
 * Reads: system and service state, directory sizes and listings, file **names, sizes, dates, permissions**, MariaDB data-directory table-file names, the tail of the MariaDB error log, backup/dump/archive **names**, suspicious-file **names**.
 * Never: modifies, moves, deletes, `chmod`s, restarts or starts anything; opens archives or databases; connects to MariaDB with credentials; executes any file it finds; prints `.env` values (only the key names and eight non-secret settings), password hashes or keys.

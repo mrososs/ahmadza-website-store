@@ -144,7 +144,7 @@ echo "  InnoDB / recovery / corruption lines in the error log (last 20):"
 for f in "$DD"/*.err /var/log/mariadb/mariadb.log /var/log/mysqld.log; do [ -r "$f" ] && { grep -iE 'innodb|crash|corrupt|recover|abort|disk full|no space|error' "$f" | tail -n 20; break; }; done
 echo "--- MariaDB version and the settings that decide whether a file-level copy can be recovered on another machine (state only)"
 rpm -qa 2>/dev/null | grep -iE '^(mariadb|mysql)' | head -8
-MDB_VER_LINE=$( (mariadbd --version || mysqld --version) 2>&1 | head -1 )   # prints the version and exits; it does NOT start a server
+MDB_VER_LINE=$( (mariadbd --version || mysqld --version) 2>&1 | grep -E 'Ver [0-9]' | head -1 )   # prints the version and exits; it does NOT start a server
 echo "$MDB_VER_LINE"
 MDB_VER=$(printf '%s' "$MDB_VER_LINE" | grep -oE 'Ver [0-9]+\.[0-9]+\.[0-9]+' | head -1 | cut -d' ' -f2)
 echo "--- server configuration files (comments and blank lines removed; secrets are masked by the sanitiser)"

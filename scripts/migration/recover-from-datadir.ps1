@@ -1,8 +1,9 @@
 # Recover the catalogue tables from a COPY of the legacy MariaDB physical files (datadir), without touching the VPS or the copy itself.
 #
 #   powershell -NoProfile -File scripts/migration/recover-from-datadir.ps1 -DataDirCopy D:\mostqel\aawraq-quarantine\mysql-copy
-#   optional: -Database aawraq_db  -Image mariadb:10.6  -WorkRoot D:\mostqel\aawraq-recovery  -Tables books,book_media,...
-#             -EncryptionHint no|yes|unknown  -HashAll  -NoVerify  -RestorePort 33306  -Remove
+#   REQUIRED: -SourceVersion X.Y.Z   the EXACT MariaDB version that wrote the copy (inspection FLAG mariadb_version). Never assumed, never defaulted.
+#   optional: -Database aawraq_db  -Image mariadb:X.Y.Z  -WorkRoot D:\mostqel\aawraq-recovery  -Tables books,book_media,...
+#             -EncryptionHint no|yes|unknown  -HashAll  -NoVerify  -RestorePort 33306  -AllowPatchDifference  -KeepRawLog  -Remove
 #
 # What it guarantees
 #   * The downloaded copy is NEVER opened for writing: it is hashed (manifest), then copied to a work directory; every attempt starts from a
@@ -13,11 +14,18 @@
 #   * Tables are extracted ONE BY ONE: a corrupt table is reported and skipped, readable tables are still recovered (incremental recovery).
 #   * Only catalogue tables are dumped by default. Customer / financial tables are never dumped unless -IncludeSensitive and -OwnerAuthorised.
 #     (They stay safe in the untouched copy and can be extracted later from it.)
+#   * The recovery server must be the SAME MariaDB version family as the server that wrote the files (another major.minor may refuse to replay a crashed
+#     redo log or silently misread it). The image version is read BEFORE anything is copied and must equal -SourceVersion (patch drift needs
+#     -AllowPatchDifference); a major.minor mismatch is always refused. The datadir's own mysql_upgrade_info is cross-checked.
+#   * Privacy: the copy holds OTHER sites' databases and the shared `mysql` schema (their password hashes). Neither is ever dumped. Other databases'
+#     folder names and host-named files are replaced by hashed aliases in the manifest and the console; server logs are printed only after redaction
+#     (account names, hosts, IPs, db.table names, paths, secrets) and raw logs are saved only with -KeepRawLog (private folder, never for sharing).
 #   * The dump is verified by restoring it into the isolated restore container and comparing row counts and CHECKSUM TABLE with the recovered server.
 param(
   [string]$DataDirCopy,
   [string]$Database,
-  [string]$Image = 'mariadb:10.6',
+  [string]$SourceVersion,
+  [string]$Image,
   [string]$WorkRoot = 'D:\mostqel\aawraq-recovery',
   [string[]]$Tables = @('books', 'book_media', 'categories', 'makers', 'related_books', 'site_infos', 'articles', 'pages'),
   [string[]]$Critical = @('books', 'book_media', 'categories', 'makers'),
@@ -27,6 +35,8 @@ param(
   [int]$RestorePort = 33306,
   [switch]$IncludeSensitive,
   [switch]$OwnerAuthorised,
+  [switch]$AllowPatchDifference,
+  [switch]$KeepRawLog,
   [switch]$Remove
 )
 # 'Continue' on purpose: Windows PowerShell 5.1 turns ANY native stderr line into a terminating error under 'Stop'.
@@ -43,6 +53,38 @@ function Remove-Container { if (& docker ps -a --filter "name=^$Name$" --format 
 # SQL on the recovery server (socket, no credentials: grant tables are skipped and there is no network)
 function Sql([string]$q) { $o = & docker exec $Name mariadb --protocol=socket -uroot --batch --skip-column-names -e $q 2>&1; return @{ Code = $LASTEXITCODE; Out = (($o | Out-String).Trim()) } }
 function Sha256([string]$f) { (Get-FileHash -Algorithm SHA256 -LiteralPath $f).Hash.ToLower() }
+
+# ---- privacy helpers: nothing from OTHER sites on the same server, and no credentials, may reach the console or a report ---------------------
+# The copy is a whole MariaDB datadir. Besides our database it holds other applications' databases (their names are other-site metadata) and the shared
+# mysql system schema (their accounts and password hashes). This script never dumps either, and never prints their names.
+function Redact-Log($text, [int]$Max = 6) {
+  $lines = @(([string]$text -split "`r?`n") | Where-Object { $_.Trim() })
+  $out = foreach ($l in $lines) {
+    $x = $l
+    $x = [regex]::Replace($x, "'[^']*'@'[^']*'", "'<user>'@'<host>'")
+    $x = [regex]::Replace($x, '\b\d{1,3}(\.\d{1,3}){3}\b', '<ip>')
+    $x = [regex]::Replace($x, '`([^`]+)`\.`([^`]+)`', '<db>.<table>')
+    $x = [regex]::Replace($x, '(?i)(table|tablespace|file)(\s+)''?`?[A-Za-z0-9_$#-]+/[A-Za-z0-9_$#.-]+', '$1$2<db>/<table>')
+    $x = [regex]::Replace($x, '(?i)(\./|/var/lib/mysql/|[A-Za-z]:[\\/])[^\s''",;)]*', '<path>')
+    $x = [regex]::Replace($x, '(?i)\b(password|passwd|pwd|identified by|token|secret)\b\s*[=:]?\s*\S+', '$1 <redacted>')
+    $x = [regex]::Replace($x, '^\s*\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}:\d{2}\s+(\d+\s+)?', '')
+    if ($x.Length -gt 220) { $x = $x.Substring(0, 220) + '...' }
+    $x
+  }
+  return @($out | Select-Object -Last $Max)
+}
+# Stable, non-reversible alias for a folder or file name that belongs to another application or to the host (two runs still compare equal).
+function Anon-Name([string]$n) { 'x-' + ([BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($n))).Replace('-', '').ToLower().Substring(0, 8)) }
+$RootFileOk = '^(ibdata\d*|ib_logfile\d+|ib_buffer_pool|ddl_recovery(-backup)?\.log|aria_log(_control|\.\d+)|mysql_upgrade_info|undo\d+|ibtmp\d*|multi-master\.info|tc\.log|auto\.cnf|ib_16384_.*)$'
+function Anon-Path([string]$rel) {
+  $parts = $rel -split [regex]::Escape([string][char]92)
+  if ($parts.Count -eq 1) { if ($rel -match $RootFileOk) { return $rel } else { return (Anon-Name $rel) } }   # host-named files (*.pid, *-bin.*, *.err) carry the host name
+  if ($sysDirs -contains $parts[0] -or $parts[0] -ieq $Database) { return $rel }
+  $parts[0] = 'other-db-' + (Anon-Name $parts[0]).Substring(2)
+  for ($i = 1; $i -lt $parts.Count; $i++) { $parts[$i] = Anon-Name $parts[$i] }
+  return ($parts -join [string][char]92)
+}
+function Parse-Version([string]$s) { if ($s -match '(\d+)\.(\d+)\.(\d+)') { return @{ Major = [int]$Matches[1]; Minor = [int]$Matches[2]; Patch = [int]$Matches[3]; Text = "$($Matches[1]).$($Matches[2]).$($Matches[3])" } } else { return $null } }
 
 if ($Remove) {
   Remove-Container; Ok "container $Name removed"
@@ -64,17 +106,43 @@ if (-not (Test-Path "$src\mysql" -PathType Container)) { Fail "no mysql\ system 
 if ($EncryptionHint -eq 'yes') { Fail "the inspection reported encryption settings: encrypted tablespaces cannot be read without the server's key files. Stop and discuss before continuing" }
 $sysDirs = @('mysql', 'performance_schema', 'sys', 'information_schema', '#innodb_redo', '#innodb_temp', '#rocksdb')
 $dbDirs = @(Get-ChildItem -LiteralPath $src -Directory | Where-Object { $sysDirs -notcontains $_.Name } | Select-Object -ExpandProperty Name)
+# the names of other applications' database folders are other-site metadata: counted here, never printed
 if (-not $Database) {
-  if ($dbDirs.Count -eq 1) { $Database = $dbDirs[0] } else { Fail "-Database is required: the copy holds $($dbDirs.Count) application database folders ($($dbDirs -join ', '))" }
+  if ($dbDirs.Count -eq 1) { $Database = $dbDirs[0] } else { Fail "-Database is required: the copy holds $($dbDirs.Count) application database folders (names withheld: they may belong to other sites). Pass the name of OUR application's database" }
 }
 if ($Database -notmatch '^[A-Za-z0-9_]{1,64}$') { Fail "-Database must be a plain identifier" }
-if (-not (Test-Path "$src\$Database" -PathType Container)) { Fail "no folder '$Database' in the copy (available: $($dbDirs -join ', '))" }
+if ($sysDirs -contains $Database.ToLower()) { Fail "-Database cannot be a system schema: the shared mysql schema holds other sites' password hashes and is never recovered or dumped" }
+if (-not (Test-Path "$src\$Database" -PathType Container)) { Fail "no folder '$Database' in the copy ($($dbDirs.Count) application database folders present, names withheld)" }
+
+# ---- 1b. the EXACT MariaDB version: required, never assumed, checked on the image BEFORE anything is copied or started --------------------------
+if (-not $SourceVersion) { Fail "-SourceVersion X.Y.Z is required: the exact MariaDB version that wrote this copy (the inspection prints it as FLAG mariadb_version). It is never assumed or defaulted" }
+$want = Parse-Version $SourceVersion
+if (-not $want -or $SourceVersion -notmatch '^\d+\.\d+\.\d+$') { Fail "-SourceVersion must look like 10.11.6 (major.minor.patch), got '$SourceVersion'" }
+if (-not $Image) { $Image = "mariadb:$($want.Text)" }
+if ($Image -notmatch '^[a-z0-9][a-z0-9._/-]*:[A-Za-z0-9._-]+$') { Fail "-Image must be a plain image reference such as mariadb:$($want.Text)" }
+$upg = Join-Path $src 'mysql_upgrade_info'
+if (Test-Path -LiteralPath $upg) {
+  $uv = Parse-Version ((Get-Content -LiteralPath $upg -TotalCount 1) -join '')
+  if ($uv) {
+    if ($uv.Major -ne $want.Major -or $uv.Minor -ne $want.Minor) { Fail "the copy's own mysql_upgrade_info says $($uv.Text) but -SourceVersion is $($want.Text): wrong version family. Re-check the inspection output" }
+    if ($uv.Patch -ne $want.Patch) { Info "note: mysql_upgrade_info records $($uv.Text) (the last upgrade), -SourceVersion is $($want.Text): normal after patch updates" }
+  }
+}
+$iv = (& docker run --rm --network none --entrypoint sh $Image -c 'mariadbd --version 2>&1 || mysqld --version 2>&1' 2>&1 | Out-String)
+$have = Parse-Version (($iv -split "`r?`n" | Where-Object { $_ -match 'Ver\s+\d' } | Select-Object -First 1))
+if (-not $have) { Fail "could not read the MariaDB version of image $Image (pull the exact tag first: docker pull $Image)" }
+if ($have.Major -ne $want.Major -or $have.Minor -ne $want.Minor) { Fail "image $Image is MariaDB $($have.Text) but the copy was written by $($want.Text): a different major.minor may refuse to replay the crashed redo log or misread it. Use an image of the same major.minor (ideally mariadb:$($want.Text))" }
+if ($have.Patch -ne $want.Patch) {
+  if (-not $AllowPatchDifference) { Fail "image $Image is MariaDB $($have.Text), the copy was written by $($want.Text): not the exact version. Pull mariadb:$($want.Text), or pass -AllowPatchDifference to accept patch-level drift inside the same $($want.Major).$($want.Minor) series" }
+  Write-Host "WARNING: patch-level difference accepted ($($have.Text) vs $($want.Text)), same $($want.Major).$($want.Minor) series" -ForegroundColor Yellow
+}
+Ok "MariaDB version: copy written by $($want.Text); recovery image $Image is $($have.Text)"
 foreach ($t in $Tables) { if ($t -notmatch '^[A-Za-z0-9_]{1,64}$') { Fail "invalid table name '$t'" } }
 $wanted = @($Tables | ForEach-Object { $_.ToLower() })
 $sens = @($wanted | Where-Object { $Sensitive -contains $_ })
 if ($sens.Count -gt 0 -and -not ($IncludeSensitive -and $OwnerAuthorised)) { Fail "customer/financial tables requested ($($sens -join ', ')): needs -IncludeSensitive and -OwnerAuthorised (written owner authorisation). Catalogue tables only by default" }
 $srcBytes = (Get-ChildItem -LiteralPath $src -Recurse -File -Force | Measure-Object Length -Sum).Sum
-Ok "copy accepted: $src ($([math]::Round($srcBytes/1MB,1)) MiB); database '$Database'; application databases: $($dbDirs -join ', ')"
+Ok "copy accepted: $src ($([math]::Round($srcBytes/1MB,1)) MiB); database '$Database'; application database folders in the copy: $($dbDirs.Count) (only '$Database' is read)"
 $drive = (Split-Path -Qualifier (New-Item -ItemType Directory -Force -Path $WorkRoot).FullName)
 $free = (Get-PSDrive ($drive.TrimEnd(':'))).Free
 if ($free -lt (2.5 * $srcBytes)) { Fail "work drive $drive has $([math]::Round($free/1GB,1)) GiB free, need about $([math]::Round(2.5*$srcBytes/1GB,1)) GiB (2.5x the copy)" }
@@ -94,7 +162,7 @@ function Get-Manifest([string]$root) {
 }
 $t0 = Get-Date
 $manifest = @(Get-Manifest $src)
-$manifest | Export-Csv -NoTypeInformation -Encoding ascii "$WorkRoot\out\manifest-source.csv"
+$manifest | ForEach-Object { [pscustomobject]@{ path = (Anon-Path $_.path); bytes = $_.bytes; sha256 = $_.sha256 } } | Export-Csv -NoTypeInformation -Encoding ascii "$WorkRoot\out\manifest-source.csv"   # other sites' folder names and host-named files are aliased
 $manifestId = ($manifest | ForEach-Object { "$($_.path)|$($_.bytes)|$($_.sha256)" } | Sort-Object) -join "`n"
 $manifestSha = [BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($manifestId))).Replace('-', '').ToLower()
 Ok "manifest of the pristine copy: $($manifest.Count) files, fingerprint $manifestSha ($([math]::Round(((Get-Date)-$t0).TotalSeconds,1)) s) -> out\manifest-source.csv"
@@ -133,27 +201,39 @@ function Probe-Tables {
   foreach ($t in $wanted) {
     if (-not $present.ContainsKey($t)) { $status[$t] = @{ state = 'absent'; rows = $null; error = 'table not present in the database folder' }; continue }
     $c = Sql "SELECT COUNT(*) FROM ``$Database``.``$t``"
-    if ($c.Code -ne 0) { $status[$t] = @{ state = 'unreadable'; rows = $null; error = ($c.Out -split "`r?`n" | Select-Object -First 1) }; continue }
+    if ($c.Code -ne 0) { $status[$t] = @{ state = 'unreadable'; rows = $null; error = ((Redact-Log $c.Out 1) -join ' ') }; continue }
     # COUNT(*) can be answered from a secondary index without touching a damaged data page, so it proves nothing about integrity:
     # CHECK TABLE reads every page of the clustered and secondary indexes. A table that counts but fails the check is 'damaged'.
     $ck = Sql "CHECK TABLE ``$Database``.``$t``"
     $bad = @(($ck.Out -split "`r?`n") | Where-Object { $_.Trim() -and (($_ -split "`t")[-1]).Trim() -ne 'OK' })
-    if ($ck.Code -ne 0 -or $bad.Count -gt 0) { $status[$t] = @{ state = 'damaged'; rows = [int64]$c.Out; error = (($bad | Select-Object -First 2) -join ' | ') } }
+    if ($ck.Code -ne 0 -or $bad.Count -gt 0) { $status[$t] = @{ state = 'damaged'; rows = [int64]$c.Out; error = ((Redact-Log ($bad -join "`n") 2) -join ' | ') } }
     else { $status[$t] = @{ state = 'readable'; rows = [int64]$c.Out; error = $null } }
   }
   return @{ present = @($present.Keys); status = $status }
 }
 function Score($p) { @($Critical | Where-Object { $p.status.ContainsKey($_) -and $p.status[$_].state -eq 'readable' }).Count }
 
-$best = $null; $levelUsed = $null; $attempts = @()
+$best = $null; $levelUsed = $null; $attempts = @(); $serverVersion = $null
 for ($level = 0; $level -le $MaxForce; $level++) {
   Write-Host "`n--- attempt: innodb_force_recovery=$level (fresh copy of the pristine copy, no network)"
   $s = Start-Level $level
   if (-not $s.Up) {
-    $logTail = (& docker logs --tail 12 $Name 2>&1 | Out-String).Trim()
-    Info "server did not come up: $($s.Why)"; ($logTail -split "`r?`n" | Select-Object -Last 6) | ForEach-Object { Info "  | $_" }
+    $rawLog = (& docker logs --tail 40 $Name 2>&1 | Out-String)
+    if ($KeepRawLog) {
+      New-Item -ItemType Directory -Force -Path "$WorkRoot\private" | Out-Null
+      "RAW server log. May contain other sites' database names and account names. PRIVATE: never share, never commit." | Set-Content -Encoding ascii "$WorkRoot\private\README.txt"
+      $rawLog | Set-Content -Encoding utf8 "$WorkRoot\private\server-log-level$level.txt"
+    }
+    Info "server did not come up: $($s.Why)"; (Redact-Log $rawLog 6) | ForEach-Object { Info "  | $_" }   # redacted: no accounts, hosts, db.table names, paths
+    $rawLog = $null
     $attempts += @{ level = $level; up = $false; why = $s.Why }
     continue
+  }
+  if (-not $serverVersion) {
+    $serverVersion = (Sql 'SELECT VERSION()').Out
+    $sv = Parse-Version $serverVersion
+    if (-not $sv -or $sv.Major -ne $want.Major -or $sv.Minor -ne $want.Minor) { Remove-Container; Fail "the running recovery server reports version '$serverVersion', not the $($want.Major).$($want.Minor) series of the copy - refusing to read it" }
+    Info "recovery server version: $serverVersion"
   }
   $p = Probe-Tables
   $score = Score $p
@@ -182,11 +262,11 @@ Write-Host "`n--- extraction (schema of every table + data of the readable reque
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $sch = & docker exec $Name sh -c "mariadb-dump --protocol=socket -uroot --no-data --skip-lock-tables --default-character-set=utf8mb4 $Database > /tmp/schema.sql" 2>&1
 $schemaOk = ($LASTEXITCODE -eq 0)
-if ($schemaOk) { Ok "schema of all tables extracted" } else { Info "schema-only dump of the whole database failed ($($sch | Select-Object -First 1)); extracting per table instead" }
+if ($schemaOk) { Ok "schema of all tables extracted" } else { Info "schema-only dump of the whole database failed ($((Redact-Log ($sch | Out-String) 1) -join ' ')); extracting per table instead" }
 $dumped = @{}
 foreach ($t in $readable) {
   $o = & docker exec $Name sh -c "mariadb-dump --protocol=socket -uroot --default-character-set=utf8mb4 --skip-lock-tables --single-transaction --hex-blob $Database $t > /tmp/t_$t.sql" 2>&1
-  if ($LASTEXITCODE -eq 0) { $dumped[$t] = $true; Ok "table $t extracted" } else { $dumped[$t] = $false; Info "table $t FAILED: $($o | Select-Object -First 1)" }
+  if ($LASTEXITCODE -eq 0) { $dumped[$t] = $true; Ok "table $t extracted" } else { $dumped[$t] = $false; Info "table $t FAILED: $((Redact-Log ($o | Out-String) 1) -join ' ')" }
 }
 $parts = @(); if ($schemaOk) { $parts += '/tmp/schema.sql' }; foreach ($t in $readable) { if ($dumped[$t]) { $parts += "/tmp/t_$t.sql" } }
 if ($parts.Count -eq 0) { Remove-Container; Fail "nothing could be extracted" }
@@ -258,6 +338,7 @@ if (-not $NoVerify) {
 # ---- 7. report -----------------------------------------------------------------------------------------------------------------------
 $report = [ordered]@{
   generated = (Get-Date).ToString('s'); source_copy = $src; source_manifest_fingerprint = $manifestSha; source_files = $manifest.Count; database = $Database; image = $Image
+  source_version = $want.Text; image_version = $have.Text; recovery_server_version = $serverVersion; other_application_database_folders = $dbDirs.Count   # count only: their names are other-site metadata
   innodb_force_recovery_used = $levelUsed; attempts = $attempts; critical = $Critical
   critical_readable = $(Score @{ status = $probe.status }); dump = $dumpName; dump_sha256 = $dumpSha; sensitive_tables_dumped = ($sens.Count -gt 0)
   tables = ($wanted | ForEach-Object { [ordered]@{ table = $_; state = $probe.status[$_].state; rows = $probe.status[$_].rows; error = $probe.status[$_].error; dumped = [bool]$dumped[$_]; checksum = $sums[$_]; verified = $verify[$_]; salvage = $salvage[$_] } })

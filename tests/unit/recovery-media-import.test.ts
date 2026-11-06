@@ -21,13 +21,24 @@ describe('buildBookRow', () => {
     const s = stagingRow(a)
     const row = buildBookRow({ analysis: a, staging: s })
     expect(row).toMatchObject({ title: 'A Real Book Title', kind: 'paid', status: 'draft', price_amount: 0, legacy_cost_raw: null, provenance: 'recovered_media', is_demo: false })
-    expect(row.recovery_evidence).toEqual({
+    expect(row.recovery_evidence).toMatchObject({
       source: 'pdf_metadata', sha256: a.sha256, byte_size: a.size,
       pdf: { title: 'A Real Book Title', author: 'Some Author', pages: 5, created: null },
       staging_id: s.id, note: EVIDENCE_NOTE,
     })
     expect(EVIDENCE_NOTE).toBe('price and original record unknown; admin review required')
     expect(Object.keys(row)).not.toEqual(expect.arrayContaining(['category', 'maker', 'owner_id', 'legacy_id', 'cover_path', 'legacy_verified_at']))
+  })
+
+  it('preserves the original file path and name, lists identical copies, records what was verified, and states explicitly what is unknown', () => {
+    const a = good()
+    const st = stagingRow(a, { legacy_path: 'storage/app/public/product_media/some-original-name-1600000001.pdf', av_result: 'clean', scanned_at: '2026-11-06T10:00:00Z' })
+    const ev = buildBookRow({ analysis: a, staging: st, duplicatePaths: ['storage/app/public/product_media/copy-1600000002.pdf'] }).recovery_evidence
+    expect(ev.source_file).toEqual({ legacy_path: st.legacy_path, original_name: 'some-original-name-1600000001.pdf', duplicate_paths: ['storage/app/public/product_media/copy-1600000002.pdf'] })
+    expect(ev.checks).toMatchObject({ hash_verified: true, size_verified: true, active_content: 'none found', encrypted: false, malware_scan: 'clean', scanned_at: '2026-11-06T10:00:00Z' })
+    expect(Object.keys(ev.uncertain).sort()).toEqual(['author', 'categories', 'kind', 'price', 'publication_status', 'title'])
+    expect(ev.uncertain.price).toMatch(/never inferred/)
+    expect(ev.uncertain.author).toMatch(/unverified/)
   })
 
   it('trims and caps the title at 250 characters', () => {

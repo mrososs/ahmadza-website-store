@@ -10,8 +10,9 @@ export const EVIDENCE_NOTE = 'price and original record unknown; admin review re
 const cleanTitle = (t) => String(t ?? '').replace(/\s+/g, ' ').trim().slice(0, TITLE_MAX).trim()
 
 /** The books row for one recovered PDF. Only evidence from the file is used. */
-export function buildBookRow({ analysis, staging, isDemo = false }) {
+export function buildBookRow({ analysis, staging, isDemo = false, duplicatePaths = [] }) {
   const title = cleanTitle(analysis.title)
+  const originalName = String(staging.legacy_path ?? '').split('/').pop() || null
   return {
     title,
     kind: 'paid',
@@ -31,6 +32,22 @@ export function buildBookRow({ analysis, staging, isDemo = false }) {
         created: analysis.created ?? null,
       },
       staging_id: staging.id,
+      // where the file came from, exactly as recovered: the original path and file name, and any identical copies found under other names
+      source_file: { legacy_path: staging.legacy_path ?? null, original_name: originalName, duplicate_paths: duplicatePaths },
+      // what was checked before this draft was allowed to exist
+      checks: {
+        hash_verified: true, size_verified: true, active_content: 'none found', encrypted: false,
+        malware_scan: staging.av_result ?? 'unknown', scanned_at: staging.scanned_at ?? null,
+      },
+      // everything below is UNKNOWN and was never inferred: the administrator must supply or confirm it
+      uncertain: {
+        price: 'unknown: never inferred from the file; price_amount 0 is a placeholder and the book cannot be published without a valid price',
+        kind: "paid is a placeholder; whether the book is free or paid is unknown",
+        author: 'not assigned: a name shown in the PDF metadata above is unverified and has not been linked to any author record',
+        categories: 'unknown: none assigned',
+        publication_status: 'unknown: there is no original record of whether this book was ever published',
+        title: 'taken from the file metadata; not verified against any catalogue record',
+      },
       note: EVIDENCE_NOTE,
     },
   }
@@ -85,7 +102,8 @@ export function planImport({ staging, evidence, existing, assumeStaged = false, 
     if (plan.create.length >= limit) { skip('over_limit'); continue }
     plan.create.push({
       sha256: sha, staging_id: canonical.id, legacy_path: canonical.legacy_path, duplicate_paths: list.length - 1,
-      title: cleanTitle(analysis.title), book: buildBookRow({ analysis, staging: canonical, isDemo }),
+      title: cleanTitle(analysis.title),
+      book: buildBookRow({ analysis, staging: canonical, isDemo, duplicatePaths: list.filter((s) => s !== canonical).map((s) => s.legacy_path) }),
     })
   }
   return plan

@@ -5,7 +5,17 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { ROOT } from './paths.mjs'
 
-export function loadEnv(file = path.join(ROOT, '.env')) {
+/**
+ * Which environment file the migration scripts read. Default: the everyday dev stack (.env). AAWRAQ_ENV_FILE may name ONE other file, and only the isolated recovery
+ * stack's (.env.recovery, in the repository root): nothing else can be selected, and the URL guard below still refuses anything that is not local.
+ */
+export function envFileFromChoice(choice = process.env.AAWRAQ_ENV_FILE) {
+  if (!choice) return path.join(ROOT, '.env')
+  if (choice !== '.env.recovery') throw new Error(`AAWRAQ_ENV_FILE may only be .env.recovery (got ${JSON.stringify(choice)})`)
+  return path.join(ROOT, choice)
+}
+
+export function loadEnv(file = envFileFromChoice()) {
   return Object.fromEntries(
     readFileSync(file, 'utf8').split(/\r?\n/).filter((l) => l && !l.startsWith('#') && l.includes('='))
       .map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]),

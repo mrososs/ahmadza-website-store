@@ -18,6 +18,17 @@ interface Rejects { items: { id: number; run_id: number | null; entity: string; 
 const { data, pending, error, refresh } = useFetch<Summary>('/api/admin/recovery/summary', { server: false })
 const errorText = computed(() => (error.value ? adminErrorMessage(error.value) : ''))
 const showRejects = ref(false)
+
+// Review queue: recovered books that still need something before they can be published, one by one.
+interface QueueItem { id: number; title: string; provenance: string; workflow: string | null; reasons: string[]; verified: boolean; has_cover: boolean; file_validated: boolean; original_name: string | null; pdf_author: string | null; pages: number | null; scan: string | null }
+interface Queue { items: QueueItem[]; total: number; page: number; pageSize: number }
+const queue = ref<Queue | null>(null)
+const queueError = ref('')
+async function loadQueue(page = 1) {
+  queueError.value = ''
+  try { queue.value = await adminFetch<Queue>('/api/admin/recovery/queue', { query: { page } }) } catch (e) { queueError.value = (e as Error).message }
+}
+onMounted(() => { void loadQueue() })
 const rejects = ref<Rejects | null>(null)
 const rejectsPage = ref(1)
 async function loadRejects(page = 1) {
@@ -71,6 +82,39 @@ const fmt = (n: number) => n.toLocaleString('en-US')
       <AdminStatCard color="success" icon="fa-check-circle" label="جاهزة للنشر" to="/admin/books?recovery=ready" :total="fmt(data.books.eligible)" />
       <AdminStatCard color="warning" icon="fa-exclamation-triangle" label="غير جاهزة" to="/admin/books?recovery=not_ready" :total="fmt(data.books.blocked)" />
       <AdminStatCard color="danger" icon="fa-file-o" label="بلا ملف موثق" to="/admin/books?recovery=missing_media" :total="fmt(data.books.without_validated_media)" />
+
+      <div class="col-12 mb-30" id="review-queue">
+        <div class="card"><div class="card-body">
+          <h5 class="card-title">طابور المراجعة <span v-if="queue" class="badge badge-warning">{{ fmt(queue.total) }}</span></h5>
+          <p class="text-muted">كتب مستعادة تحتاج إلى استكمال قبل النشر. افتح كل كتاب، أدخل السعر الصحيح وراجع البيانات واعتمده ثم انشره. لا شيء يُنشر تلقائياً، والأسماء المأخوذة من الملف غير موثقة ولا تُربط بأي مؤلف.</p>
+          <div v-if="queueError" class="alert alert-danger" role="alert">{{ queueError }}</div>
+          <p v-else-if="queue && !queue.items.length" class="mb-0">لا توجد كتب بانتظار المراجعة.</p>
+          <div v-else-if="queue" class="table-responsive">
+            <table class="table table-sm mb-2">
+              <thead><tr><th>الكتاب</th><th>الملف الأصلي</th><th>ما ينقص</th><th /></tr></thead>
+              <tbody>
+                <tr v-for="q in queue.items" :key="q.id">
+                  <td>
+                    <NuxtLink :to="`/admin/books/${q.id}`">{{ q.title }}</NuxtLink>
+                    <small class="d-block text-muted">
+                      <span v-if="q.pages">{{ q.pages }} صفحة · </span>
+                      <span v-if="q.pdf_author">المؤلف في الملف (غير موثق): {{ q.pdf_author }}</span>
+                    </small>
+                  </td>
+                  <td dir="ltr" class="text-right"><code>{{ q.original_name ?? '—' }}</code><small v-if="q.scan" class="d-block text-muted">scan: {{ q.scan }}</small></td>
+                  <td><span v-for="r in q.reasons" :key="r" class="badge badge-warning ml-1 d-inline-block mb-1">{{ readinessReasonLabel(r) }}</span></td>
+                  <td class="text-left"><NuxtLink class="btn btn-sm btn-primary" :to="`/admin/books/${q.id}`">مراجعة</NuxtLink></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-if="queue && queue.total > queue.pageSize">
+            <button class="btn btn-sm btn-light" type="button" :disabled="queue.page <= 1" @click="loadQueue(queue.page - 1)">السابق</button>
+            <span class="mx-2">{{ queue.page }} / {{ Math.ceil(queue.total / queue.pageSize) }}</span>
+            <button class="btn btn-sm btn-light" type="button" :disabled="queue.page * queue.pageSize >= queue.total" @click="loadQueue(queue.page + 1)">التالي</button>
+          </div>
+        </div></div>
+      </div>
 
       <div class="col-lg-6 mb-30">
         <div class="card h-100"><div class="card-body">

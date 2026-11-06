@@ -1,6 +1,8 @@
 // Idempotent, resumable import of verified recovered media into the PRIVATE local bucket `legacy-staging`.
 //   node scripts/migration/stage-media.mjs [--register-only] [--limit-bytes N] [--limit-files N] [--editor-limit N]
-//                                          [--batch-id ID] [--dry-run] [--verify]
+//                                          [--batch-id ID] [--dry-run] [--verify] [--sha-list <json>]
+// --sha-list restricts staging to the listed SHA-256 blobs (a JSON array, or an import dry-run plan with would_create_items): no editor uploads are staged then.
+// AAWRAQ_ENV_FILE=.env.recovery stages into the ISOLATED recovery stack instead of the dev stack (the only other target allowed; always local).
 // Layout: sha256/<aa>/<hash>.<ext> (content addressed; duplicates are uploaded once, every legacy path keeps its own
 // row in public.legacy_media_staging with duplicate_of -> canonical row). Nothing here attaches media to a book:
 // without the database there is no truthful mapping (see UNMAPPED_MEDIA).
@@ -18,6 +20,7 @@ const limitFiles = Number(opt('--limit-files', Infinity))
 const editorLimit = Number(opt('--editor-limit', 10))
 const batchId = opt('--batch-id', `batch-${new Date().toISOString().slice(0, 10)}-a`)
 const dry = flag('--dry-run')
+const shaListFile = opt('--sha-list')
 const root = opt('--quarantine', path.join(QUARANTINE, 'user-files'))
 const BUCKET = 'legacy-staging'
 
@@ -54,9 +57,16 @@ async function register() {
 async function stage() {
   if (!av?.clean) throw new Error('refusing to stage: no clean Defender scan report (migration-output/defender-scan.json). Run scan-quarantine.ps1 first.')
   const have = await existing()
-  const todo = inventory.filter((r) => r.accepted && r.extracted && !r.oversize && have.get(r.path)?.status !== 'staged' && have.get(r.path)?.status !== 'linked')
+  let allowed = null
+  if (shaListFile) {
+    const raw = JSON.parse(await readFile(shaListFile, 'utf8'))
+    const list = Array.isArray(raw) ? raw : (raw.would_create_items ?? []).map((i) => i.sha256)
+    allowed = new Set(list.map((x) => String(x).toLowerCase()).filter((x) => /^[0-9a-f]{64}$/.test(x)))
+    if (!allowed.size) throw new Error(`no SHA-256 values found in ${shaListFile}`)
+  }
+  const todo = inventory.filter((r) => r.accepted && r.extracted && !r.oversize && have.get(r.path)?.status !== 'staged' && have.get(r.path)?.status !== 'linked' && (!allowed || allowed.has(r.sha256)))
   const products = todo.filter((r) => r.scope === 'product').sort((a, b) => a.size - b.size || a.path.localeCompare(b.path))
-  const editors = todo.filter((r) => r.scope === 'editor' && ['png', 'jpeg', 'webp'].includes(r.detected_type) && r.size >= 20_000)
+  const editors = allowed ? [] : todo.filter((r) => r.scope === 'editor' && ['png', 'jpeg', 'webp'].includes(r.detected_type) && r.size >= 20_000)
     .sort((a, b) => a.path.localeCompare(b.path)).slice(0, editorLimit)
 
   const groups = new Map()

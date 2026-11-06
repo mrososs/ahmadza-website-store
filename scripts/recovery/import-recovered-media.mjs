@@ -41,7 +41,7 @@ const warnings = []
 const readStaging = async (client) => {
   const all = []
   for (let from = 0; ; from += 1000) {
-    const { data, error } = await client.from('legacy_media_staging').select('id,legacy_path,sha256,byte_size,detected_type,scope,status,duplicate_of,book_media_id,storage_path').order('id').range(from, from + 999)
+    const { data, error } = await client.from('legacy_media_staging').select('id,legacy_path,sha256,byte_size,detected_type,scope,status,duplicate_of,book_media_id,storage_path,av_result,scanned_at').order('id').range(from, from + 999)
     if (error) throw error
     all.push(...data)
     if (data.length < 1000) break

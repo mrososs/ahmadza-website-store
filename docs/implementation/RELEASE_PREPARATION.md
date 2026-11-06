@@ -5,7 +5,7 @@ Prepared 2026-11-06. **Nothing here has been run.** No merge, no push, no deploy
 ## State
 
 * `main` is at `ea3c183` (one commit ahead of `origin/main`: a documentation commit, reviewed below).
-* `vps-recovery-prep` is **14 commits ahead of `main`**, linear (its merge base is `main` itself), so it integrates as a fast-forward with no merge commit and no conflicts.
+* `vps-recovery-prep` is **15 commits ahead of `main`**, linear (its merge base is `main` itself), so it integrates as a fast-forward with no merge commit and no conflicts.
 * 140 files, about 10,500 added lines. Everything is committed; the working tree is clean.
 
 ## Review before publishing
@@ -40,6 +40,7 @@ git diff --name-only main..HEAD | Select-String -Pattern '\.(pdf|zip|tar|gz|sql|
 | `758ff80` | admin MFA, production environment validation |
 | `9682813` | workflow statuses, free-book claim, download audit, canonical URLs, journey fixes |
 | `8d7aa38` | media reconciliation and evidence-based drafts |
+| `4ebe411` | completion report, release preparation, preview deployment guide, preview verification script |
 
 (The Paymob/Tap commit refers to configuration keys that the MFA commit adds to `nuxt.config.ts`; the branch is only meaningful as a whole.)
 
@@ -57,7 +58,7 @@ Publishing is a separate decision with consequences:
 git push origin main
 ```
 
-This would publish **both** the 14 branch commits **and** the earlier unpublished `ea3c183`. Never force-push. Do not push `vps-recovery-prep` as a separate branch unless you want that history visible too.
+This would publish **both** the 15 branch commits **and** the earlier unpublished `ea3c183`. Never force-push. Do not push `vps-recovery-prep` as a separate branch unless you want that history visible too.
 
 ## Order of operations for a working preview
 

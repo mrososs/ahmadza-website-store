@@ -39,7 +39,8 @@ const size = computed(() => (props.item.size_bytes ? `${(props.item.size_bytes /
 </template>
 
 <style scoped>
-.recovered-badge { background: #b45309; color: #fff; }
+/* white text: the legacy rule `.book_block .item .type_book { color: #753f27 }` is more specific than a single class, so this repeats its path to win (white on #b45309 is about 5:1) */
+.recovered-card .item .type_book.recovered-badge { background: #b45309; color: #fff; font-weight: 600; }
 .recovered-line { margin: 0 0 .25rem; font-size: .9rem; }
 .recovered-unknown { color: #6b7280; }
 .recovered-details { margin-top: .4rem; font-size: .85rem; text-align: right; }

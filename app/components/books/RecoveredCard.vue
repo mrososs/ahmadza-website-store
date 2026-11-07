@@ -27,7 +27,7 @@ const size = computed(() => (props.item.size_bytes ? `${(props.item.size_bytes /
             <dt>الأقسام</dt><dd>غير محددة</dd>
             <dt v-if="item.pages">عدد الصفحات (من الملف)</dt><dd v-if="item.pages">{{ item.pages }}</dd>
             <dt v-if="size">حجم الملف</dt><dd v-if="size">{{ size }}</dd>
-            <dt v-if="item.original_name">الملف الأصلي</dt><dd v-if="item.original_name" dir="auto">{{ item.original_name }}</dd>
+            <dt v-if="item.original_name">الملف الأصلي</dt><dd v-if="item.original_name"><bdi dir="ltr">{{ item.original_name }}</bdi></dd>
             <dt>بصمة الملف</dt><dd dir="ltr" class="recovered-hash">{{ item.fingerprint }}…</dd>
             <dt>فحص الملف</dt><dd>سليم، لم يُعثر على محتوى نشط</dd>
           </dl>

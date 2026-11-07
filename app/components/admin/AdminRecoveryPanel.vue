@@ -55,7 +55,7 @@ const LEGACY_STATUS: Record<string, string> = { '0': 'غير مفعل', '1': 'م
           <div v-if="evidence.pdf?.title"><dt>العنوان في الملف الأصلي</dt><dd>{{ evidence.pdf.title }}</dd></div>
           <div v-if="evidence.pdf?.author"><dt>المؤلف في الملف الأصلي</dt><dd>{{ evidence.pdf.author }}</dd></div>
           <div v-if="evidence.sha256"><dt>بصمة الملف (SHA-256)</dt><dd dir="ltr" class="text-right"><code>{{ evidence.sha256.slice(0, 16) }}…</code></dd></div>
-          <div v-if="evidence.source_file?.original_name" data-testid="evidence-original-name"><dt>اسم الملف الأصلي</dt><dd dir="auto">{{ evidence.source_file.original_name }}</dd></div>
+          <div v-if="evidence.source_file?.original_name" data-testid="evidence-original-name"><dt>اسم الملف الأصلي</dt><dd><bdi dir="ltr">{{ evidence.source_file.original_name }}</bdi></dd></div>
           <div v-if="evidence.source_file?.legacy_path"><dt>المسار الأصلي</dt><dd dir="ltr" class="text-right"><code>{{ evidence.source_file.legacy_path }}</code></dd></div>
           <div v-if="evidence.pdf?.pages"><dt>عدد الصفحات (من الملف)</dt><dd>{{ evidence.pdf.pages }}</dd></div>
           <div v-if="formatSize(evidence.byte_size)"><dt>حجم الملف</dt><dd>{{ formatSize(evidence.byte_size) }}</dd></div>

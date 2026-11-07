@@ -6,9 +6,8 @@
 export function usePaymentsOffered() {
   const offered = useState<boolean>('payments-offered', () => false)
   const asked = useState<boolean>('payments-offered-asked', () => false)
-  // A protected preview switches checkout off (the endpoint answers 503). The server knows that, so the browser is not sent to discover it with a failing request on every page.
-  if (import.meta.server && !asked.value && String(useRuntimeConfig().previewMode ?? '').trim().toLowerCase() !== 'open') asked.value = true
-  if (import.meta.client && !asked.value) {
+  const switchedOff = useState<boolean>('checkout-switched-off', () => false) // set by the server on every render (app/plugins/checkout-switch.server.ts)
+  if (import.meta.client && !asked.value && !switchedOff.value) {
     asked.value = true
     $fetch<{ methods: { available: boolean }[] }>('/api/checkout/methods')
       .then((r) => { offered.value = r.methods.some((m) => m.available) })

@@ -20,7 +20,7 @@ function watch(page: Page) {
   const local: string[] = []
   page.on('pageerror', (e) => problems.push(`pageerror: ${e.message.slice(0, 140)}`))
   page.on('console', (m) => { if (m.type() === 'error' && !/favicon|Failed to load resource/.test(m.text())) problems.push(`console: ${m.text().slice(0, 140)}`) })
-  page.on('response', (r) => { if (r.status() >= 400 && r.status() !== 401) problems.push(`HTTP ${r.status()} ${r.url().slice(0, 110)}`) })
+  page.on('response', (r) => { if (r.status() >= 400 && r.status() !== 401) problems.push(`HTTP ${r.status()} ${r.url().slice(0, 110)} (on ${page.url().slice(0, 80)})`) })
   page.on('request', (r) => {
     const u = new URL(r.url())
     if (/supabase\.(co|in)$/.test(u.hostname)) supabaseHosts.add(u.hostname)
@@ -89,9 +89,10 @@ test('the public bundle carries no secret: no secret key, no password hash, no s
   const bodies = [html]
   for (const a of assets.slice(0, 60)) bodies.push(await (await request.get(`${ORIGIN}${a}`)).text()) // static files are served without the gate: that is what an outsider can read
   const all = bodies.join('\n')
-  expect(all).not.toMatch(/sb_secret_/)
+  // the Supabase client library contains the bare prefix "sb_secret_" (it uses it to REFUSE secret keys in a browser), so look for a real key: prefix plus key body
+  expect(all).not.toMatch(/sb_secret_[A-Za-z0-9_-]{20,}/)
   expect(all).not.toMatch(/scrypt\$\d+\$/)
-  expect(all).not.toMatch(/service_role/)
+  for (const m of all.matchAll(/eyJ[\w-]{10,}\.([\w-]{10,})\.[\w-]{10,}/g)) expect(Buffer.from(m[1]!, 'base64url').toString(), 'a JWT in the bundle must not be a service-role token').not.toMatch(/"role"\s*:\s*"service_role"/)
   expect(all).not.toMatch(/NUXT_SUPABASE_SECRET_KEY|NUXT_PREVIEW_PASSWORD_HASH/)
   expect(all).toContain(`${SUPABASE_REF}.supabase.co`) // the build points at the authorised project
   expect(all).not.toMatch(/127\.0\.0\.1:543\d\d|localhost:543\d\d/) // and never at a local stack

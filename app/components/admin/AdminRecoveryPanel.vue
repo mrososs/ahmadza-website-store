@@ -11,10 +11,28 @@ defineProps<{
   legacyCostRaw: string | null
   verifiedAt: string | null
   media: MediaRow[]
-  evidence?: { sha256?: string; byte_size?: number; pdf?: { title?: string; author?: string; pages?: number } } | null
+  evidence?: {
+    sha256?: string; byte_size?: number; pdf?: { title?: string; author?: string; pages?: number }
+    source_file?: { original_name?: string; legacy_path?: string }
+    checks?: { malware_scan?: string; hash_verified?: boolean; size_verified?: boolean; encrypted?: boolean; active_content?: string }
+    uncertain?: Record<string, string>
+    hosted_import?: { at?: string; file_uploaded?: boolean }
+  } | null
   canVerify?: boolean
+  canReject?: boolean
 }>()
-const emit = defineEmits<{ verify: [] }>()
+const emit = defineEmits<{ verify: []; reject: [] }>()
+
+// What the recovery could NOT establish, in plain Arabic (the stored English notes are the evidence; these are what the reviewer reads).
+const UNKNOWN_LABEL: Record<string, string> = {
+  title: 'العنوان مأخوذ من الملف ولم يُطابق مع سجل أصلي',
+  author: 'المؤلف غير مُسند (الاسم في بيانات الملف غير موثق)',
+  categories: 'الأقسام غير محددة',
+  price: 'السعر مجهول ولم يُستنتج (القيمة 0 مؤقتة ولا يمكن النشر بها)',
+  kind: 'النوع (مجاني أو مدفوع) مجهول، والقيمة الحالية مؤقتة',
+  publication_status: 'لا يوجد سجل أصلي يبين هل نُشر الكتاب سابقاً',
+}
+const formatSize = (b?: number) => (b ? `${(b / 1048576).toFixed(2)} م.ب` : null)
 
 const MEDIA_STATUS: Record<string, string> = { pending: 'بانتظار النقل', staged: 'تم الاستلام وبانتظار الفحص', available: 'متاح', missing: 'الملف مفقود', rejected: 'مرفوض' }
 const LEGACY_STATUS: Record<string, string> = { '0': 'غير مفعل', '1': 'مفعل', '2': 'قريباً' }
@@ -37,11 +55,22 @@ const LEGACY_STATUS: Record<string, string> = { '0': 'غير مفعل', '1': 'م
           <div v-if="evidence.pdf?.title"><dt>العنوان في الملف الأصلي</dt><dd>{{ evidence.pdf.title }}</dd></div>
           <div v-if="evidence.pdf?.author"><dt>المؤلف في الملف الأصلي</dt><dd>{{ evidence.pdf.author }}</dd></div>
           <div v-if="evidence.sha256"><dt>بصمة الملف (SHA-256)</dt><dd dir="ltr" class="text-right"><code>{{ evidence.sha256.slice(0, 16) }}…</code></dd></div>
+          <div v-if="evidence.source_file?.original_name" data-testid="evidence-original-name"><dt>اسم الملف الأصلي</dt><dd dir="auto">{{ evidence.source_file.original_name }}</dd></div>
+          <div v-if="evidence.source_file?.legacy_path"><dt>المسار الأصلي</dt><dd dir="ltr" class="text-right"><code>{{ evidence.source_file.legacy_path }}</code></dd></div>
+          <div v-if="evidence.pdf?.pages"><dt>عدد الصفحات (من الملف)</dt><dd>{{ evidence.pdf.pages }}</dd></div>
+          <div v-if="formatSize(evidence.byte_size)"><dt>حجم الملف</dt><dd>{{ formatSize(evidence.byte_size) }}</dd></div>
+          <div v-if="evidence.checks"><dt>فحص الملف عند الاستعادة</dt><dd>{{ evidence.checks.malware_scan === 'clean' ? 'سليم' : 'غير مؤكد' }}، {{ evidence.checks.active_content === 'none found' ? 'لا محتوى نشط' : 'محتوى نشط' }}، {{ evidence.checks.hash_verified ? 'البصمة مطابقة' : 'البصمة غير مؤكدة' }}</dd></div>
+          <div v-if="evidence.hosted_import?.at"><dt>الاستيراد إلى الموقع</dt><dd>{{ evidence.hosted_import.at.slice(0, 10) }}<template v-if="evidence.hosted_import.file_uploaded === false"> — لم يُرفع ملف PDF بعد</template></dd></div>
         </template>
       </dl>
+      <div v-if="evidence?.uncertain && Object.keys(evidence.uncertain).length" class="alert alert-secondary" role="note" data-testid="evidence-unknowns">
+        <strong>ما لا يزال مجهولاً (لم يُخمَّن):</strong>
+        <ul class="mb-0 pr-3"><li v-for="k in Object.keys(evidence.uncertain)" :key="k">{{ UNKNOWN_LABEL[k] ?? k }}</li></ul>
+      </div>
       <p v-if="canVerify && !verifiedAt" class="mb-3">
         <button type="button" class="btn btn-sm btn-primary" @click="emit('verify')">اعتماد هذا الكتاب بعد مراجعته</button>
-        <small class="text-muted d-block">الاعتماد لا ينشر الكتاب. يلزم أيضاً سعر صالح وملف موثق.</small>
+        <button v-if="canReject" type="button" class="btn btn-sm btn-outline-danger mr-2" @click="emit('reject')">رفض هذا السجل</button>
+        <small class="text-muted d-block">الاعتماد لا ينشر الكتاب. يلزم أيضاً سعر صالح وملف موثق. الرفض ينقل السجل إلى المهملات ويمكن استعادته.</small>
       </p>
 
       <div v-if="!readiness.eligible" class="alert alert-warning" role="status">

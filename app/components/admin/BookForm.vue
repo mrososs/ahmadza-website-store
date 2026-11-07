@@ -56,6 +56,16 @@ async function verifyBook() {
   } catch (e) { globalError.value = (e as Error).message }
 }
 
+/** Reject a recovered record: the existing audited soft delete. It moves to the trash and can be restored from there; nothing is destroyed. */
+async function rejectBook() {
+  if (!props.id || !window.confirm('رفض هذا السجل المستعاد؟ سيُنقل إلى المهملات ويمكن استعادته لاحقاً.')) return
+  globalError.value = ''
+  try {
+    await adminFetch(`/api/admin/books/${props.id}`, { method: 'DELETE' })
+    await navigateTo('/admin/books')
+  } catch (e) { globalError.value = (e as Error).message }
+}
+
 async function submit() {
   Object.keys(errors).forEach((k) => delete errors[k])
   globalError.value = ''
@@ -95,7 +105,7 @@ async function submit() {
     <div class="row justify-content-center">
       <div class="col-12 text-right"><NuxtLink to="/admin/makers/create" target="_blank" class="text-info">إضافة مؤلف جديد</NuxtLink></div>
       <div class="col-lg-10 col-12">
-        <AdminRecoveryPanel v-if="recovery" v-bind="recovery" can-verify @verify="verifyBook" />
+        <AdminRecoveryPanel v-if="recovery" v-bind="recovery" can-verify can-reject @verify="verifyBook" @reject="rejectBook" />
         <div v-if="globalError" class="alert alert-danger" role="alert">{{ globalError }}</div>
         <div v-if="saved" class="alert alert-success" role="status">تم الحفظ بنجاح</div>
         <div class="form-layout">

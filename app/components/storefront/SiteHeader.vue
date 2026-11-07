@@ -4,6 +4,8 @@ const { data: shell } = await useShell()
 const { publicUrl } = useMediaUrl()
 const { info, isAuthed, logout } = useSessionInfo()
 const cart = useCartStore()
+const recovered = useRecoveredSummary() // protected preview only: a link to the recovered catalogue under review, shown when it has books
+const recoveredCount = computed(() => (recovered.data.value?.enabled ? recovered.data.value.total : 0))
 const router = useRouter()
 const q = ref('')
 onMounted(() => cart.hydrate())
@@ -67,6 +69,7 @@ function submitSearch() {
               </li>
               <li><NuxtLink class="nav-link" to="/authors"><i class="fa fa-users" /> المؤلفون</NuxtLink></li>
               <li><NuxtLink class="nav-link" to="/articles"><i class="fa fa-pencil" /> المدونة</NuxtLink></li>
+              <li v-if="recoveredCount"><NuxtLink class="nav-link" to="/recovered"><i class="fa fa-search" /> كتب مستعادة (قيد المراجعة)</NuxtLink></li>
               <li v-for="p in headerPages" :key="p.slug"><NuxtLink class="nav-link" :to="`/p/${p.slug}`">{{ p.title }}</NuxtLink></li>
               <li v-if="isAuthed" class="nav-item dropdown">
                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user" /> الصفحة الشخصية</a>
@@ -125,6 +128,7 @@ function submitSearch() {
               </li>
               <li class="nav-item d-block d-md-none"><NuxtLink class="nav-link" to="/authors"><i class="fa fa-users" /> المؤلفون</NuxtLink></li>
               <li class="nav-item d-block d-md-none"><NuxtLink class="nav-link" to="/articles"><i class="fa fa-pencil" /> المدونة</NuxtLink></li>
+              <li v-if="recoveredCount" class="nav-item d-block d-md-none"><NuxtLink class="nav-link" to="/recovered"><i class="fa fa-search" /> كتب مستعادة (قيد المراجعة)</NuxtLink></li>
               <li v-if="isAuthed" class="nav-item dropdown d-block d-md-none">
                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user" /> الصفحة الشخصية</a>
                 <div class="dropdown-menu rounded-0 m-0">

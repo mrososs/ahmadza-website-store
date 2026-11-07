@@ -6,6 +6,7 @@ definePageMeta({ showPoster: true, showStats: true })
 <template>
   <div>
     <PageHeading title="الرئيسية" />
+    <RecoveredHomeSection />
     <BookListing />
   </div>
 </template>

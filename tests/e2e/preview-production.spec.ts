@@ -81,10 +81,14 @@ for (const vp of VIEWPORTS) {
     })
 
     test('checkout, payment webhooks and downloads are switched off even for someone who knows the preview password', async ({ page }) => {
-      for (const [method, path] of [['GET', '/api/checkout/methods'], ['POST', '/api/checkout/session'], ['POST', '/api/webhooks/payments/paymob'], ['POST', '/api/webhooks/payments/tap'], ['GET', '/api/library/download/1']] as const) {
+      for (const [method, path] of [['POST', '/api/checkout/session'], ['POST', '/api/webhooks/payments/paymob'], ['POST', '/api/webhooks/payments/tap'], ['GET', '/api/library/download/1']] as const) {
         const res = await page.request.fetch(`${ORIGIN}${path}`, { method, data: method === 'POST' ? {} : undefined })
         expect(res.status(), `${method} ${path}`).toBe(503)
       }
+      // the list of payment methods answers honestly (nothing to offer) instead of failing on every page
+      const methods = await page.request.get(`${ORIGIN}/api/checkout/methods`)
+      expect(methods.status()).toBe(200)
+      expect((await methods.json()).methods).toEqual([])
       const admin = await page.request.get(`${ORIGIN}/api/admin/books`)
       expect(admin.status()).toBe(401) // the preview password is not an administrator session
     })

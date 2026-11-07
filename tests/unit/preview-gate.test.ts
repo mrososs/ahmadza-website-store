@@ -71,6 +71,12 @@ describe('gate decisions (protected)', () => {
     expect(at('/api/checkouts', basic('client', PASSWORD))).toMatchObject({ action: 'allow' })
     expect(at('/api/library/download/12?x=1', basic('client', PASSWORD))).toMatchObject({ action: 'deny' })
   })
+  it('the list of payment methods is the one exception inside the checkout prefix: reachable with the password, still challenged without it, nothing else under it', () => {
+    expect(at('/api/checkout/methods', basic('client', PASSWORD))).toEqual({ action: 'allow', headers: { ...NOINDEX_HEADERS } })
+    expect(at('/api/checkout/methods/', basic('client', PASSWORD))).toMatchObject({ action: 'allow' })
+    expect(at('/api/checkout/methods')).toEqual({ action: 'challenge', failedAttempt: false })
+    for (const p of ['/api/checkout/methods/x', '/api/checkout/methodsX', '/api/checkout/session']) expect(at(p, basic('client', PASSWORD))).toMatchObject({ action: 'deny', status: 503 })
+  })
   it('anonymous requests to blocked flows are challenged, not told that the route exists', () => {
     expect(at('/api/checkout/session')).toEqual({ action: 'challenge', failedAttempt: false })
   })

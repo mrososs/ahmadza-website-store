@@ -6,7 +6,6 @@ import type { QuoteResponse } from '~~/shared/schemas/commerce'
  */
 export function useCheckout() {
   const cart = useCartStore()
-  const checkoutSwitchedOff = useState<boolean>('checkout-switched-off', () => false) // set by the server on every render (app/plugins/checkout-switch.server.ts)
   const quote = ref<QuoteResponse | null>(null)
   const loading = ref(false)
   const error = ref('')
@@ -33,7 +32,6 @@ export function useCheckout() {
   }
 
   async function loadMethods() {
-    if (checkoutSwitchedOff.value) { methods.value = []; methodsLoaded.value = true; return } // protected preview: no request that is certain to fail
     try {
       const r = await $fetch<{ methods: { id: string; label: string; available: boolean }[]; testMode: boolean }>('/api/checkout/methods')
       methods.value = r.methods.filter((m) => m.available) // the server already lists only usable methods; never trust that a client shows an unusable one

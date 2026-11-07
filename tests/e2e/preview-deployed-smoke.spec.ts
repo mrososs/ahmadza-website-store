@@ -102,6 +102,7 @@ for (const vp of VIEWPORTS) {
       const cards = page.locator('.recovered-card')
       for (let i = 0; i < Math.min(await cards.count(), 6); i++) {
         await expect(cards.nth(i)).toContainText('قيد المراجعة')
+        await expect(cards.nth(i).locator('.recovered-badge'), 'the review badge text is white (it was unreadable dark brown)').toHaveCSS('color', 'rgb(255, 255, 255)')
         await expect(cards.nth(i)).toContainText('السعر غير محدد')
         await expect(cards.nth(i)).toContainText('المؤلف غير محدد')
         await expect(cards.nth(i).locator('img')).toHaveAttribute('src', /default-cover|icon|cover/i) // the fallback cover, never a broken image

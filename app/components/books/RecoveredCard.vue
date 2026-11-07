@@ -8,7 +8,7 @@ const size = computed(() => (props.item.size_bytes ? `${(props.item.size_bytes /
 </script>
 
 <template>
-  <div class="col-xl-3 col-lg-4 col-6">
+  <div class="col-xl-3 col-lg-4 col-6 recovered-col">
     <article class="book_block block recovered-card" :aria-label="item.title">
       <div class="item">
         <span class="type_book recovered-badge">قيد المراجعة</span>
@@ -44,8 +44,11 @@ const size = computed(() => (props.item.size_bytes ? `${(props.item.size_bytes /
 .recovered-unknown { color: #6b7280; }
 .recovered-details { margin-top: .4rem; font-size: .85rem; text-align: right; }
 .recovered-details summary { cursor: pointer; color: #1d4ed8; }
-.recovered-details dl { margin: .5rem 0 0; display: grid; grid-template-columns: auto 1fr; gap: .15rem .6rem; }
-.recovered-details dt { font-weight: 600; color: #374151; }
+/* a card keeps its own height: opening one card's details must not stretch its neighbours */
+.recovered-col { align-self: flex-start; }
+/* label above value: the card is narrow (two across on a phone), so a two-column grid left the value one letter wide */
+.recovered-details dl { margin: .5rem 0 0; }
+.recovered-details dt { font-weight: 600; color: #374151; font-size: .8rem; margin-top: .45rem; }
 .recovered-details dd { margin: 0; overflow-wrap: anywhere; }
 .recovered-hash { font-family: ui-monospace, monospace; }
 .recovered-note { margin: .5rem 0 0; color: #6b7280; font-size: .8rem; }

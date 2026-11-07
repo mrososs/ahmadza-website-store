@@ -52,7 +52,7 @@ const PROVIDER: Record<string, string> = { paymob: 'Paymob', tap: 'Tap', dev_sim
           </p>
           <div v-if="!gateways.origin.https" class="alert alert-warning" role="status">{{ gateways.origin.note }}</div>
           <div class="table-responsive">
-            <table class="table table-sm mb-2">
+            <table class="table table-sm mb-2" style="min-width: 820px">
               <thead><tr><th>البوابة</th><th>الحالة</th><th>ما ينقص (أسماء المتغيرات فقط)</th><th>العملة</th><th>التحقق</th><th>رابط الـ Webhook</th></tr></thead>
               <tbody>
                 <tr v-for="g in gateways.providers" :key="g.id">

@@ -86,7 +86,7 @@ const fmt = (n: number) => n.toLocaleString('en-US')
       <div class="col-12 mb-30" id="review-queue">
         <div class="card"><div class="card-body">
           <h5 class="card-title">طابور المراجعة <span v-if="queue" class="badge badge-warning">{{ fmt(queue.total) }}</span></h5>
-          <p class="text-muted">كتب مستعادة تحتاج إلى استكمال قبل النشر. افتح كل كتاب، أدخل السعر الصحيح وراجع البيانات واعتمده ثم انشره. لا شيء يُنشر تلقائياً، والأسماء المأخوذة من الملف غير موثقة ولا تُربط بأي مؤلف.</p>
+          <p class="text-muted">الكتب المستعادة تحتاج إلى استكمال قبل النشر. افتح كل كتاب، أدخل السعر الصحيح وراجع البيانات واعتمده ثم انشره. لا شيء يُنشر تلقائياً، والأسماء المأخوذة من الملف غير موثقة ولا تُربط بأي مؤلف.</p>
           <div v-if="queueError" class="alert alert-danger" role="alert">{{ queueError }}</div>
           <p v-else-if="queue && !queue.items.length" class="mb-0">لا توجد كتب بانتظار المراجعة.</p>
           <div v-else-if="queue" class="table-responsive">

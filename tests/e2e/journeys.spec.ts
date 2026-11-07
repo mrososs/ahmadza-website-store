@@ -181,7 +181,7 @@ for (const vp of VIEWPORTS) {
         await expect(page.getByText(b.title)).toBeVisible()
         await expect(page.locator('#total_cart_item')).toContainText(b.price.toFixed(2))
         await expect(page.getByText('وضع تجريبي: لا يتم أي خصم حقيقي.')).toBeVisible()
-        await expect(page.getByRole('radio', { name: /Paymob/ })).toBeDisabled() // unavailable gateways are shown but cannot be chosen
+        await expect(page.getByRole('radio', { name: /Paymob|Tap/ })).toHaveCount(0) // a gateway that cannot be used is not offered at all (no disabled radio, no promise)
         await noSidewaysScroll(page)
         await shot(page, 'cart', vp.name)
 

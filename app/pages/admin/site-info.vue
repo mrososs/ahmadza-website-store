@@ -31,7 +31,12 @@ async function submit() {
   const parsed = adminSettingsFullSchema.safeParse({
     ...f, affiliate_commission_percent: Number(f.affiliate_commission_percent), commission_freeze_days: Number(f.commission_freeze_days), min_withdrawal_amount: Number(f.min_withdrawal_amount),
   })
-  if (!parsed.success) { for (const i of parsed.error.issues) errors[String(i.path[0])] ??= i.message; return }
+  if (!parsed.success) {
+    for (const i of parsed.error.issues) errors[String(i.path[0])] ??= i.message
+    msg.err = 'تعذر الحفظ: راجع الحقول التي تحتوي على أخطاء'
+    scrollToFirstError()
+    return
+  }
   busy.value = true
   try {
     await adminFetch('/api/admin/settings', { method: 'PUT', body: parsed.data })
@@ -61,8 +66,8 @@ async function submit() {
           </div>
           <div class="form-layout">
             <div class="row">
-              <div class="col-lg-6 col-12"><AdminFormField label="أسم الموقع" required :error="errors.site_name"><input v-model="f.site_name as string" class="form-control" placeholder="الأسم"></AdminFormField></div>
-              <div class="col-lg-6 col-12"><AdminFormField label="البريد الالكترونى" :error="errors.email"><input v-model="f.email as string" class="form-control" dir="ltr" placeholder="البريد الالكترونى"></AdminFormField></div>
+              <div class="col-lg-6 col-12"><AdminFormField label="أسم الموقع" required :error="errors.site_name" for="s-site_name"><input id="s-site_name" v-model="f.site_name as string" class="form-control" placeholder="الأسم"></AdminFormField></div>
+              <div class="col-lg-6 col-12"><AdminFormField label="البريد الالكترونى" :error="errors.email" for="s-email"><input id="s-email" v-model="f.email as string" class="form-control" dir="ltr" placeholder="البريد الالكترونى"></AdminFormField></div>
               <div class="col-lg-6 col-12"><AdminFormField label="رابط إظهار الكتب المجانية" required><AdminSelect :model-value="freeBtn" @update:model-value="freeBtn = $event as never" title="أختر الحالة" :options="yn" /></AdminFormField></div>
               <div class="col-lg-6 col-12">
                 <AdminFormField label="Payment Mode" required hint="لا تُفعَّل بوابة دفع حقيقية في هذه النسخة (محاكاة محلية فقط)">
@@ -71,18 +76,18 @@ async function submit() {
               </div>
               <div class="col-lg-6 col-12"><AdminFormField label="البوستر (الشاشات الكبيرة)" required><AdminSelect :model-value="posterPc" @update:model-value="posterPc = $event as never" title="أختر الحالة" :options="yn" /></AdminFormField></div>
               <div class="col-lg-6 col-12"><AdminFormField label="البوستر (الموبايل)" required><AdminSelect :model-value="posterMob" @update:model-value="posterMob = $event as never" title="أختر الحالة" :options="yn" /></AdminFormField></div>
-              <div class="col-lg-6 col-12"><AdminFormField label="رقم الواتساب"><input v-model="f.whatsapp as string" class="form-control" dir="ltr" placeholder="مثال : 9665512345678"></AdminFormField></div>
-              <div class="col-lg-6 col-12"><AdminFormField label="رقم الهاتف"><input v-model="f.phone as string" class="form-control" dir="ltr" placeholder="رقم الهاتف"></AdminFormField></div>
+              <div class="col-lg-6 col-12"><AdminFormField label="رقم الواتساب" :error="errors.whatsapp" for="s-whatsapp"><input id="s-whatsapp" v-model="f.whatsapp as string" class="form-control" dir="ltr" placeholder="مثال : 9665512345678"></AdminFormField></div>
+              <div class="col-lg-6 col-12"><AdminFormField label="رقم الهاتف" :error="errors.phone" for="s-phone"><input id="s-phone" v-model="f.phone as string" class="form-control" dir="ltr" placeholder="رقم الهاتف"></AdminFormField></div>
               <div v-for="s in [['facebook', 'رابط الفيسبوك'], ['twitter', 'رابط تويتر'], ['instagram', 'رابط الانستجرام'], ['youtube', 'رابط اليوتيوب'], ['telegram', 'رابط التيليجرام'], ['linkedin', 'رابط لينكدإن']]" :key="s[0]" class="col-lg-6 col-12">
-                <AdminFormField :label="s[1]!"><input v-model="f[s[0]!] as string" class="form-control" dir="ltr" :placeholder="s[1]"></AdminFormField>
+                <AdminFormField :label="s[1]!" :error="errors[s[0]!]" :for="`s-${s[0]}`"><input :id="`s-${s[0]}`" v-model="f[s[0]!] as string" class="form-control" dir="ltr" :placeholder="s[1]"></AdminFormField>
               </div>
-              <div class="col-12"><AdminFormField label="وصف الموقع"><textarea v-model="f.description as string" class="form-control" rows="2" /></AdminFormField></div>
-              <div class="col-12"><AdminFormField label="الكلمات المفتاحية"><textarea v-model="f.keywords as string" class="form-control" rows="2" /></AdminFormField></div>
+              <div class="col-12"><AdminFormField label="وصف الموقع" :error="errors.description" for="s-description"><textarea id="s-description" v-model="f.description as string" class="form-control" rows="2" /></AdminFormField></div>
+              <div class="col-12"><AdminFormField label="الكلمات المفتاحية" :error="errors.keywords" for="s-keywords"><textarea id="s-keywords" v-model="f.keywords as string" class="form-control" rows="2" /></AdminFormField></div>
 
               <div class="col-12"><h6 class="mt-3">التسويق بالعمولة والسحب <span class="badge badge-warning">بانتظار تأكيد المالك</span></h6></div>
-              <div class="col-lg-4 col-12"><AdminFormField label="نسبة العمولة %" :error="errors.affiliate_commission_percent"><input v-model="f.affiliate_commission_percent as number" type="number" step="0.01" min="0" max="100" class="form-control"></AdminFormField></div>
-              <div class="col-lg-4 col-12"><AdminFormField label="أيام التجميد" :error="errors.commission_freeze_days"><input v-model="f.commission_freeze_days as number" type="number" min="0" max="365" class="form-control"></AdminFormField></div>
-              <div class="col-lg-4 col-12"><AdminFormField label="الحد الأدنى للسحب" :error="errors.min_withdrawal_amount"><input v-model="f.min_withdrawal_amount as number" type="number" step="0.01" min="0" class="form-control"></AdminFormField></div>
+              <div class="col-lg-4 col-12"><AdminFormField label="نسبة العمولة %" :error="errors.affiliate_commission_percent" for="s-affiliate_commission_percent"><input id="s-affiliate_commission_percent" v-model="f.affiliate_commission_percent as number" type="number" step="0.01" min="0" max="100" class="form-control"></AdminFormField></div>
+              <div class="col-lg-4 col-12"><AdminFormField label="أيام التجميد" :error="errors.commission_freeze_days" for="s-commission_freeze_days"><input id="s-commission_freeze_days" v-model="f.commission_freeze_days as number" type="number" min="0" max="365" class="form-control"></AdminFormField></div>
+              <div class="col-lg-4 col-12"><AdminFormField label="الحد الأدنى للسحب" :error="errors.min_withdrawal_amount" for="s-min_withdrawal_amount"><input id="s-min_withdrawal_amount" v-model="f.min_withdrawal_amount as number" type="number" step="0.01" min="0" class="form-control"></AdminFormField></div>
 
               <div class="col-12"><h6 class="mt-3">الأمان</h6></div>
               <div class="col-lg-6 col-12">
@@ -93,13 +98,13 @@ async function submit() {
 
               <div class="col-12"><h6 class="mt-3">الصور</h6></div>
               <div class="col-lg-4 col-12">
-                <AdminFormField label="الشعار (Logo)"><img v-if="data.logo_path" :src="publicUrl(data.logo_path as string)" alt="الشعار الحالي" style="height: 50px" class="mb-2 d-block"><AdminFileDrop accept="image/png,image/jpeg,image/webp" :height="50" :max-bytes="2097152" @file="files.logo = $event" /></AdminFormField>
+                <AdminFormField label="الشعار (Logo)"><img v-if="data.logo_path" :src="publicUrl(data.logo_path as string)" alt="الشعار الحالي" style="height: 50px" class="mb-2 d-block"><AdminFileDrop accept="image/png,image/jpeg,image/webp" :height="76" :max-bytes="2097152" @file="files.logo = $event" /></AdminFormField>
               </div>
               <div class="col-lg-4 col-12">
-                <AdminFormField label="البوستر (كبير)"><img v-if="data.poster_path" :src="publicUrl(data.poster_path as string)" alt="البوستر الحالي" style="height: 50px" class="mb-2 d-block"><AdminFileDrop accept="image/png,image/jpeg,image/webp" :height="50" :max-bytes="2097152" @file="files.poster = $event" /></AdminFormField>
+                <AdminFormField label="البوستر (كبير)"><img v-if="data.poster_path" :src="publicUrl(data.poster_path as string)" alt="البوستر الحالي" style="height: 50px" class="mb-2 d-block"><AdminFileDrop accept="image/png,image/jpeg,image/webp" :height="76" :max-bytes="2097152" @file="files.poster = $event" /></AdminFormField>
               </div>
               <div class="col-lg-4 col-12">
-                <AdminFormField label="البوستر (موبايل)"><img v-if="data.poster_mobile_path" :src="publicUrl(data.poster_mobile_path as string)" alt="بوستر الموبايل الحالي" style="height: 50px" class="mb-2 d-block"><AdminFileDrop accept="image/png,image/jpeg,image/webp" :height="50" :max-bytes="2097152" @file="files.poster_mobile = $event" /></AdminFormField>
+                <AdminFormField label="البوستر (موبايل)"><img v-if="data.poster_mobile_path" :src="publicUrl(data.poster_mobile_path as string)" alt="بوستر الموبايل الحالي" style="height: 50px" class="mb-2 d-block"><AdminFileDrop accept="image/png,image/jpeg,image/webp" :height="76" :max-bytes="2097152" @file="files.poster_mobile = $event" /></AdminFormField>
               </div>
             </div>
             <div class="text-right"><button class="button" type="submit" :disabled="busy"><i v-if="busy" class="fa fa-spinner fa-spin" /> حفظ</button></div>

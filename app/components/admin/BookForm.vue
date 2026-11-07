@@ -69,6 +69,7 @@ async function submit() {
   const parsed = adminBookSchema.safeParse(payload)
   if (!parsed.success) {
     for (const i of parsed.error.issues) errors[String(i.path[0] ?? 'form')] ??= i.message
+    void scrollToFirstError()
     return
   }
   busy.value = true

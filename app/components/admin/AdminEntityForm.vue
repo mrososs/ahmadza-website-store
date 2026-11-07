@@ -45,7 +45,7 @@ async function submit() {
   Object.keys(errors).forEach((k) => delete errors[k])
   globalError.value = ''; saved.value = false
   const parsed = payload()
-  if (!parsed.success) { for (const i of parsed.error.issues) errors[String(i.path[0] ?? 'form')] ??= i.message; return }
+  if (!parsed.success) { for (const i of parsed.error.issues) errors[String(i.path[0] ?? 'form')] ??= i.message; void scrollToFirstError(); return }
   busy.value = true
   try {
     let id = props.id

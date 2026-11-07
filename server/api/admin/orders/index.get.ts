@@ -3,7 +3,7 @@ import { ADMIN_PAGE_SIZE } from '~~/shared/schemas/admin'
 
 const schema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  q: z.string().trim().max(20).optional().default(''),
+  q: z.string().trim().max(120).optional().default(''),
   status: z.enum(['all', 'paid', 'failed', 'refunded']).default('all'),
   mode: z.enum(['all', 'live', 'test']).default('all'),
 })
@@ -17,7 +17,11 @@ export default defineEventHandler(async (event) => {
     .is('deleted_at', null)
   if (q.status !== 'all') query = query.eq('status', q.status)
   if (q.mode !== 'all') query = query.eq('mode', q.mode)
-  if (/^\d+$/.test(q.q)) query = query.eq('order_no', Number(q.q))
+  // the search box is an invoice-number lookup: anything else (or a number no invoice can have) matches nothing, never "everything"
+  if (q.q) {
+    if (!/^\d{1,9}$/.test(q.q)) return { items: [], total: 0, page: q.page, pageSize: ADMIN_PAGE_SIZE }
+    query = query.eq('order_no', Number(q.q))
+  }
   const { data, count, error } = await query.order('created_at', { ascending: false }).range((q.page - 1) * ADMIN_PAGE_SIZE, q.page * ADMIN_PAGE_SIZE - 1)
   if (error) dbFail(error)
   return { items: data ?? [], total: count ?? 0, page: q.page, pageSize: ADMIN_PAGE_SIZE }

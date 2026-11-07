@@ -19,6 +19,11 @@ const columns = [
   { key: 'status', label: 'الحالة', cls: 'wd-10p' }, { key: 'orders_count', label: 'الطلبات', cls: 'wd-10p' }, { key: 'view_count', label: 'الزيارات', cls: 'wd-10p' },
   { key: 'favourites_count', label: 'المفضلة', cls: 'wd-10p' }, { key: 'price', label: 'التكلفة', cls: 'wd-10p' }, { key: 'kind', label: 'النوع', cls: 'wd-10p' }, { key: 'recovery', label: 'حالة العمل', cls: 'wd-10p' }, { key: 'ops', label: 'عمليات', cls: 'wd-15p' },
 ]
+/** A recorded cover whose file is missing from storage must not show a broken-image icon with alt text: use the default cover (as the storefront does). */
+function fallbackCover(e: Event) {
+  const img = e.target as HTMLImageElement
+  if (!img.src.endsWith('/assets/images/default-cover.webp')) img.src = '/assets/images/default-cover.webp'
+}
 const trash = computed(() => query.value.status === 'trash')
 
 const target = ref<Row | null>(null)
@@ -47,18 +52,18 @@ async function clone(r: Row) {
     </div>
     <div class="col-12 mb-3 recovery-filter">
       <label for="workflow-filter" class="mr-2">حالة العمل</label>
-      <select id="workflow-filter" class="form-control d-inline-block w-auto ml-3" :value="workflow" @change="setWorkflow(($event.target as HTMLSelectElement).value)">
+      <select id="workflow-filter" class="form-control d-inline-block w-auto ml-3 mb-2" style="height: auto; padding: 8px 12px; width: auto; min-width: 180px" :value="workflow" @change="setWorkflow(($event.target as HTMLSelectElement).value)">
         <option v-for="w in WORKFLOW_STATUSES" :key="w" :value="w">{{ WORKFLOW_LABEL[w] }}</option>
       </select>
       <label for="recovery-filter" class="mr-2">الاستعادة</label>
-      <select id="recovery-filter" class="form-control d-inline-block w-auto" :value="recovery" @change="setRecovery(($event.target as HTMLSelectElement).value)">
+      <select id="recovery-filter" class="form-control d-inline-block w-auto mb-2" style="height: auto; padding: 8px 12px; width: auto; min-width: 180px" :value="recovery" @change="setRecovery(($event.target as HTMLSelectElement).value)">
         <option v-for="f in RECOVERY_LIST_FILTERS" :key="f" :value="f">{{ RECOVERY_LIST_FILTER_LABEL[f] }}</option>
       </select>
     </div>
     <div v-if="actionError && !target" class="col-12"><div class="alert alert-danger" role="alert">{{ actionError }}</div></div>
     <div class="col-12 mb-30">
       <AdminDataTable :columns="columns" :rows="data?.items" :loading="pending" :error="errorText" :total="data?.total" :page="data?.page" :page-size="data?.pageSize" searchable search-placeholder="ابحث بعنوان الكتاب" @retry="refresh()">
-        <template #cell-cover="{ row }"><img class="img-fluid" style="width: 35px" :src="publicUrl(row.cover_path)" :alt="row.title" :title="row.title"></template>
+        <template #cell-cover="{ row }"><img class="img-fluid" style="width: 35px" :src="publicUrl(row.cover_path)" :alt="row.title" :title="row.title" @error="fallbackCover"></template>
         <template #cell-status="{ row }"><span class="badge" :class="STATUS_BADGE[row.status]?.cls">{{ STATUS_BADGE[row.status]?.label }}</span></template>
         <template #cell-price="{ row }">{{ Number(row.price_amount).toFixed(2) }} <template v-if="row.kind === 'paid'">دولار</template></template>
         <template #cell-kind="{ row }">{{ row.kind === 'free' ? 'مجانى' : 'مدفوع' }}</template>

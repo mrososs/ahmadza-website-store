@@ -56,56 +56,63 @@ export const contributorRequestSchema = z.object({
 })
 
 // ---- admin ---------------------------------------------------------------
-const status = z.enum(['draft', 'published', 'coming_soon', 'archived'])
+// Every message here is shown to the operator as-is (form errors AND the 400 body), so they are Arabic sentences, not schema jargon.
+const status = z.enum(['draft', 'published', 'coming_soon', 'archived'], { error: 'الحالة غير صالحة' })
+const entityStatus = z.enum(['draft', 'published', 'archived'], { error: 'الحالة غير صالحة' })
+const adminName = (label: string, max: number) => z.string({ error: `${label} مطلوب` }).trim().min(1, `${label} مطلوب`).max(max, `${label} لا يزيد عن ${max} حرفاً`)
 export const adminBookSchema = z.object({
-  title: z.string().trim().min(1).max(250),
-  description_html: z.string().max(100_000).optional().nullable(),
-  kind: z.enum(['paid', 'free']),
+  title: adminName('عنوان الكتاب', 250),
+  description_html: z.string({ error: 'الوصف غير صالح' }).max(100_000, 'الوصف طويل جداً').optional().nullable(),
+  kind: z.enum(['paid', 'free'], { error: 'نوع الكتاب غير صالح' }),
   status,
-  price_amount: z.number().min(0).max(100000),
-  pages: z.number().int().min(0).max(100000).default(0),
-  category_ids: z.array(z.number().int().positive()).default([]),
-  maker_ids: z.array(z.object({ id: z.number().int().positive(), role: z.enum(['author', 'reader', 'writer']) })).default([]),
-  tags: z.array(z.string().trim().min(1).max(60)).max(30).default([]),
+  price_amount: z.number({ error: 'السعر غير صالح' }).min(0, 'السعر لا يمكن أن يكون سالباً').max(100000, 'السعر كبير جداً'),
+  pages: z.number({ error: 'عدد الصفحات غير صالح' }).int('عدد الصفحات يجب أن يكون رقماً صحيحاً').min(0, 'عدد الصفحات لا يمكن أن يكون سالباً').max(100000, 'عدد الصفحات كبير جداً').default(0),
+  category_ids: z.array(z.number().int().positive(), { error: 'الأقسام غير صالحة' }).default([]),
+  maker_ids: z.array(z.object({ id: z.number().int().positive(), role: z.enum(['author', 'reader', 'writer']) }), { error: 'المؤلفون غير صالحين' }).default([]),
+  tags: z.array(z.string().trim().min(1, 'كلمة مفتاحية فارغة').max(60, 'الكلمة المفتاحية لا تزيد عن 60 حرفاً'), { error: 'الكلمات المفتاحية غير صالحة' }).max(30, 'الحد الأقصى 30 كلمة مفتاحية').default([]),
 }).refine((b) => (b.kind === 'free' ? b.price_amount === 0 : b.price_amount > 0 || b.status === 'draft'), {
   path: ['price_amount'], message: 'الكتاب المدفوع يحتاج سعراً أكبر من صفر، والمجاني سعره صفر',
 })
-export const adminCategorySchema = z.object({ name: z.string().trim().min(1).max(120), is_active: z.boolean().default(true) })
+export const adminCategorySchema = z.object({ name: adminName('عنوان القسم', 120), is_active: z.boolean().default(true) })
 export const adminMakerSchema = z.object({
-  name: z.string().trim().min(1).max(160),
-  kind: z.enum(['author', 'reader', 'writer']),
-  era: z.enum(['old', 'new']),
-  bio_html: z.string().max(50_000).optional().nullable(),
+  name: adminName('الاسم', 160),
+  kind: z.enum(['author', 'reader', 'writer'], { error: 'النوع غير صالح' }),
+  era: z.enum(['old', 'new'], { error: 'العصر غير صالح' }),
+  bio_html: z.string().max(50_000, 'النبذة طويلة جداً').optional().nullable(),
   is_active: z.boolean().default(true),
 })
 export const adminArticleSchema = z.object({
-  kind: z.enum(['article', 'video', 'ads']).default('article'),
-  title: z.string().trim().min(1).max(250),
-  excerpt: z.string().max(1000).optional().nullable(),
-  content_html: z.string().max(200_000).optional().nullable(),
-  status: z.enum(['draft', 'published', 'archived']),
+  kind: z.enum(['article', 'video', 'ads'], { error: 'نوع المقال غير صالح' }).default('article'),
+  title: adminName('العنوان', 250),
+  excerpt: z.string().max(1000, 'المقتطف لا يزيد عن 1000 حرف').optional().nullable(),
+  content_html: z.string().max(200_000, 'المحتوى طويل جداً').optional().nullable(),
+  status: entityStatus,
 })
 export const adminPageSchema = z.object({
-  slug: z.string().trim().regex(/^[^\s/]+$/, 'الرابط لا يحتوي مسافات أو /').max(120),
-  title: z.string().trim().min(1).max(250),
-  content_html: z.string().max(200_000).optional().nullable(),
-  positions: z.array(z.enum(['header', 'footer'])).default([]),
-  status: z.enum(['draft', 'published', 'archived']),
+  slug: z.string({ error: 'الرابط مطلوب' }).trim().min(1, 'الرابط مطلوب').regex(/^[^\s/]+$/, 'الرابط لا يحتوي مسافات أو /').max(120, 'الرابط لا يزيد عن 120 حرفاً'),
+  title: adminName('العنوان', 250),
+  content_html: z.string().max(200_000, 'المحتوى طويل جداً').optional().nullable(),
+  positions: z.array(z.enum(['header', 'footer']), { error: 'مكان الظهور غير صالح' }).default([]),
+  status: entityStatus,
 })
+/** A social/profile link: empty, or an http(s) URL (a `javascript:` or `data:` link would otherwise reach the storefront footer). */
+const socialUrl = z.string().max(300, 'الرابط لا يزيد عن 300 حرف').optional().nullable().refine((v) => {
+  const t = (v ?? '').trim()
+  if (!t) return true
+  try { return ['http:', 'https:'].includes(new URL(t).protocol) } catch { return false }
+}, 'الرابط غير صالح: يجب أن يبدأ بـ https://')
 export const adminSettingsSchema = z.object({
-  site_name: z.string().trim().min(1).max(120),
-  phone: z.string().max(40).optional().nullable(),
-  email: z.string().email().optional().nullable().or(z.literal('')),
-  description: z.string().max(500).optional().nullable(),
-  keywords: z.string().max(500).optional().nullable(),
-  facebook: z.string().max(300).optional().nullable(), twitter: z.string().max(300).optional().nullable(),
-  instagram: z.string().max(300).optional().nullable(), youtube: z.string().max(300).optional().nullable(),
-  telegram: z.string().max(300).optional().nullable(), linkedin: z.string().max(300).optional().nullable(),
-  whatsapp: z.string().max(300).optional().nullable(),
+  site_name: adminName('اسم الموقع', 120),
+  phone: z.string().max(40, 'رقم الهاتف لا يزيد عن 40 حرفاً').optional().nullable(),
+  email: z.string().email('البريد الإلكتروني غير صالح').optional().nullable().or(z.literal('')),
+  description: z.string().max(500, 'الوصف لا يزيد عن 500 حرف').optional().nullable(),
+  keywords: z.string().max(500, 'الكلمات المفتاحية لا تزيد عن 500 حرف').optional().nullable(),
+  facebook: socialUrl, twitter: socialUrl, instagram: socialUrl, youtube: socialUrl, telegram: socialUrl, linkedin: socialUrl,
+  whatsapp: z.string().max(300, 'رقم الواتساب لا يزيد عن 300 حرف').optional().nullable(),
   show_free_book_button: z.boolean(),
-  affiliate_commission_percent: z.number().min(0).max(100),
-  commission_freeze_days: z.number().int().min(0).max(365),
-  min_withdrawal_amount: z.number().min(0).max(1_000_000),
+  affiliate_commission_percent: z.number({ error: 'نسبة العمولة غير صالحة' }).min(0, 'نسبة العمولة بين 0 و 100').max(100, 'نسبة العمولة بين 0 و 100'),
+  commission_freeze_days: z.number({ error: 'أيام التجميد غير صالحة' }).int('أيام التجميد رقم صحيح').min(0, 'أيام التجميد بين 0 و 365').max(365, 'أيام التجميد بين 0 و 365'),
+  min_withdrawal_amount: z.number({ error: 'الحد الأدنى للسحب غير صالح' }).min(0, 'الحد الأدنى للسحب لا يمكن أن يكون سالباً').max(1_000_000, 'الحد الأدنى للسحب كبير جداً'),
 })
 export const decisionSchema = z.object({ approve: z.boolean(), note: z.string().max(1000).optional().nullable() })
 

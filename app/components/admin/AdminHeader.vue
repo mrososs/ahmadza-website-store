@@ -46,6 +46,7 @@ async function logout() {
           </div>
           <div class="dropdown-divider" />
           <NuxtLink class="dropdown-item" to="/admin/edit-profile"><i class="text-info ti-settings" />بيانات الدخول</NuxtLink>
+          <NuxtLink class="dropdown-item" to="/admin/security"><i class="text-warning ti-lock" />التحقق بخطوتين</NuxtLink>
           <NuxtLink class="dropdown-item" to="/"><i class="text-success ti-home" />عرض الموقع</NuxtLink>
           <a class="dropdown-item" href="#" @click.prevent="logout"><i class="text-danger ti-unlock" />تسجيل الخروج</a>
         </div>

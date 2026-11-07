@@ -111,6 +111,7 @@ async function remove(f: Factor) {
               </ul>
               <NuxtLink to="/admin" class="button">العودة إلى لوحة التحكم</NuxtLink>
             </template>
+            <p v-if="mode !== 'done'" class="mt-3 mb-0"><NuxtLink to="/admin">العودة إلى لوحة التحكم</NuxtLink></p>
           </template>
         </div>
       </div>

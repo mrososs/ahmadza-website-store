@@ -23,6 +23,12 @@ export async function adminFetch<T = unknown>(url: string, opts: Parameters<type
   }
 }
 
+/** After a failed client-side validation: bring the first field error into view (the forms are long, especially on a phone). */
+export async function scrollToFirstError() {
+  await nextTick()
+  document.querySelector('.text-danger[role="alert"]')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+}
+
 export function useAdminTitle(title: MaybeRefOrGetter<string>) {
   const state = useState<string>('admin-title', () => '')
   watchEffect(() => { state.value = toValue(title) })

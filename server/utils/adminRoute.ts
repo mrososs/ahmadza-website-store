@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { getQuery, readBody, getRequestHeader } from 'h3'
+import { createError, getQuery, readBody, getRequestHeader } from 'h3'
 import type { ZodType } from 'zod'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Json } from '~~/shared/types/database.types'
@@ -41,9 +41,21 @@ export function intParam(event: H3Event, name: string): number {
   return v
 }
 
-/** Throw an HTTP error for a PostgREST/Postgres failure (constraint violations become 400, the rest go through fromDbError). */
+/** Operator-facing Arabic text for the constraint failures a form can cause (never the raw Postgres message). */
+const DB_MESSAGES: Record<string, string> = {
+  '23514': 'قيمة غير مقبولة: راجع الحقول وأعد المحاولة',
+  '23502': 'حقل مطلوب ناقص',
+  '22P02': 'قيمة بصيغة غير صالحة',
+  '22001': 'قيمة أطول من المسموح',
+  '23503': 'مرجع غير موجود أو مرتبط بسجلات أخرى',
+}
+
+/** Throw an HTTP error for a PostgREST/Postgres failure: constraint violations become 400 / 409 with an Arabic message, the rest go through fromDbError. */
 export function dbFail(error: { code?: string; message?: string }): never {
-  if (['23514', '23502', '22P02', '22001', '23503'].includes(error.code ?? '')) throw badRequest(error.message ?? 'بيانات غير صالحة')
+  const code = error.code ?? ''
+  if (code === '23505') throw createError({ statusCode: 409, statusMessage: /slug/i.test(error.message ?? '') ? 'الرابط مستخدم مسبقاً، اختر رابطاً آخر' : 'هذه القيمة مستخدمة مسبقاً في سجل آخر' })
+  if (code === 'PGRST103') throw createError({ statusCode: 404, statusMessage: 'هذه الصفحة غير موجودة: تجاوزت آخر صفحة في القائمة' }) // ?page= past the end (PostgREST 416), not a server fault
+  if (DB_MESSAGES[code]) throw badRequest(DB_MESSAGES[code]!)
   throw fromDbError(error)
 }
 

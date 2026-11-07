@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-// @ts-expect-error plain .mjs module without type declarations
-import { decideCandidate, decideGeneratedCover, withCandidate, withCurrentCover } from '../../scripts/recovery/lib/cover-evidence.mjs'
+import { decideCandidate, decideGeneratedCover, withCandidate, withCurrentCover } from '../../shared/utils/coverEvidence'
 
 const SHA = 'a'.repeat(64)
 const result = (over: Record<string, unknown> = {}) => ({ confidence: 'high', jpeg: { sha256: SHA, bytes: 60000, width: 480, height: 700 }, ...over })

@@ -105,8 +105,17 @@ for (const vp of VIEWPORTS) {
         await expect(cards.nth(i).locator('.recovered-badge'), 'the review badge text is white (it was unreadable dark brown)').toHaveCSS('color', 'rgb(255, 255, 255)')
         await expect(cards.nth(i)).toContainText('السعر غير محدد')
         await expect(cards.nth(i)).toContainText('المؤلف غير محدد')
-        await expect(cards.nth(i).locator('img')).toHaveAttribute('src', /default-cover|icon|cover/i) // the fallback cover, never a broken image
+        // a stored cover (content-hashed key in the public bucket) or the default one; either way the image really loads: never a broken image
+        const img = cards.nth(i).locator('img')
+        await img.scrollIntoViewIfNeeded()
+        await expect(img).toHaveAttribute('src', /default-cover|\/public-media\/books\/\d+\/[0-9a-f]{12}\.jpg$/)
+        await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0), { message: 'the cover image loads' }).toBe(true)
       }
+      // most books now show a real cover, and every cover says where it came from
+      const real = await page.locator('.recovered-card img[src*="/public-media/books/"]').count()
+      expect(real, 'most cards on the first page show a stored cover').toBeGreaterThanOrEqual(Math.floor(Math.min(24, summary.total) * 0.6))
+      await page.locator('.recovered-card summary').first().click()
+      await expect(page.locator('.recovered-card [data-testid="cover-label"]').first()).toContainText(/مُولَّدة|الغلاف الأصلي|لا يوجد غلاف/)
       // nothing to buy, nothing to download, no link into a product page
       expect(await page.locator('.recovered-card a, .recovered-card button').count()).toBe(0)
       expect(await page.locator('a[href^="/book/"], a[href*="/api/library/download"], a[href^="/checkout"]').count()).toBe(0)
@@ -148,9 +157,9 @@ test('the recovered-catalogue API is behind the password and returns only whitel
   expect(res.headers()['cache-control']).toMatch(/no-store/)
   const body = await res.json()
   expect(body.items.length).toBeGreaterThan(0)
-  for (const it of body.items) expect(Object.keys(it).sort()).toEqual(['fingerprint', 'id', 'original_name', 'pages', 'scan', 'size_bytes', 'title'])
+  for (const it of body.items) expect(Object.keys(it).sort()).toEqual(['cover_path', 'cover_provenance', 'fingerprint', 'id', 'original_name', 'pages', 'scan', 'size_bytes', 'title'])
   const json = JSON.stringify(body)
-  for (const forbidden of ['storage_path', 'books/recovered', 'price', 'author', 'cover', 'legacy_path', 'recovery_evidence', 'sb_secret']) expect(json, forbidden).not.toContain(forbidden)
+  for (const forbidden of ['storage_path', 'books/recovered', 'price', 'author', 'cover-candidates', 'private-sensitive', 'candidates', 'legacy_path', 'recovery_evidence', 'sb_secret']) expect(json, forbidden).not.toContain(forbidden)
   expect((await request.get(`${ORIGIN}/api/preview/recovered?search=%25_%5C`, { headers: auth })).status(), 'wildcard characters in a search are harmless').toBe(200)
 })
 

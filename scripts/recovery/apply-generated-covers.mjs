@@ -18,21 +18,26 @@ import path from 'node:path'
 import { assertAuthorizedSupabaseTarget, AUTHORIZED_SUPABASE_REF } from '../../shared/utils/supabaseTarget.ts'
 import { OUT_DIR, ROOT } from '../migration/lib/paths.mjs'
 import { loadEnv } from '../migration/lib/supabase.mjs'
-import { decideGeneratedCover, withCandidate, withCurrentCover } from './lib/cover-evidence.mjs'
+import { decideGeneratedCover, withCandidate, withCurrentCover } from '../../shared/utils/coverEvidence.ts'
 import { jpegSize } from './lib/cover-pages.mjs'
 
 const args = process.argv.slice(2)
 const opt = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d)
-if (opt('--confirm') !== AUTHORIZED_SUPABASE_REF) { console.error(`refusing: pass --confirm ${AUTHORIZED_SUPABASE_REF}`); process.exit(2) }
+// The target is the HOSTED project (needs --confirm <ref>) or, with --target recovery, the isolated local recovery stack (the local mirror of the same genuine data).
+const TARGET = opt('--target', 'hosted')
+if (TARGET !== 'hosted' && TARGET !== 'recovery') { console.error('refusing: --target must be hosted or recovery'); process.exit(2) }
+if (TARGET === 'hosted' && opt('--confirm') !== AUTHORIZED_SUPABASE_REF) { console.error(`refusing: pass --confirm ${AUTHORIZED_SUPABASE_REF}`); process.exit(2) }
 const APPLY = args.includes('--apply')
 const folder = opt('--folder', 'D:\\mostqel\\aawraq-generated-covers')
 const limit = Number(opt('--limit', Infinity))
 const reportFile = opt('--report', path.join(OUT_DIR, readdirSync(OUT_DIR).filter((f) => /^generated-covers-\d{4}-/.test(f)).sort().at(-1) ?? ''))
 const { results } = JSON.parse(readFileSync(reportFile, 'utf8'))
 
-const env = loadEnv(path.join(ROOT, '.env.hosted'))
-assertAuthorizedSupabaseTarget(env.NUXT_PUBLIC_SUPABASE_URL)
-if (!/^https:\/\/ubjuyeccioflhpcpnhmo\.supabase\.co\/?$/.test(env.NUXT_PUBLIC_SUPABASE_URL)) { console.error('refusing: .env.hosted does not point at the authorised project'); process.exit(2) }
+const env = loadEnv(path.join(ROOT, TARGET === 'hosted' ? '.env.hosted' : '.env.recovery'))
+if (TARGET === 'hosted') {
+  assertAuthorizedSupabaseTarget(env.NUXT_PUBLIC_SUPABASE_URL)
+  if (!/^https:\/\/ubjuyeccioflhpcpnhmo\.supabase\.co\/?$/.test(env.NUXT_PUBLIC_SUPABASE_URL)) { console.error('refusing: .env.hosted does not point at the authorised project'); process.exit(2) }
+} else if (!/^http:\/\/(127\.0\.0\.1|localhost):55321$/.test(env.NUXT_PUBLIC_SUPABASE_URL)) { console.error('refusing: .env.recovery does not point at the local recovery stack'); process.exit(2) }
 const db = createClient(env.NUXT_PUBLIC_SUPABASE_URL, env.NUXT_SUPABASE_SECRET_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
 const must = (r, what) => { if (r.error) throw new Error(`${what}: ${r.error.message}`); return r.data }
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex')
@@ -47,7 +52,7 @@ async function counts() {
   }
 }
 const before = await counts()
-const out = { generated_at: new Date().toISOString(), mode: APPLY ? 'apply' : 'dry-run', target: AUTHORIZED_SUPABASE_REF, report: path.basename(reportFile), before, attached: [], candidates: [], skipped: [], failed: [] }
+const out = { generated_at: new Date().toISOString(), mode: APPLY ? 'apply' : 'dry-run', target: TARGET === 'hosted' ? AUTHORIZED_SUPABASE_REF : 'recovery', report: path.basename(reportFile), before, attached: [], candidates: [], skipped: [], failed: [] }
 
 async function upload(bucket, key, bytes, cache) {
   const up = await db.storage.from(bucket).upload(key, bytes, { contentType: 'image/jpeg', cacheControl: cache, upsert: false })
@@ -61,10 +66,12 @@ async function upload(bucket, key, bytes, cache) {
 
 for (const r of results.slice(0, limit)) {
   try {
-    const book = must(await db.from('books').select('id,cover_path,status,recovery_evidence').eq('id', r.book_id).maybeSingle(), 'read book')
+    // the book is found by its PDF's SHA-256, not by an id (ids differ between hosted and the recovery stack); there must be exactly one
+    const owners = must(await db.from('book_media').select('book_id').eq('sha256', r.pdf_sha256), 'find the book by its PDF hash')
+    if (owners.length !== 1 || owners[0].book_id == null) { out.skipped.push({ book_id: r.book_id, reason: `${owners.length} books own this PDF hash in the target` }); continue }
+    const bookId = owners[0].book_id
+    const book = must(await db.from('books').select('id,cover_path,status,recovery_evidence').eq('id', bookId).maybeSingle(), 'read book')
     if (!book) { out.skipped.push({ book_id: r.book_id, reason: 'no such book' }); continue }
-    const media = must(await db.from('book_media').select('sha256').eq('book_id', r.book_id), 'read media')
-    if (media.length !== 1 || media[0].sha256 !== r.pdf_sha256) { out.skipped.push({ book_id: r.book_id, reason: 'the report belongs to a different PDF than the hosted record' }); continue }
     const decision = decideGeneratedCover({ book, result: r })
     if (decision.action === 'skip') { out.skipped.push({ book_id: r.book_id, reason: decision.reason }); continue }
     const bytes = await readFile(path.join(folder, r.jpeg.file))
@@ -72,21 +79,21 @@ for (const r of results.slice(0, limit)) {
     if (sha256(bytes) !== r.jpeg.sha256 || !dims || bytes.length > 400_000 || bytes.length !== r.jpeg.bytes) { out.failed.push({ book_id: r.book_id, error: 'the image bytes differ from the report or fail validation' }); continue }
     const base = { provenance: 'generated_from_pdf', method: 'pdf_first_page', confidence: r.confidence, sha256: r.jpeg.sha256, bytes: bytes.length, width: dims.w, height: dims.h, source_pdf_sha256: r.pdf_sha256 }
     if (decision.action === 'attach') {
-      const key = `books/${r.book_id}/${decision.sha12}.jpg`
+      const key = `books/${bookId}/${decision.sha12}.jpg`
       if (APPLY) {
         await upload('public-media', key, bytes, '31536000')
         const ev = withCurrentCover(book.recovery_evidence, { ...base, bucket: 'public-media', path: key, applied_at: new Date().toISOString(), review: 'unreviewed', reason: r.reason })
-        must(await db.from('books').update({ cover_path: key, recovery_evidence: ev }).eq('id', r.book_id).eq('status', 'draft'), 'attach cover')
+        must(await db.from('books').update({ cover_path: key, recovery_evidence: ev }).eq('id', bookId).eq('status', 'draft'), 'attach cover')
       }
-      out.attached.push({ book_id: r.book_id, path: key, confidence: r.confidence })
+      out.attached.push({ book_id: bookId, path: key, confidence: r.confidence })
     } else {
-      const key = `cover-candidates/${r.book_id}/${decision.sha12}.jpg`
+      const key = `cover-candidates/${bookId}/${decision.sha12}.jpg`
       if (APPLY) {
         await upload('private-sensitive', key, bytes, '3600')
         const cand = { id: decision.sha12, ...base, class: r.class, reason: r.reason, bucket: 'private-sensitive', path: key, status: 'pending', created_at: new Date().toISOString() }
-        must(await db.from('books').update({ recovery_evidence: withCandidate(book.recovery_evidence, cand) }).eq('id', r.book_id).eq('status', 'draft'), 'record candidate')
+        must(await db.from('books').update({ recovery_evidence: withCandidate(book.recovery_evidence, cand) }).eq('id', bookId).eq('status', 'draft'), 'record candidate')
       }
-      out.candidates.push({ book_id: r.book_id, path: key, confidence: r.confidence, class: r.class })
+      out.candidates.push({ book_id: bookId, path: key, confidence: r.confidence, class: r.class })
     }
   } catch (e) { out.failed.push({ book_id: r.book_id, error: String(e.message).slice(0, 200) }) }
 }

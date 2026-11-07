@@ -10,17 +10,66 @@ import { escapeLike } from './adminCrud'
 type BookStatus = 'draft' | 'published' | 'coming_soon' | 'archived'
 
 type RecoveryFilter = 'all' | 'recovered' | 'not_ready' | 'ready' | 'missing_media'
-const BOOK_LIST_COLUMNS = 'id,title,cover_path,status,kind,price_amount,price_currency,view_count,is_demo,created_at,deleted_at,provenance'
+const BOOK_LIST_COLUMNS = 'id,title,cover_path,status,kind,price_amount,price_currency,view_count,is_demo,created_at,deleted_at,provenance,cover_provenance:recovery_evidence->cover->current->>provenance,cover_pending:recovery_evidence->cover->>has_pending'
 
-export async function listBooks(event: H3Event, q: { page: number; q: string; status: string; recovery?: RecoveryFilter; workflow?: string }) {
+/** Ids of the books that have an author / a verified file, so "has no author" and "has no verified file" can be a NOT IN. */
+async function pagedBookIds(read: (from: number) => PromiseLike<{ data: Array<{ book_id: number | null }> | null; error: { code?: string; message?: string } | null }>): Promise<number[]> {
+  const ids = new Set<number>()
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await read(from)
+    if (error) dbFail(error)
+    for (const r of data ?? []) if (r.book_id != null) ids.add(r.book_id)
+    if ((data ?? []).length < 1000) return [...ids]
+  }
+}
+const booksWithAuthor = (db: ReturnType<typeof serviceClient>) => pagedBookIds((from) => db.from('book_makers').select('book_id').eq('role', 'author').order('book_id').range(from, from + 999))
+const booksWithFile = (db: ReturnType<typeof serviceClient>) => pagedBookIds((from) => db.from('book_media').select('book_id').eq('migration_status', 'available').order('id').range(from, from + 999))
+
+export async function listBooks(event: H3Event, q: { page: number; q: string; status: string; recovery?: RecoveryFilter; workflow?: string; cover?: string; gap?: string }) {
   const db = serviceClient(event)
   const range: [number, number] = [(q.page - 1) * ADMIN_PAGE_SIZE, q.page * ADMIN_PAGE_SIZE - 1]
   const term = escapeLike(q.q)
   const recovery = q.recovery ?? 'all'
   const workflow = q.workflow ?? 'all'
+  const cover = q.cover ?? 'all'
+  const gap = q.gap ?? 'all'
   let rows: Array<Record<string, unknown> & { id: number }> = []
   let total = 0
-  if (recovery === 'all' && workflow === 'all') {
+  if (cover !== 'all' || gap !== 'all') {
+    // cover / gap filters read the books table directly (the cover record lives in recovery_evidence); workflow and recovery filters are intersected by id
+    let query = db.from('books').select(BOOK_LIST_COLUMNS, { count: 'exact' }).is('deleted_at', null)
+    switch (q.status) {
+      case 'active': query = query.eq('status', 'published'); break
+      case 'inactive': query = query.in('status', ['draft', 'archived']); break
+      case 'soon': query = query.eq('status', 'coming_soon'); break
+      case 'trash': query = query.eq('id', -1); break
+      default:
+    }
+    if (cover === 'none') query = query.is('cover_path', null)
+    if (cover === 'generated') query = query.eq('recovery_evidence->cover->current->>provenance', 'generated_from_pdf')
+    if (cover === 'original') query = query.eq('recovery_evidence->cover->current->>provenance', 'original_cover')
+    if (cover === 'candidate') query = query.eq('recovery_evidence->cover->>has_pending', 'true')
+    if (gap === 'price') query = query.eq('price_amount', 0).neq('kind', 'free')
+    if (gap === 'author') { const ids = await booksWithAuthor(db); if (ids.length) query = query.not('id', 'in', `(${ids.join(',')})`) }
+    if (gap === 'pdf') { const ids = await booksWithFile(db); if (ids.length) query = query.not('id', 'in', `(${ids.join(',')})`) }
+    if (recovery !== 'all' || workflow !== 'all') {
+      let rq = db.from('books_readiness').select('book_id').limit(5000)
+      if (recovery !== 'all') rq = rq.in('provenance', ['legacy', 'recovered_media'])
+      if (workflow !== 'all') rq = rq.eq('workflow_status', workflow)
+      if (recovery === 'not_ready') rq = rq.eq('eligible', false)
+      if (recovery === 'ready') rq = rq.eq('eligible', true)
+      if (recovery === 'missing_media') rq = rq.or('media_missing.gt.0,media_validated.eq.0')
+      const { data: rids, error: rerr } = await rq
+      if (rerr) dbFail(rerr)
+      const idList = (rids ?? []).map((r) => r.book_id).filter((v): v is number => v != null)
+      query = idList.length ? query.in('id', idList) : query.eq('id', -1)
+    }
+    if (term) query = query.ilike('title', `%${term}%`)
+    const { data, count, error } = await query.order('id', { ascending: false }).range(...range)
+    if (error) dbFail(error)
+    rows = (data ?? []) as unknown as typeof rows
+    total = count ?? 0
+  } else if (recovery === 'all' && workflow === 'all') {
     let query = db.from('books').select(BOOK_LIST_COLUMNS, { count: 'exact' })
     switch (q.status) {
       case 'active': query = query.is('deleted_at', null).eq('status', 'published'); break
@@ -92,8 +141,20 @@ export async function getBook(event: H3Event, id: number) {
     db.from('book_media_readiness').select('media_id,name,kind,visibility,migration_status,storage_provider,is_external,legacy_book_media_id,has_hash,checksum_verified_at,validated').eq('book_id', id).order('media_id'),
   ])
   const r = readiness.data?.[0]
+  // Cover candidates wait in a PRIVATE bucket: the administrator sees them through short-lived signed links, never a public address.
+  const candidates = ((book.recovery_evidence as { cover?: { candidates?: Array<{ id: string; bucket?: string; path?: string }> } } | null)?.cover?.candidates ?? [])
+  const cover_candidate_previews: Record<string, string> = {}
+  for (const c of candidates) {
+    if (c.bucket !== 'private-sensitive' || !c.path?.startsWith(`cover-candidates/${id}/`)) continue
+    const signed = await db.storage.from('private-sensitive').createSignedUrl(c.path, 600)
+    if (signed.data?.signedUrl) cover_candidate_previews[c.id] = signed.data.signedUrl
+  }
+  // Other books with exactly the same title: possibly another edition, possibly a repeat. Shown as a warning; nothing is merged.
+  const dup = await db.from('books').select('id').eq('title', book.title).neq('id', id).is('deleted_at', null).order('id').limit(20)
   return {
     ...book,
+    cover_candidate_previews,
+    duplicate_title_ids: (dup.data ?? []).map((d) => d.id),
     category_ids: (cats.data ?? []).map((c) => c.category_id),
     maker_ids: (makers.data ?? []).map((m) => ({ id: m.maker_id, role: m.role })),
     tags: (tags.data ?? []).map((t) => t.tag),

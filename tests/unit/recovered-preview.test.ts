@@ -15,12 +15,29 @@ const row = (over: Record<string, unknown> = {}, checks: Record<string, unknown>
 
 describe('previewItemFromRow (what a visitor of the protected preview may learn about a recovered book)', () => {
   it('returns exactly the whitelisted fields', () => {
-    expect(previewItemFromRow(row())).toEqual({ id: 7, title: 'عن شيء اسمه الحب', pages: 112, size_bytes: 923682, original_name: 'أوراق عربية-1675015554.pdf', fingerprint: 'aaaaaaaaaaaa', scan: 'clean' })
+    expect(previewItemFromRow(row())).toEqual({ id: 7, title: 'عن شيء اسمه الحب', pages: 112, size_bytes: 923682, original_name: 'أوراق عربية-1675015554.pdf', fingerprint: 'aaaaaaaaaaaa', scan: 'clean', cover_path: null, cover_provenance: null })
   })
-  it('never carries an author, a price, a cover, a storage path, the full hash or the PDF metadata', () => {
+  it('never carries an author, a price, a storage path of the PDF, the full hash or the PDF metadata', () => {
     const json = JSON.stringify(previewItemFromRow(row()))
-    for (const forbidden of ['اسم غير موثق', 'author', 'price', 'cover', 'storage', 'legacy_path', 'product_media', SHA, '2016-01-08', 'عنوان من الملف']) expect(json).not.toContain(forbidden)
-    expect(Object.keys(previewItemFromRow(row())!).sort()).toEqual(['fingerprint', 'id', 'original_name', 'pages', 'scan', 'size_bytes', 'title'])
+    for (const forbidden of ['اسم غير موثق', 'author', 'price', 'storage', 'legacy_path', 'product_media', SHA, '2016-01-08', 'عنوان من الملف']) expect(json).not.toContain(forbidden)
+    expect(Object.keys(previewItemFromRow(row())!).sort()).toEqual(['cover_path', 'cover_provenance', 'fingerprint', 'id', 'original_name', 'pages', 'scan', 'size_bytes', 'title'])
+  })
+  it('shows a cover only in the exact shape of a stored cover, with where it came from', () => {
+    const withCover = (cover_path: unknown, provenance: unknown = 'generated_from_pdf') => previewItemFromRow({ ...row({ cover: { current: { provenance } } }), cover_path } as never)!
+    expect(withCover('books/55/9fb2c1d4e6a7.jpg')).toMatchObject({ cover_path: 'books/55/9fb2c1d4e6a7.jpg', cover_provenance: 'generated_from_pdf' })
+    expect(withCover('books/55/9fb2c1d4e6a7.webp', 'original_cover').cover_provenance).toBe('original_cover')
+    for (const bad of ['https://evil.example/x.jpg', 'books/../secret.jpg', '../books/55/9fb2c1d4e6a7.jpg', 'private-sensitive/cover-candidates/55/9fb2c1d4e6a7.jpg', 'cover-candidates/55/9fb2c1d4e6a7.jpg', 'books/55/9fb2c1d4e6a7.pdf', 'books/55/a b.jpg', 'books/x/9fb2c1d4e6a7.jpg', '', null, 42]) {
+      expect(withCover(bad).cover_path, String(bad)).toBeNull()
+    }
+  })
+  it('states a provenance only when there is a cover, and only a known one', () => {
+    expect(previewItemFromRow({ ...row({ cover: { current: { provenance: 'generated_from_pdf' } } }), cover_path: null } as never)!.cover_provenance).toBeNull()
+    expect(previewItemFromRow({ ...row({ cover: { current: { provenance: 'made_up' } } }), cover_path: 'books/1/aaaaaaaaaaaa.jpg' } as never)!.cover_provenance).toBeNull()
+  })
+  it('never exposes cover candidates or their private paths', () => {
+    const r = previewItemFromRow({ ...row({ cover: { current: null, candidates: [{ id: 'c1', bucket: 'private-sensitive', path: 'cover-candidates/7/aaaaaaaaaaaa.jpg', status: 'pending' }] } }), cover_path: null } as never)!
+    const json = JSON.stringify(r)
+    for (const forbidden of ['candidates', 'private-sensitive', 'cover-candidates', 'pending']) expect(json).not.toContain(forbidden)
   })
   it('lists nothing whose evidence is not clean, verified and unencrypted', () => {
     for (const checks of [{ malware_scan: 'infected' }, { malware_scan: undefined }, { hash_verified: false }, { size_verified: false }, { encrypted: true }, { active_content: 'javascript found' }, { active_content: undefined }]) {

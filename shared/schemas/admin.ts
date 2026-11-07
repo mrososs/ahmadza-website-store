@@ -51,8 +51,18 @@ export const adminReportQuerySchema = z.object({
 export const adminBooksListQuerySchema = adminListQuerySchema.extend({
   recovery: z.enum(['all', 'recovered', 'not_ready', 'ready', 'missing_media']).default('all'),
   workflow: z.enum(['all', 'draft', 'needs_review', 'missing_media', 'ready', 'published', 'archived']).default('all'),
+  // cover: none = no cover, generated = generated from the book's PDF, original = a recovered original, candidate = a proposed cover waits for a decision.
+  cover: z.enum(['all', 'none', 'generated', 'original', 'candidate']).default('all'),
+  // gap: what is still missing: price (0 on a paid book), author (no author assigned), pdf (no verified file in storage).
+  gap: z.enum(['all', 'price', 'author', 'pdf']).default('all'),
 })
 
 export const recoveryRunSchema = z.object({ run: z.coerce.number().int().positive() })
 export const recoveryVerifySchema = recoveryRunSchema.extend({ confirm: z.string().trim().max(120) })
 export const recoveryPromoteSchema = z.object({ run: z.coerce.number().int().positive().optional() })
+
+/** An administrator's decision on one cover candidate (its id is the first 12 hex characters of the image's SHA-256). */
+export const adminCoverDecisionSchema = z.object({
+  candidate: z.string({ error: 'المرشح مطلوب' }).regex(/^[0-9a-f]{12}$/, 'معرّف المرشح غير صالح'),
+  decision: z.enum(['approve', 'reject'], { error: 'القرار غير صالح' }),
+})

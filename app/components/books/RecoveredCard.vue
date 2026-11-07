@@ -5,6 +5,13 @@ import type { RecoveredPreviewItem } from '~~/shared/utils/recoveredPreview'
 
 const props = defineProps<{ item: RecoveredPreviewItem }>()
 const size = computed(() => (props.item.size_bytes ? `${(props.item.size_bytes / 1048576).toFixed(1)} م.ب` : null))
+// Where the cover came from, said plainly: a cover made from the book's own first page is never passed off as the original.
+const COVER_LABEL: Record<string, string> = {
+  generated_from_pdf: 'صورة الصفحة الأولى من الملف (مُولَّدة، وليست الغلاف الأصلي)',
+  original_cover: 'الغلاف الأصلي',
+  admin_upload: 'مرفوع من المسؤول',
+}
+const coverLabel = computed(() => (props.item.cover_path ? (COVER_LABEL[props.item.cover_provenance ?? ''] ?? 'غلاف') : 'لا يوجد غلاف بعد (الغلاف الافتراضي)'))
 </script>
 
 <template>
@@ -12,8 +19,8 @@ const size = computed(() => (props.item.size_bytes ? `${(props.item.size_bytes /
     <article class="book_block block recovered-card" :aria-label="item.title">
       <div class="item">
         <span class="type_book recovered-badge">قيد المراجعة</span>
-        <div class="img-block is-placeholder">
-          <CoverImage class="img-fluid" loading="lazy" :path="null" :alt="item.title" />
+        <div class="img-block" :class="{ 'is-placeholder': !item.cover_path }">
+          <CoverImage class="img-fluid" loading="lazy" decoding="async" :path="item.cover_path" :alt="item.title" />
         </div>
         <div class="info"><h3 class="name">{{ item.title }}</h3></div>
       </div>
@@ -25,6 +32,7 @@ const size = computed(() => (props.item.size_bytes ? `${(props.item.size_bytes /
           <dl>
             <dt>الحالة</dt><dd>قيد المراجعة، لم يُعتمد للنشر</dd>
             <dt>الأقسام</dt><dd>غير محددة</dd>
+            <dt>الغلاف</dt><dd data-testid="cover-label">{{ coverLabel }}</dd>
             <dt v-if="item.pages">عدد الصفحات (من الملف)</dt><dd v-if="item.pages">{{ item.pages }}</dd>
             <dt v-if="size">حجم الملف</dt><dd v-if="size">{{ size }}</dd>
             <dt v-if="item.original_name">الملف الأصلي</dt><dd v-if="item.original_name"><bdi dir="ltr">{{ item.original_name }}</bdi></dd>

@@ -20,8 +20,30 @@ defineProps<{
   } | null
   canVerify?: boolean
   canReject?: boolean
+  cover?: { current?: { provenance?: string; path?: string; review?: string; confidence?: string; reason?: string; class?: string } | null; candidates?: Array<{ id: string; provenance: string; confidence?: string; class?: string; reason?: string; status: string }> } | null
+  previews?: Record<string, string>
+  duplicateTitleIds?: number[]
+  busy?: boolean
 }>()
-const emit = defineEmits<{ verify: []; reject: [] }>()
+const emit = defineEmits<{ verify: []; reject: []; 'cover-decision': [candidate: string, decision: 'approve' | 'reject'] }>()
+const { publicUrl } = useMediaUrl()
+
+// Where a cover came from, in plain Arabic. A generated cover is NEVER presented as the original.
+const COVER_SOURCE: Record<string, string> = {
+  generated_from_pdf: 'صورة الصفحة الأولى من ملف الكتاب (مُولَّدة، وليست الغلاف الأصلي)',
+  original_cover: 'غلاف أصلي مُسترجع من مخزن الموقع القديم',
+  admin_upload: 'مرفوع من المسؤول',
+}
+// What the measurement means, in Arabic (the measured English sentence stays as a tooltip). Shown for proposed covers and for a generated current cover.
+const COVER_CLASS: Record<string, string> = {
+  cover_like: 'الصفحة الأولى صورة واحدة كبيرة بلا نص تقريباً: تبدو غلافاً',
+  uncertain: 'قد تكون غلافاً لكن الدليل غير حاسم: راجعها بعينك',
+  text_page: 'الأرجح أنها صفحة نصية أو صفحة عنوان وليست غلافاً',
+}
+const coverNote = (c: { class?: string; confidence?: string }) => COVER_CLASS[c.class ?? ''] ?? (c.confidence === 'high' ? COVER_CLASS.cover_like : '')
+const COVER_REVIEW: Record<string, string> = { unreviewed: 'لم يراجعها مسؤول بعد', approved_by_admin: 'اعتمدها مسؤول' }
+const CANDIDATE_STATUS: Record<string, string> = { pending: 'بانتظار قرارك', approved: 'معتمد', rejected: 'مرفوض', superseded: 'استُبدل بقرار آخر' }
+const CONFIDENCE: Record<string, string> = { high: 'ثقة عالية', medium: 'ثقة متوسطة', low: 'ثقة منخفضة' }
 
 // What the recovery could NOT establish, in plain Arabic (the stored English notes are the evidence; these are what the reviewer reads).
 const UNKNOWN_LABEL: Record<string, string> = {
@@ -60,9 +82,47 @@ const LEGACY_STATUS: Record<string, string> = { '0': 'غير مفعل', '1': 'م
           <div v-if="evidence.pdf?.pages"><dt>عدد الصفحات (من الملف)</dt><dd>{{ evidence.pdf.pages }}</dd></div>
           <div v-if="formatSize(evidence.byte_size)"><dt>حجم الملف</dt><dd>{{ formatSize(evidence.byte_size) }}</dd></div>
           <div v-if="evidence.checks"><dt>فحص الملف عند الاستعادة</dt><dd>{{ evidence.checks.malware_scan === 'clean' ? 'سليم' : 'غير مؤكد' }}، {{ evidence.checks.active_content === 'none found' ? 'لا محتوى نشط' : 'محتوى نشط' }}، {{ evidence.checks.hash_verified ? 'البصمة مطابقة' : 'البصمة غير مؤكدة' }}</dd></div>
+          <div v-if="evidence.checks" data-testid="evidence-support"><dt>ما تدعمه الأدلة</dt><dd>الملف نفسه موثق (بصمة وفحص). العنوان مأخوذ من الملف. المؤلف والأقسام والسعر بلا أي دليل.</dd></div>
           <div v-if="evidence.hosted_import?.at"><dt>الاستيراد إلى الموقع</dt><dd>{{ evidence.hosted_import.at.slice(0, 10) }}<template v-if="evidence.hosted_import.file_uploaded === false"> — لم يُرفع ملف PDF بعد</template></dd></div>
         </template>
       </dl>
+      <div v-if="duplicateTitleIds?.length" class="alert alert-warning" role="status" data-testid="duplicate-warning">
+        <strong>تنبيه:</strong> يوجد {{ duplicateTitleIds.length }} كتاب آخر بنفس العنوان تماماً:
+        <template v-for="(d, i) in duplicateTitleIds" :key="d"><NuxtLink :to="`/admin/books/${d}`">#{{ d }}</NuxtLink><span v-if="i < duplicateTitleIds.length - 1">، </span></template>.
+        قد يكون إصداراً آخر وقد يكون تكراراً: لا يُدمج ولا يُحذف شيء تلقائياً، والقرار لك.
+      </div>
+
+      <div class="cover-block mb-3" data-testid="cover-block">
+        <h6>الغلاف</h6>
+        <div v-if="cover?.current?.path" class="d-flex align-items-start">
+          <img :src="publicUrl(cover.current.path)" width="90" class="ml-3 border" alt="الغلاف الحالي" data-testid="cover-current">
+          <div>
+            <strong>{{ COVER_SOURCE[cover.current.provenance ?? ''] ?? cover.current.provenance }}</strong>
+            <div class="text-muted small">{{ COVER_REVIEW[cover.current.review ?? ''] ?? '' }}<template v-if="cover.current.confidence"> · {{ CONFIDENCE[cover.current.confidence] ?? cover.current.confidence }}</template></div>
+            <div v-if="coverNote(cover.current)" class="text-muted small" :title="cover.current.reason">{{ coverNote(cover.current) }}</div>
+          </div>
+        </div>
+        <p v-else class="text-muted mb-2">لا يوجد غلاف معتمد: يظهر الغلاف الافتراضي في المعاينة.</p>
+        <div v-if="cover?.candidates?.length" class="mt-2" data-testid="cover-candidates">
+          <strong>أغلفة مقترحة</strong>
+          <div v-for="c in cover.candidates" :key="c.id" class="d-flex align-items-start border-top pt-2 mt-2" :data-testid="`cover-candidate-${c.id}`">
+            <img v-if="previews?.[c.id]" :src="previews[c.id]" width="90" class="ml-3 border" :alt="`صورة مقترحة ${c.id}`">
+            <div class="flex-grow-1">
+              <div>{{ COVER_SOURCE[c.provenance] ?? c.provenance }} · {{ CONFIDENCE[c.confidence ?? ''] ?? '' }}</div>
+              <div v-if="coverNote(c)" class="text-muted small" :title="c.reason">{{ coverNote(c) }}</div>
+              <div class="mt-1">
+                <template v-if="c.status === 'pending'">
+                  <button type="button" class="btn btn-sm btn-success" :disabled="busy" @click="emit('cover-decision', c.id, 'approve')">اعتماد كغلاف</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary mr-2" :disabled="busy" @click="emit('cover-decision', c.id, 'reject')">رفض</button>
+                </template>
+                <span v-else class="badge badge-light">{{ CANDIDATE_STATUS[c.status] ?? c.status }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <small class="text-muted d-block mt-2">اعتماد غلاف لا ينشر الكتاب ولا يغيّر سعره. لتغيير غلاف معتمد ارفع صورة جديدة من نموذج الكتاب.</small>
+      </div>
+
       <div v-if="evidence?.uncertain && Object.keys(evidence.uncertain).length" class="alert alert-secondary" role="note" data-testid="evidence-unknowns">
         <strong>ما لا يزال مجهولاً (لم يُخمَّن):</strong>
         <ul class="mb-0 pr-3"><li v-for="k in Object.keys(evidence.uncertain)" :key="k">{{ UNKNOWN_LABEL[k] ?? k }}</li></ul>

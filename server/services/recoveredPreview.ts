@@ -34,7 +34,7 @@ export async function recoveredPage(event: H3Event, opts: { page: number; size: 
   const size = Math.min(Math.max(1, opts.size), RECOVERED_PAGE_SIZE)
   const page = Math.max(1, opts.page)
   const from = (page - 1) * size
-  let q = eligibleOnly(serviceClient(event).from('books').select('id,title,recovery_evidence', { count: 'exact' }))
+  let q = eligibleOnly(serviceClient(event).from('books').select('id,title,cover_path,recovery_evidence', { count: 'exact' }))
   if (opts.search) q = q.ilike('title', `%${escapeLike(opts.search)}%`)
   const { data, count, error } = await q.order('id', { ascending: true }).range(from, from + size - 1)
   if (error) throw failure()

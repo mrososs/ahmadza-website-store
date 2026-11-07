@@ -5,13 +5,13 @@ Updated 2026-11-07 after the final verification run (results in `RELEASE_ACCEPTA
 ## State
 
 * `origin/main` is at `00a1bf5`. Local `main` is at `ea3c183`, one documentation commit ahead of it (never pushed).
-* `vps-recovery-prep` is a **linear series of 23 commits on top of `main`** (`git log --oneline main..HEAD`; its merge base is `main` itself). It integrates as a fast-forward: no merge commit, no conflicts.
+* `vps-recovery-prep` is a **linear series of commits on top of `main`** (`git log --oneline main..HEAD`; its merge base is `main` itself). It integrates as a fast-forward: no merge commit, no conflicts.
 * 171 files changed (about 13,300 added lines). Everything is committed; the working tree is clean.
 * Hosted Supabase `ubjuyeccioflhpcpnhmo`: all 19 migrations applied by you, schema fingerprints identical to the local stack, advisors without errors, hosted integration suites passing, catalogue tables empty. No other project was touched.
 
 ## What a push would publish
 
-`git push origin main` after the fast-forward publishes **`ea3c183` (docs) and all 23 branch commits**: 24 commits from `00a1bf5` to the branch head. Nothing else: no data, no PDFs, no environment files.
+`git push origin main` after the fast-forward publishes **`ea3c183` (docs) and every branch commit**: everything from `00a1bf5` to the branch head (`git log --oneline origin/main..vps-recovery-prep` lists them). Nothing else: no data, no PDFs, no environment files.
 
 ## Review before publishing
 

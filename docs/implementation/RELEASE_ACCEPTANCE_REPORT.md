@@ -1,6 +1,6 @@
 # AAWRAQ release acceptance report
 
-Date 2026-11-07. Branch `vps-recovery-prep` (23 commits on `main`). **Not merged, not pushed, not deployed.** Every figure below comes from a run on the committed code in this session; nothing is counted that was not executed and passed.
+Date 2026-11-07. Branch `vps-recovery-prep` (`git log --oneline main..HEAD` lists its commits). **Not merged, not pushed, not deployed.** Every figure below comes from a run on the committed code in this session; nothing is counted that was not executed and passed.
 
 ## 1. Gates
 
@@ -75,7 +75,7 @@ How the run went, so nothing is overstated:
 
 ## 3. What is needed to publish safely
 
-1. **Decide** to merge: `git merge --ff-only vps-recovery-prep` on `main`, then `git push origin main` (this publishes `ea3c183` and the 23 branch commits). No force-push.
+1. **Decide** to merge: `git merge --ff-only vps-recovery-prep` on `main`, then `git push origin main` (this publishes `ea3c183` and every branch commit). No force-push.
 2. **Create the hosting project** (Vercel: repository root, Nuxt, Node 22, `npm ci`, `npx nuxt build`; do not set `NUXT_PREVIEW_MODE`) and enter the environment from `PROTECTED_PREVIEW_DEPLOYMENT.md` section 3 in its dashboard: the hosted project URL, publishable and secret keys, the site URL, `NUXT_PREVIEW_USER` and a password hash made with `scripts/preview/hash-password.mjs`. Keep `NUXT_PAYMENTS_ENABLED_PROVIDERS` empty. Never paste secrets into chat or commit them.
 3. **Configure Auth and SMTP**, then invite the administrator and enrol the authenticator.
 4. **Deploy, then verify from outside**: `scripts/preview/verify-preview.mjs` and the `preview-production` spec with `PREVIEW_ORIGIN`, `PREVIEW_USER`, `PREVIEW_PASSWORD`. Share the link only when both pass. Share the password through a different channel.

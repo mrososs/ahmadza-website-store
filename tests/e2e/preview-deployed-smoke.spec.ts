@@ -125,8 +125,9 @@ for (const vp of VIEWPORTS) {
       expect(await overflow(page)).toBeLessThanOrEqual(1)
 
       // the details disclose the evidence, not private paths
-      await page.locator('.recovered-card summary').first().click()
-      const detail = await page.locator('.recovered-card details').first().innerText()
+      const firstDetails = page.locator('.recovered-card details').first()
+      if (!(await firstDetails.evaluate((d) => (d as HTMLDetailsElement).open))) await page.locator('.recovered-card summary').first().click() // open it only if it is closed
+      const detail = await firstDetails.innerText()
       expect(detail).toMatch(/بصمة الملف/)
       expect(detail).toMatch(/الملف الأصلي/)
       expect(detail).not.toMatch(/storage|books\/recovered|product_media|sb_|supabase\.co/)

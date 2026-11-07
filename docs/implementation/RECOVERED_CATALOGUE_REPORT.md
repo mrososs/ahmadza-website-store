@@ -49,3 +49,27 @@ For a recovered book the review screen shows the original file name and path, pa
 * **Covers, category and author images, branding, blog images:** the five VPS folders are not in the workspace. `VPS_CONTENT_TRANSFER.md` has the exact download-only WinSCP steps. Even once copied, covers cannot be attached to books without the legacy database.
 * **Legacy database (MariaDB):** not recovered; the service on the VPS was unhealthy and its data directory must not be copied as if it were a backup. So no genuine author, category, price, publication state, customer, order or payment exists, and none was invented. This did not block the import of independently verified content.
 * **203 untitled PDFs** need a human to identify them; **503 suspicious PDFs** stay excluded (`SUSPICIOUS_PDF_POLICY.md`); 8 encrypted PDFs need a password or a clean copy.
+
+## 6. Covers (2026-11-07, later the same day)
+
+**The original covers are not recovered yet.** They live in the legacy `product_cover` folder, which is in neither archive (`VPS_COVER_RECOVERY.md` is the download-only procedure for the `aawraq_transfer` account). Until then every book shows either a cover made from its own PDF, clearly labelled, or the brand fallback.
+
+| Hosted state (read from the database and from the served images) | Count |
+|---|---|
+| books | 334 (all drafts, 0 published, 0 priced) |
+| **original covers recovered** | **0** |
+| covers generated from the book's own PDF (page 1), attached | **307** |
+| books with a proposed cover waiting for an administrator (private bucket) | **27** |
+| of the 307: served image bytes equal the recorded SHA-256 | 307 |
+| of the 307: generated from that book's own PDF (hash matches) | 307 |
+| books still showing the fallback cover | 27 |
+
+How the generated covers were made and judged: Poppler (no script engine, no network) rendered page 1 of each vetted PDF (never a `/Launch` file) from a private ASCII-named copy of the hash-verified bytes, and the page was measured: share covered by pictures, letters on the page, blank test, and the rendered aspect. Only "one big portrait picture and almost no text" (307 of 334) is attached without a person; a landscape page (a slide or banner) is never "high". Two samples of 31 images each were reviewed by eye: 61 were genuine covers and one was a banner, which led to the portrait rule. The other 27 (21 uncertain, 6 text pages) are candidates only.
+
+Where things are: public covers `public-media/books/<id>/<sha12>.jpg` (19 MB, one-year immutable cache), candidates `private-sensitive/cover-candidates/<id>/<sha12>.jpg` (not readable publicly; verified with the browser key). Provenance is recorded in `books.recovery_evidence.cover` as `generated_from_pdf`, never `original_cover`. The hosted Free plan allows 1 GB of storage and 50 MB per file (Supabase documentation); this uses about 21 MB, so the full PDF set (about 1.5 GB) is the part that does not fit.
+
+Admin: the review screen shows the current cover and its provenance, the proposed covers with approve and reject (approving changes only the cover record, never status or price, and never replaces a non-generated cover), and a warning when other books share the exact title. The books list filters by cover (none, generated, original, proposed) and by what is missing (price, author, verified PDF). Checked in a real browser on the 334 genuine drafts of the local mirror, restoring the decision books exactly.
+
+Matching the original covers once they exist: `match-covers.mjs` then `apply-original-covers.mjs` (rules in `shared/utils/coverMatching.ts`; verified only for cover and PDF stamps within 2 s with nothing competing, visual identity with the book's own page 1 or an adjacent stamp are candidates, a title is never evidence). Proven end to end on a synthetic folder; no real cover has been matched because none has been recovered.
+
+Independent audit (`audit-hosted-catalogue.mjs`, read-only): 334 records `file_evidence_verified`, 0 anomalies; 329 unique titles; 4 same-title groups (9 books) that are different files with different page counts or sizes (plausibly editions or volumes, nothing merged); 0 duplicate hashes or source paths; 8 titles whose combining marks are in a non-canonical order (render identically). "File evidence verified" means the file is proven; the title comes from the file, and author, categories and price have no evidence at all.

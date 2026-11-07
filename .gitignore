@@ -64,3 +64,6 @@ docs/implementation/ui-validation/diff/
 # second dev server pointed at the hosted project (see docs/implementation/HOSTED_MIGRATION_RUNBOOK.md)
 .nuxt-hosted/
 .nuxt-recovery/
+
+# Vercel project link (local only)
+.vercel

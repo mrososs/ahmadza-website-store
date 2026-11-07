@@ -101,6 +101,9 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    // sanitize-html is CommonJS and require()s the ES-only htmlparser2. Node can do that, but Vercel's function runtime refuses it (ERR_REQUIRE_ESM, every route that
+    // imports server/utils/sanitize.ts answered 500). Bundling it turns that require into a plain import.
+    externals: { inline: ['sanitize-html'] },
     // security headers for every response
     routeRules: {
       '/**': {

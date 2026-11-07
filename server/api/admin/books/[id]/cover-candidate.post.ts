@@ -32,7 +32,9 @@ export default defineEventHandler(async (event) => {
 
   const cand: CoverCandidate = settled.attach
   if (cand.bucket !== 'private-sensitive' || !cand.path?.startsWith(`cover-candidates/${id}/`)) throw badRequest('مسار المرشح غير صالح')
-  const dest = `books/${id}/${cand.id}.jpg`
+  const ext = /\.(jpg|jpeg|png|webp)$/.exec(cand.path)?.[1] // a recovered original is usually WebP, a generated page is JPEG: the copy keeps the candidate's own extension
+  if (!ext) throw badRequest('نوع الصورة غير مقبول')
+  const dest = `books/${id}/${cand.id}.${ext}`
   const copied = await db.storage.from('private-sensitive').copy(cand.path, dest, { destinationBucket: 'public-media' })
   if (copied.error && !/exist|duplicate/i.test(copied.error.message)) throw badRequest('تعذر نسخ الصورة')
 

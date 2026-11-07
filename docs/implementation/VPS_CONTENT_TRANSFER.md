@@ -1,6 +1,6 @@
 # Recovering the five missing VPS folders (covers, categories, authors, articles, logo)
 
-Status 2026-11-07. **These folders are not in the recovered workspace.** Checked: neither archive (`aawraq-user-files.tar`, 6.98 GB; `aawraq-source.tar.gz`) nor the quarantine contains `product_cover`, `category`, `maker`, `article` or `logo`. The user-files archive holds only `public/uploads/editor` (editor images and videos) and `storage/app/public/product_media` (the PDFs, already recovered). The names of these folders are known from the earlier inspection; their **content** is not. I have no SSH access and need none: this is a download you make with the WinSCP session you already use.
+Status 2026-11-07. **For the book covers (`product_cover`) follow `VPS_COVER_RECOVERY.md`, which has the exact commands for the `aawraq_transfer` account and replaces Step 2 below for that folder.** **These folders are not in the recovered workspace.** Checked: neither archive (`aawraq-user-files.tar`, 6.98 GB; `aawraq-source.tar.gz`) nor the quarantine contains `product_cover`, `category`, `maker`, `article` or `logo`. The user-files archive holds only `public/uploads/editor` (editor images and videos) and `storage/app/public/product_media` (the PDFs, already recovered). The names of these folders are known from the earlier inspection; their **content** is not. I have no SSH access and need none: this is a download you make with the WinSCP session you already use.
 
 ## What is needed, and what is not
 

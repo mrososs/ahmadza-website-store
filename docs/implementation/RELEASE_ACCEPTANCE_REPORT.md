@@ -1,6 +1,6 @@
 # AAWRAQ release acceptance report
 
-Date 2026-11-07. Branch `vps-recovery-prep` (`git log --oneline main..HEAD` lists its commits). **Not merged, not pushed, not deployed.** Every figure below comes from a run on the committed code in this session; nothing is counted that was not executed and passed.
+Date 2026-11-07. Branch `vps-recovery-prep` (`git log --oneline main..HEAD` lists its commits). **Update later on 2026-11-07: merged into `main`, pushed, and deployed as a protected preview at https://aawraq-store.vercel.app (see `PROTECTED_PREVIEW_DEPLOYMENT.md` section 5b). The statements below describe the state at the time of the gates.** Every figure below comes from a run on the committed code in this session; nothing is counted that was not executed and passed.
 
 ## 1. Gates
 
@@ -31,14 +31,14 @@ How the run went, so nothing is overstated:
 * The first attempt to run all 224 in one command was stopped by the host when memory ran critically low, after 4 tests. It was **not** counted. The totals above are from separate, memory-gated runs after that.
 * The 3 journey failures were a test still expecting the old behaviour (an unusable gateway shown as a disabled radio). The requirement is that checkout never shows an unusable method, so the assertion now expects none. This is a test update to the stated requirement, not a loosened check.
 * `ui-validation` and `ui-refinement` rewrite tracked screenshots; those generated files were restored, so they are not part of any commit.
-* The preview acceptance ran against a **local production build** on `127.0.0.1:3300` over plain http with a throw-away password, not on a hosting platform. There is no AAWRAQ hosting project yet.
+* The preview acceptance ran against a **local production build** on `127.0.0.1:3300` over plain http with a throw-away password, not on a hosting platform (the same specs were later run against the real deployment and pass; that deployment also exposed two defects that a local run cannot show, both fixed).
 
 ## 2. Status in six categories
 
 ### Ready for client preview
 * The protected-preview build and its configuration. Anonymous visitors get 401 with no application bytes, `noindex` and `no-store` everywhere (including errors); wrong user or password is refused; with the password the storefront renders Arabic RTL without hydration errors, canonical URLs exist, an unknown book is a non-cacheable 404, `/admin` leads to the login; checkout, payment webhooks and downloads answer 503; the admin API still demands an administrator session. No synthetic data appears. Verified 9/9 in a real browser at 1440 and 390 px.
 * A protected build carries no shared-cache rules, and refuses to start on Vercel if it ever did (the cache would bypass the password gate).
-* **Not yet deployed.** Needs the hosting project and your secrets (section 3).
+* **Deployed since:** Vercel project `aawraq-store`, https://aawraq-store.vercel.app, verified with a real browser against the live URL (9 external checks, 9 acceptance tests, 7 smoke tests).
 * The hosted catalogue is empty, so a first preview shows an empty storefront until recovered drafts are reviewed and published.
 
 ### Ready for administrator use
@@ -64,7 +64,7 @@ How the run went, so nothing is overstated:
 * Other flagged PDFs (8 encrypted, 58 flagged only for ordinary links) were not part of the `/Launch` review and remain subject to the ordinary checks. A clean copy from the original publisher is the most reliable route for any of them.
 
 ### Blocked from public launch
-1. No hosting project and no deployment exist (the Vercel account has one unrelated project). Protected preview first, public later.
+1. The protected preview is deployed; a public deployment is not (it would also need the licensed fonts and template CSS to be cleared for public delivery, a custom domain, and `NUXT_PREVIEW_MODE=open`). Protected preview first, public later.
 2. Auth redirect URLs and custom SMTP are not configured, so confirmation and reset e-mails reach only your Supabase organisation members.
 3. No administrator has been invited.
 4. No payment method can be used (credentials and currency confirmation, above), so the store cannot sell.

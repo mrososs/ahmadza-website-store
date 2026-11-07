@@ -1,6 +1,13 @@
 # Auth for the protected preview — Site URL, redirect allow-list, SMTP
 
-**No deployment domain is assumed anywhere.** Everything below uses `<PREVIEW_ORIGIN>` = the real https origin of the protected preview (scheme + host, no path, e.g. what Hostinger/your host gives you). Send it to me when it exists.
+**The real origin now exists:** `<PREVIEW_ORIGIN>` = **`https://aawraq-store.vercel.app`** (the Vercel-generated production address of the protected preview; the app already runs with `NUXT_PUBLIC_SITE_URL` set to it). Still to do in the Supabase dashboard (a remote write that is yours to make; nothing here has been changed on the hosted project):
+
+| Dashboard → Authentication → URL Configuration | Value to enter |
+|---|---|
+| Site URL | `https://aawraq-store.vercel.app` |
+| Redirect URLs | `https://aawraq-store.vercel.app/confirm` (add `http://127.0.0.1:3000/confirm` and `http://localhost:3000/confirm` only while developing) |
+
+State on 2026-11-07 (read from the project's public Auth settings endpoint, no write): sign-ups enabled, e-mail confirmation required, no social providers. The Site URL and allow-list cannot be read from outside the dashboard; when last observed (2026-11-06) the Site URL was the Supabase default `http://localhost:3000`, in which case a confirmation or reset link would point there. **Customer sign-up and password recovery are therefore not usable, and must not be presented to the client as working, until the settings above are saved AND custom SMTP (section 4) is configured AND the proof step (section 3) passes.**
 
 ## 1. What the app sends to Supabase Auth (from the code)
 | Flow | Redirect the app requests | Source |

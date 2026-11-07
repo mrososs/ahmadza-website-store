@@ -143,6 +143,24 @@ for (const b of books) {
   flag(b.status !== 'draft', `status is ${b.status}`)
   flag(Number(b.price_amount) > 0 && b.status === 'published', 'purchasable: published with a price')
 
+  // the cover, checked against the bytes actually served: fetched from the public bucket, hashed, and compared with the recorded evidence
+  const cov = ev.cover ?? null
+  const cur = cov?.current ?? null
+  let coverCheck = null
+  if (b.cover_path) {
+    const res = await fetch(`${env.NUXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/public-media/${b.cover_path}`)
+    const buf = Buffer.from(await res.arrayBuffer())
+    const actual = createHash('sha256').update(buf).digest('hex')
+    coverCheck = { http: res.status, bytes: buf.length, served_sha256_matches_evidence: !!cur && actual === cur.sha256, provenance: cur?.provenance ?? null, from_this_books_own_pdf: !!cur && cur.source_pdf_sha256 === sha, path_matches_evidence: !!cur && cur.path === b.cover_path }
+    flag(res.status !== 200, 'the cover image is not served')
+    flag(!cur, 'the book has a cover_path but no cover evidence')
+    flag(!!cur && !coverCheck.served_sha256_matches_evidence, 'the served cover differs from its recorded SHA-256')
+    flag(!!cur && cur.provenance === 'generated_from_pdf' && !coverCheck.from_this_books_own_pdf, 'a generated cover that does not come from this book\'s own PDF')
+    flag(!!cur && !coverCheck.path_matches_evidence, 'cover_path differs from the cover evidence')
+    flag(!!cur && cur.provenance === 'original_cover' && !(cur.match_evidence?.length), 'an original cover without recorded match evidence')
+  }
+  const pendingCovers = (cov?.candidates ?? []).filter((c) => c.status === 'pending').length
+
   // completeness (what is NOT known)
   const completeness = {
     title: anomalies.some((a) => a.startsWith('title')) ? 'damaged' : (analysis?.ok && norm(analysis.title) === norm(b.title) ? 'from_file_unverified' : 'unconfirmed'),
@@ -159,6 +177,8 @@ for (const b of books) {
   if (completeness.categories === 'missing') actions.push('assign categories')
   if (completeness.price === 'missing') actions.push('set the price (or mark free)')
   if (completeness.cover === 'missing') actions.push('attach a cover')
+  if (cur?.provenance === 'generated_from_pdf') actions.push('confirm the generated cover, or replace it with the original')
+  if (pendingCovers) actions.push('decide the proposed cover')
   if (completeness.pdf_in_storage !== 'available') actions.push('upload the verified PDF to private storage')
   if (dups.some((d) => d.kind === 'same_title')) actions.push('decide whether the same-title records are different editions')
   if (anomalies.length) actions.unshift('investigate the anomalies')
@@ -168,6 +188,7 @@ for (const b of books) {
     verification_status: anomalies.length ? 'attention' : 'file_evidence_verified', file_state: fileState, completeness,
     cover_available: completeness.cover === 'present', pdf_available: completeness.pdf_in_storage === 'available',
     pdf_pages: analysis?.pages?.estimate ?? null, pdf_created: analysis?.created ?? null, pdf_producer: analysis?.info?.producer ?? null,
+    cover: coverCheck, pending_cover_candidates: pendingCovers,
     duplicate_warnings: dups, anomalies, notes: info, required_admin_actions: actions,
   })
 }
@@ -208,6 +229,11 @@ const summary = {
   in_launch_exclusion_set: count((r) => r.anomalies.some((a) => a.includes('/Launch'))),
   missing_author: count((r) => r.completeness.author === 'missing'), missing_categories: count((r) => r.completeness.categories === 'missing'),
   missing_price: count((r) => r.completeness.price === 'missing'), missing_cover: count((r) => r.completeness.cover === 'missing'),
+  covers_present: count((r) => r.completeness.cover === 'present'),
+  covers_generated_from_pdf: count((r) => r.cover?.provenance === 'generated_from_pdf'), covers_original: count((r) => r.cover?.provenance === 'original_cover'),
+  covers_whose_served_bytes_match_the_evidence: count((r) => r.cover?.served_sha256_matches_evidence === true),
+  covers_from_the_books_own_pdf: count((r) => r.cover?.from_this_books_own_pdf === true),
+  books_with_a_pending_cover_candidate: count((r) => r.pending_cover_candidates > 0),
   pdf_not_in_hosted_storage: count((r) => r.completeness.pdf_in_storage !== 'available'),
   published: books.filter((b) => b.status === 'published').length,
   purchasable_published_with_price: books.filter((b) => b.status === 'published' && Number(b.price_amount) > 0).length,

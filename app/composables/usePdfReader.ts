@@ -19,6 +19,7 @@ export function usePdfReader(canvas: Ref<HTMLCanvasElement | null>, viewport: Re
   const failure = ref<ReaderFailure | null>(null)
   const ready = computed(() => pageCount.value > 0 && !failure.value)
 
+  let fitScale = 1 // the scale that makes the page exactly as wide as the viewport; zoom steps start from what is on screen
   let task: PDFDocumentLoadingTask | null = null
   let doc: PDFDocumentProxy | null = null
   let current: PDFPageProxy | null = null
@@ -70,8 +71,11 @@ export function usePdfReader(canvas: Ref<HTMLCanvasElement | null>, viewport: Re
       if (mine !== ticket) return
       current = p
       const natural = p.getViewport({ scale: 1 })
-      const width = viewport.value?.clientWidth ?? natural.width
-      const scale = zoom.value === 'fit' ? Math.max(0.1, (width - 2) / natural.width) : zoom.value
+      const box = viewport.value
+      const pad = box ? (parseFloat(getComputedStyle(box).paddingLeft) || 0) + (parseFloat(getComputedStyle(box).paddingRight) || 0) : 0
+      const width = box ? box.clientWidth - pad : natural.width
+      fitScale = Math.max(0.1, width / natural.width)
+      const scale = zoom.value === 'fit' ? fitScale : zoom.value
       const css = p.getViewport({ scale })
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
       const k = Math.min(dpr, Math.sqrt(MAX_PIXELS / (css.width * css.height)))
@@ -97,8 +101,8 @@ export function usePdfReader(canvas: Ref<HTMLCanvasElement | null>, viewport: Re
   const next = () => go(page.value + 1)
   const prev = () => go(page.value - 1)
   function setZoom(z: ZoomMode) { zoom.value = z === 'fit' ? 'fit' : Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z)); return draw() }
-  const zoomIn = () => setZoom((zoom.value === 'fit' ? 1 : zoom.value) * 1.2)
-  const zoomOut = () => setZoom((zoom.value === 'fit' ? 1 : zoom.value) / 1.2)
+  const zoomIn = () => setZoom((zoom.value === 'fit' ? fitScale : zoom.value) * 1.2)
+  const zoomOut = () => setZoom((zoom.value === 'fit' ? fitScale : zoom.value) / 1.2)
 
   async function close() {
     disposed = true; ticket++
@@ -117,11 +121,13 @@ export function usePdfReader(canvas: Ref<HTMLCanvasElement | null>, viewport: Re
   // refit when the container changes size (rotation, window resize, fullscreen)
   let ro: ResizeObserver | null = null
   let timer: ReturnType<typeof setTimeout> | undefined
-  onMounted(() => {
-    if (!viewport.value || typeof ResizeObserver === 'undefined') return
+  // the viewport element only exists while the reader is on screen (v-if), so observe whichever element is current
+  watch(viewport, (el) => {
+    ro?.disconnect(); ro = null
+    if (!el || typeof ResizeObserver === 'undefined') return
     ro = new ResizeObserver(() => { if (zoom.value !== 'fit' || !doc) return; clearTimeout(timer); timer = setTimeout(() => void draw(), 120) })
-    ro.observe(viewport.value)
-  })
+    ro.observe(el)
+  }, { flush: 'post' })
   onBeforeUnmount(() => { clearTimeout(timer); ro?.disconnect(); void close() })
 
   return { pageCount, page, zoom, loading, rendering, progress, failure, ready, open, close, go, next, prev, setZoom, zoomIn, zoomOut, ZOOM_MIN, ZOOM_MAX }

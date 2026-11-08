@@ -102,8 +102,12 @@ export async function latestArticles(c: Client, n = 3) {
 export async function getArticle(c: Client, id: number) {
   const { data, error } = await c.from('articles').select('id,title,excerpt,content_html,poster_path,view_count,created_at,date_is_original')
     .eq('id', id).eq('status', 'published').maybeSingle()
-  if (error) throw error
-  return data
+  if (!error) return data
+  // 42703 = the date_is_original column is not there yet (migration 20261119000100 not applied): show the article WITHOUT a date rather than fail.
+  if (error.code !== '42703') throw error
+  const old = await c.from('articles').select('id,title,excerpt,content_html,poster_path,view_count,created_at').eq('id', id).eq('status', 'published').maybeSingle()
+  if (old.error) throw old.error
+  return old.data ? { ...old.data, date_is_original: false } : null
 }
 
 // Legacy /post/<id|token> and /article/<token> links -> the new article id (published articles only).

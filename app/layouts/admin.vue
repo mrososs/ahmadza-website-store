@@ -49,13 +49,15 @@ watch(() => route.fullPath, () => { void refreshBadges() })
 </template>
 
 <style>
-/* The «عمليات» dropdown of a row opens INSIDE .table-responsive, whose overflow:auto clips it (the last rows opened a menu below the table, out of sight).
-   On a desktop-width screen the table fits, so it does not need to scroll sideways: let the menu escape. On a phone the wrapper must keep scrolling,
-   so it grows by the height of an open menu instead. */
+/* Row «عمليات» dropdowns. Two faults: (1) the wrapper around the button is a plain <div>, not a positioned .dropdown, so the absolutely positioned menu was placed
+   relative to a distant ancestor, far below its button (under the table); (2) the menu sits inside .table-responsive, whose overflow clips it. */
+td > div:has(> [data-toggle='dropdown']) { position: relative; display: inline-block; }
+/* desktop width: the table fits, so it need not scroll sideways: let the menu escape (div.table-responsive outranks the template's own .table-responsive rule) */
 @media (min-width: 992px) {
-  .table-responsive { overflow: visible; }
+  div.table-responsive { overflow: visible; }
 }
+/* phone: the wrapper must keep scrolling, so it grows by the height of an open menu */
 @media (max-width: 991.98px) {
-  .table-responsive:has(.dropdown-menu.show) { padding-bottom: 9rem; }
+  div.table-responsive:has(.dropdown-menu.show) { padding-bottom: 9rem; }
 }
 </style>

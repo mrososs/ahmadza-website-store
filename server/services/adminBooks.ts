@@ -6,6 +6,7 @@ import { dbFail } from '../utils/adminRoute'
 import { notFound } from '../utils/errors'
 import { sanitizeRichText } from '../utils/sanitize'
 import { escapeLike } from './adminCrud'
+import { assessReader, type ReadinessMedia } from '~~/shared/utils/readerReadiness'
 
 type BookStatus = 'draft' | 'published' | 'coming_soon' | 'archived'
 
@@ -200,7 +201,26 @@ export async function createBook(event: H3Event, input: AdminBookInput, relatedI
   return data
 }
 
+// Reader / delivery assessment for one book (no storage paths). Used by the admin panel and by the publish guard below.
+export async function readerAssessment(event: H3Event, id: number) {
+  const db = serviceClient(event)
+  const { data: book, error } = await db.from('books').select('id,kind,status,price_amount').eq('id', id).is('deleted_at', null).maybeSingle()
+  if (error) dbFail(error)
+  if (!book) throw notFound('الكتاب غير موجود')
+  const { data: media, error: e2 } = await db.from('book_media').select('id,extension,visibility,migration_status,page_count,sha256').eq('book_id', id)
+  if (e2) dbFail(e2)
+  return { book, assessment: assessReader(book, (media ?? []) as ReadinessMedia[]) }
+}
+
+// A paid book must never be published while a public PDF is the book itself.
+async function assertNoPublicFullPdf(event: H3Event, id: number, status: string) {
+  if (status !== 'published') return
+  const { assessment } = await readerAssessment(event, id)
+  if (assessment.publicFullPdf) throw createError({ statusCode: 409, statusMessage: 'لا يمكن نشر كتاب مدفوع بينما ملف عام مطابق للكتاب الكامل: احذف الملف العام أولاً' })
+}
+
 export async function updateBook(event: H3Event, id: number, input: AdminBookInput, relatedIds: number[]) {
+  await assertNoPublicFullPdf(event, id, input.status)
   const db = serviceClient(event)
   // slug '' makes the DB trigger regenerate it from the (possibly changed) title
   const { data, error } = await db.from('books').update({ ...rowOf(input), slug: '' }).eq('id', id).select('id').maybeSingle()

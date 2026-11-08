@@ -201,3 +201,31 @@ describe('Nuxt VpsStorageAdapter against the service', () => {
     expect(() => new VpsStorageAdapter({ baseUrl: 'https://files.example.com', signingSecret: '', uploadToken: '' })).toThrow(/not configured/)
   })
 })
+
+describe('CORS for the in-browser reader (exact-origin allow-list)', () => {
+  const ALLOWED = 'https://store.example'
+  it('answers the preflight and tags deliveries only for an allowed origin; others get nothing', async () => {
+    const s = await start({ allowedOrigins: [ALLOWED] })
+    try {
+      const url = signedUrl(keyFor(pdf)).replace(base, s.url)
+      const ok = await fetch(url, { method: 'OPTIONS', headers: { origin: ALLOWED, 'access-control-request-method': 'GET', 'access-control-request-headers': 'range' } })
+      expect(ok.status).toBe(204)
+      expect(ok.headers.get('access-control-allow-origin')).toBe(ALLOWED)
+      expect(ok.headers.get('access-control-allow-headers')).toBe('range')
+      const get = await fetch(url, { headers: { origin: ALLOWED, range: 'bytes=0-3' } })
+      expect(get.status).toBe(206)
+      expect(get.headers.get('access-control-allow-origin')).toBe(ALLOWED)
+      expect(get.headers.get('access-control-expose-headers')).toContain('content-range')
+      await get.arrayBuffer()
+      const evil = await fetch(url, { headers: { origin: 'https://evil.example' } })
+      expect(evil.headers.get('access-control-allow-origin')).toBeNull()
+      await evil.arrayBuffer()
+      expect((await fetch(url, { method: 'OPTIONS', headers: { origin: 'https://evil.example' } })).status).toBe(403)
+    } finally { s.s.close() }
+  })
+  it('without configuration there is no CORS at all', async () => {
+    const res = await fetch(signedUrl(keyFor(pdf)), { headers: { origin: ALLOWED } })
+    expect(res.headers.get('access-control-allow-origin')).toBeNull()
+    await res.arrayBuffer()
+  })
+})

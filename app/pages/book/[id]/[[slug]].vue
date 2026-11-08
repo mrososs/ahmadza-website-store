@@ -36,6 +36,8 @@ const fileExt = computed(() => media.value.find((m) => m.kind === 'file')?.exten
 
 // ---- personalised, client-only state -------------------------------------------------------------
 const owned = ref(false)
+// an available PDF exists; whether THIS visitor may read it is decided by the server when the reader opens
+const hasReadableFile = computed(() => files('after_purchase', 'file').some((m) => m.migration_status === 'available'))
 watch([mounted, () => info.value?.id], async ([m, uid]) => {
   owned.value = m && uid ? (await client.rpc('owns_book', { p_book: id })).data === true : false
 }, { immediate: true })
@@ -153,7 +155,7 @@ useHead({
                 <div id="paid_file" class="tab-pane container fade">
                   <ul v-if="mayDownloadPaid && files('after_purchase', 'file').length" class="book_list">
                     <li v-for="m in files('after_purchase', 'file')" :key="m.id">
-                      <span v-if="m.migration_status !== 'available'" class="response_access" title="الملف قيد التجهيز"><i class="fa fa-clock-o" /> {{ m.name || 'ملف' }} — قيد التجهيز</span><a v-else :href="`/api/library/download/${m.id}`" target="_blank" rel="noopener"><i class="fa fa-file-pdf-o" /> {{ m.name || 'الكتاب' }}</a>
+                      <span v-if="m.migration_status !== 'available'" class="response_access" title="الملف قيد التجهيز"><i class="fa fa-clock-o" /> {{ m.name || 'ملف' }} — قيد التجهيز</span><NuxtLink v-else :to="`/read/${b.id}`"><i class="fa fa-book-open" /> {{ m.name || 'الكتاب' }} — قراءة</NuxtLink>
                     </li>
                   </ul>
                   <p v-else-if="mayDownloadPaid" class="response_access">الكتاب الإلكتروني غير متوفر</p>
@@ -194,6 +196,7 @@ useHead({
                 </div>
               </div>
             </div>
+            <NuxtLink v-if="hasReadableFile" :to="`/read/${b.id}`" class="wp_btn btn-block" data-test="read-book"><i class="fa fa-book-open" /> {{ mayDownloadPaid ? 'اقرأ الكتاب' : 'قراءة الكتاب' }}</NuxtLink>
             <button v-if="canBuy && !owned" type="button" class="wp_btn btn-block addToCartBtn" @click="addToCart">
               <i class="fa" :class="added || cart.has(id) ? 'fa-check' : 'fa-cart-plus'" />
               {{ cart.has(id) ? 'في السلة' : 'أضف إلى السلة' }}

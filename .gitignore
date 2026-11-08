@@ -67,3 +67,6 @@ docs/implementation/ui-validation/diff/
 
 # Vercel project link (local only)
 .vercel
+
+# generated from the pinned pdfjs-dist dependency (scripts/copy-pdfjs-assets.mjs)
+public/_pdfjs/

@@ -83,14 +83,14 @@ isOneToOne: false
                   ]
                 },"articles": {
                   Row: {
-                    "author_id": string | null,"content_html": string | null,"created_at": string,"deleted_at": string | null,"excerpt": string | null,"id": number,"is_demo": boolean,"kind": Database["public"]['Enums']["article_kind"],"legacy_id": number | null,"poster_path": string | null,"status": Database["public"]['Enums']["content_status"],"title": string,"updated_at": string,"view_count": number
+                    "author_id": string | null,"content_sha256": string | null,"date_is_original": boolean,"legacy_refs": string[],"original_slug": string | null,"review_status": string,"source_evidence": Json | null,"source_system": string | null,"content_html": string | null,"created_at": string,"deleted_at": string | null,"excerpt": string | null,"id": number,"is_demo": boolean,"kind": Database["public"]['Enums']["article_kind"],"legacy_id": number | null,"poster_path": string | null,"status": Database["public"]['Enums']["content_status"],"title": string,"updated_at": string,"view_count": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "author_id"?: string | null,"content_html"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"excerpt"?: string | null,"id"?: never,"is_demo"?: boolean,"kind"?: Database["public"]['Enums']["article_kind"],"legacy_id"?: number | null,"poster_path"?: string | null,"status"?: Database["public"]['Enums']["content_status"],"title": string,"updated_at"?: string,"view_count"?: number
+                    "author_id"?: string | null,"content_sha256"?: string | null,"date_is_original"?: boolean,"legacy_refs"?: string[],"original_slug"?: string | null,"review_status"?: string,"source_evidence"?: Json | null,"source_system"?: string | null,"content_html"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"excerpt"?: string | null,"id"?: never,"is_demo"?: boolean,"kind"?: Database["public"]['Enums']["article_kind"],"legacy_id"?: number | null,"poster_path"?: string | null,"status"?: Database["public"]['Enums']["content_status"],"title": string,"updated_at"?: string,"view_count"?: number
                   }
                   Update: {
-                    "author_id"?: string | null,"content_html"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"excerpt"?: string | null,"id"?: never,"is_demo"?: boolean,"kind"?: Database["public"]['Enums']["article_kind"],"legacy_id"?: number | null,"poster_path"?: string | null,"status"?: Database["public"]['Enums']["content_status"],"title"?: string,"updated_at"?: string,"view_count"?: number
+                    "author_id"?: string | null,"content_sha256"?: string | null,"date_is_original"?: boolean,"legacy_refs"?: string[],"original_slug"?: string | null,"review_status"?: string,"source_evidence"?: Json | null,"source_system"?: string | null,"content_html"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"excerpt"?: string | null,"id"?: never,"is_demo"?: boolean,"kind"?: Database["public"]['Enums']["article_kind"],"legacy_id"?: number | null,"poster_path"?: string | null,"status"?: Database["public"]['Enums']["content_status"],"title"?: string,"updated_at"?: string,"view_count"?: number
                   }
                   Relationships: [
                     {
@@ -1003,6 +1003,9 @@ isOneToOne: false
                            },
 "log_media_download":
 { Args: { "p_book": number,"p_media": number,"p_outcome": string,"p_reason"?: string,"p_user": string }; Returns: undefined
+                           },
+"resolve_legacy_article":
+{ Args: { "p_ref": string }; Returns: number
                            },
 "normalize_ar":
 { Args: { "p": string }; Returns: string

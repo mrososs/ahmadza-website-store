@@ -120,6 +120,7 @@ async function submit() {
     <div class="row justify-content-center">
       <div class="col-12 text-right"><NuxtLink to="/admin/makers/create" target="_blank" class="text-info">إضافة مؤلف جديد</NuxtLink></div>
       <div class="col-lg-10 col-12">
+        <AdminReaderPanel v-if="props.id" :book-id="props.id" />
         <AdminRecoveryPanel v-if="recovery" v-bind="recovery" can-verify can-reject :busy="coverBusy" @verify="verifyBook" @reject="rejectBook" @cover-decision="coverDecision" />
         <div v-if="globalError" class="alert alert-danger" role="alert">{{ globalError }}</div>
         <div v-if="saved" class="alert alert-success" role="status">تم الحفظ بنجاح</div>

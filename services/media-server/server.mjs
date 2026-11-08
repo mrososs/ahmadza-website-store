@@ -50,11 +50,13 @@ export function configFromEnv(env = process.env) {
     maxTtlSeconds: Number(env.MEDIA_MAX_TTL ?? 300), maxUploadBytes: Number(env.MEDIA_MAX_UPLOAD ?? 100 * 1024 * 1024),
     trustProxy: env.MEDIA_TRUST_PROXY === '1', getLimitPerMin: Number(env.MEDIA_GET_LIMIT ?? 120), putLimitPerMin: Number(env.MEDIA_PUT_LIMIT ?? 30),
     failLimitPerMin: Number(env.MEDIA_FAIL_LIMIT ?? 20),
+    // exact origins (scheme://host[:port]) whose pages may read signed deliveries with fetch (the in-browser PDF reader); empty = no CORS at all
+    allowedOrigins: String(env.MEDIA_ALLOWED_ORIGINS ?? '').split(',').map((o) => o.trim()).filter(Boolean),
   }
 }
 
 export function createMediaServer(config) {
-  const c = { maxTtlSeconds: 300, maxUploadBytes: 100 * 1024 * 1024, trustProxy: false, getLimitPerMin: 120, putLimitPerMin: 30, failLimitPerMin: 20, now: () => Date.now(), log: (l) => console.log(JSON.stringify(l)), ...config }
+  const c = { allowedOrigins: [], maxTtlSeconds: 300, maxUploadBytes: 100 * 1024 * 1024, trustProxy: false, getLimitPerMin: 120, putLimitPerMin: 30, failLimitPerMin: 20, now: () => Date.now(), log: (l) => console.log(JSON.stringify(l)), ...config }
   const objectsDir = join(c.root, 'objects')
   const buckets = new Map()
   const sweep = setInterval(() => { const t = c.now(); for (const [k, b] of buckets) if (b.reset < t) buckets.delete(k) }, 60_000)
@@ -122,6 +124,14 @@ export function createMediaServer(config) {
     }
 
     // ---- public delivery: valid signature required --------------------------------------------------------------
+    const origin = String(req.headers.origin ?? '')
+    const cors = origin && c.allowedOrigins.includes(origin)
+      ? { 'access-control-allow-origin': origin, vary: 'Origin', 'access-control-expose-headers': 'content-range, accept-ranges, content-length' } : { vary: 'Origin' }
+    if (method === 'OPTIONS') {
+      return cors['access-control-allow-origin']
+        ? send(res, 204, undefined, { ...cors, 'access-control-allow-methods': 'GET, HEAD', 'access-control-allow-headers': 'range', 'access-control-max-age': '600' })
+        : send(res, 403, { error: 'forbidden' })
+    }
     if (method !== 'GET' && method !== 'HEAD') return send(res, 405, { error: 'method_not_allowed' }, { allow: 'GET, HEAD, PUT, DELETE' })
     if (tooMany(`fail:${ip}`, c.failLimitPerMin) || !hit(`get:${ip}`, c.getLimitPerMin)) return send(res, 429, { error: 'rate_limited' }, { 'retry-after': '60' })
     const dn = (url.searchParams.get('dn') ?? '').slice(0, 200)
@@ -134,7 +144,7 @@ export function createMediaServer(config) {
     // eslint-disable-next-line no-control-regex -- header-value sanitising: ASCII fallback name only
     const safe = (dn.replace(/[\u0000-\u001f\u007f"\\]/g, '_').replace(/[^\x20-\x7e]/g, '_') || `download.${ext}`)
     const headers = {
-      'content-type': MIME[ext], 'accept-ranges': 'bytes', 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff',
+      ...cors, 'content-type': MIME[ext], 'accept-ranges': 'bytes', 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff',
       'content-disposition': `attachment; filename="${safe}"; filename*=UTF-8''${encodeURIComponent(dn || `download.${ext}`)}`,
     }
     let start = 0; let end = st.size - 1; let status = 200

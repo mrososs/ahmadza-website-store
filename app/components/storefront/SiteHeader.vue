@@ -65,6 +65,7 @@ function submitSearch() {
                 <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">الأقسام</a>
                 <div class="dropdown-menu">
                   <NuxtLink v-for="c in shell?.categories ?? []" :key="c.id" class="dropdown-item" :to="{ path: '/search', query: { category: c.id } }">{{ c.name }}</NuxtLink>
+                  <span v-if="!(shell?.categories ?? []).length" class="dropdown-item-text text-muted px-3 py-2 d-block" role="status">لا توجد أقسام بعد</span>
                 </div>
               </li>
               <li><NuxtLink class="nav-link" to="/authors"><i class="fa fa-users" /> المؤلفون</NuxtLink></li>
@@ -124,6 +125,7 @@ function submitSearch() {
                 <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-file" /> الأقسام</a>
                 <div class="dropdown-menu">
                   <NuxtLink v-for="c in shell?.categories ?? []" :key="c.id" class="dropdown-item" :to="{ path: '/search', query: { category: c.id } }">{{ c.name }}</NuxtLink>
+                  <span v-if="!(shell?.categories ?? []).length" class="dropdown-item-text text-muted px-3 py-2 d-block" role="status">لا توجد أقسام بعد</span>
                 </div>
               </li>
               <li class="nav-item d-block d-md-none"><NuxtLink class="nav-link" to="/authors"><i class="fa fa-users" /> المؤلفون</NuxtLink></li>

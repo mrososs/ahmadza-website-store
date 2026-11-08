@@ -3,7 +3,7 @@
 // (the server answers 404 otherwise) and is kept visibly apart from the approved store: no purchase, no download, every unknown stated as unknown.
 import type { RecoveredPreviewItem } from '~~/shared/utils/recoveredPreview'
 
-useHead({ title: 'الكتالوج المستعاد — قيد المراجعة' })
+useHead({ title: 'الكتالوج المستعاد' })
 const route = useRoute()
 const router = useRouter()
 const term = ref(typeof route.query.search === 'string' ? route.query.search : '')
@@ -22,9 +22,9 @@ function submitSearch() {
 
 <template>
   <section class="wp_home recovered-page">
-    <h3 class="wp_h3">الكتالوج المستعاد — قيد المراجعة</h3>
+    <h3 class="wp_h3">الكتالوج المستعاد</h3>
     <div class="alert alert-warning" role="note">
-      هذه كتب <strong>مستعادة من أرشيف الموقع القديم</strong> وما زالت <strong>قيد المراجعة</strong>. العناوين مأخوذة من الملفات نفسها ولم تُطابق بعد مع سجلات الكتالوج الأصلية،
+      هذه كتب <strong>مستعادة من أرشيف الموقع القديم</strong>. العناوين مأخوذة من الملفات نفسها ولم تُطابق بعد مع سجلات الكتالوج الأصلية،
       والمؤلفون والأقسام والأسعار <strong>غير محددة</strong>. لا يمكن شراء هذه الكتب أو تنزيلها في هذه المعاينة، والكتالوج التجاري المعتمد يضم الكتب المنشورة بعد المراجعة فقط.
     </div>
 
@@ -41,7 +41,7 @@ function submitSearch() {
     <div v-else-if="error" class="alert alert-danger" role="alert">تعذر تحميل الكتب المستعادة. <a href="#" @click.prevent="refresh()">إعادة المحاولة</a></div>
     <div v-else-if="!data" class="text-center p-5" role="status"><i class="fa fa-spinner fa-spin" /> جاري التحميل…</div>
     <template v-else-if="data">
-      <p class="text-muted" role="status">{{ data.total }} كتابًا قيد المراجعة<template v-if="query.search"> مطابقًا لـ «{{ query.search }}»</template></p>
+      <p class="text-muted" role="status">{{ data.total }} كتابًا<template v-if="query.search"> مطابقًا لـ «{{ query.search }}»</template></p>
       <div v-if="!data.items.length" class="alert alert-info" role="status">لا توجد كتب مستعادة مطابقة لبحثك.</div>
       <div v-else class="row">
         <RecoveredCard v-for="b in data.items" :key="b.id" :item="b" />

@@ -88,7 +88,8 @@ for (const vp of VIEWPORTS) {
       // home: a clearly separated strip, a bounded number of cards, a link to the full list
       await page.goto(`${ORIGIN}/`, { waitUntil: 'networkidle' })
       await expect(page.locator('.recovered-home')).toBeVisible()
-      await expect(page.locator('.recovered-home')).toContainText('قيد المراجعة')
+      await expect(page.locator('.recovered-home')).toContainText('كتب مستعادة')
+      await expect(page.locator('.recovered-home')).not.toContainText('قيد المراجعة')
       expect(await page.locator('.recovered-home .recovered-card').count()).toBeLessThanOrEqual(8)
       expect(await page.locator('.recovered-home .recovered-card').count()).toBeGreaterThan(0)
 
@@ -98,11 +99,11 @@ for (const vp of VIEWPORTS) {
       await expect(page.getByRole('heading', { name: /الكتالوج المستعاد/ })).toBeVisible()
       await expect(page.locator('.recovered-card').first()).toBeVisible()
       expect(await page.locator('.recovered-card').count()).toBe(Math.min(24, summary.total))
-      await expect(page.getByText(`${summary.total} كتابًا قيد المراجعة`)).toBeVisible()
+      await expect(page.getByText(`${summary.total} كتابًا`)).toBeVisible()
       const cards = page.locator('.recovered-card')
       for (let i = 0; i < Math.min(await cards.count(), 6); i++) {
-        await expect(cards.nth(i)).toContainText('قيد المراجعة')
-        await expect(cards.nth(i).locator('.recovered-badge'), 'the review badge text is white (it was unreadable dark brown)').toHaveCSS('color', 'rgb(255, 255, 255)')
+        await expect(cards.nth(i), 'no draft / review label on the storefront').not.toContainText('قيد المراجعة')
+        await expect(cards.nth(i).locator('.recovered-badge')).toHaveCount(0)
         await expect(cards.nth(i)).toContainText('السعر غير محدد')
         await expect(cards.nth(i)).toContainText('المؤلف غير محدد')
         // a stored cover (content-hashed key in the public bucket) or the default one; either way the image really loads: never a broken image

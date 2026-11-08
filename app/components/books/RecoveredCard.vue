@@ -18,7 +18,6 @@ const coverLabel = computed(() => (props.item.cover_path ? (COVER_LABEL[props.it
   <div class="col-xl-3 col-lg-4 col-6 recovered-col">
     <article class="book_block block recovered-card" :aria-label="item.title">
       <div class="item">
-        <span class="type_book recovered-badge">قيد المراجعة</span>
         <div class="img-block" :class="{ 'is-placeholder': !item.cover_path }">
           <CoverImage class="img-fluid" loading="lazy" decoding="async" :path="item.cover_path" :alt="item.title" />
         </div>
@@ -28,9 +27,8 @@ const coverLabel = computed(() => (props.item.cover_path ? (COVER_LABEL[props.it
         <p class="recovered-line"><span class="cost recovered-unknown">السعر غير محدد</span></p>
         <p class="recovered-line recovered-unknown">المؤلف غير محدد</p>
         <details class="recovered-details">
-          <summary>تفاصيل المراجعة</summary>
+          <summary>التفاصيل</summary>
           <dl>
-            <dt>الحالة</dt><dd>قيد المراجعة، لم يُعتمد للنشر</dd>
             <dt>الأقسام</dt><dd>غير محددة</dd>
             <dt>الغلاف</dt><dd data-testid="cover-label">{{ coverLabel }}</dd>
             <dt v-if="item.pages">عدد الصفحات (من الملف)</dt><dd v-if="item.pages">{{ item.pages }}</dd>

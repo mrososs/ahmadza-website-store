@@ -10,8 +10,8 @@ watch(() => summary.data.value?.enabled && summary.data.value.total > 0, (show) 
 <template>
   <section v-if="summary.data.value?.enabled && summary.data.value.total > 0" class="recovered-home" aria-labelledby="recovered-home-title">
     <div class="alert alert-warning" role="note">
-      <strong id="recovered-home-title">كتب مستعادة قيد المراجعة ({{ summary.data.value.total }})</strong>
-      <span> — عناوين وُجدت في أرشيف الموقع القديم ولم تُراجع بعد؛ لا يمكن شراؤها أو تنزيلها في المعاينة. </span>
+      <strong id="recovered-home-title">كتب مستعادة ({{ summary.data.value.total }})</strong>
+      <span> — عناوين من أرشيف الموقع القديم؛ لا يمكن شراؤها أو تنزيلها في المعاينة. </span>
       <NuxtLink to="/recovered">عرض الكل</NuxtLink>
     </div>
     <div v-if="list.data.value?.items?.length" class="row">

@@ -219,7 +219,9 @@ input[data-type='currency']{
 }
 .wp_nav .dropdown-menu{
     padding: 0;
-    top: 5px !important;
+    /* the nav items are 60px tall: a fixed 5px put the menu over its own link instead of under it */
+    top: 100% !important;
+    min-width: 11rem;
 }
 .wp_nav .dropdown-menu .dropdown-item{
     color: #131921;

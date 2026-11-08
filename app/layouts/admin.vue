@@ -47,3 +47,15 @@ watch(() => route.fullPath, () => { void refreshBadges() })
     </div>
   </section>
 </template>
+
+<style>
+/* The «عمليات» dropdown of a row opens INSIDE .table-responsive, whose overflow:auto clips it (the last rows opened a menu below the table, out of sight).
+   On a desktop-width screen the table fits, so it does not need to scroll sideways: let the menu escape. On a phone the wrapper must keep scrolling,
+   so it grows by the height of an open menu instead. */
+@media (min-width: 992px) {
+  .table-responsive { overflow: visible; }
+}
+@media (max-width: 991.98px) {
+  .table-responsive:has(.dropdown-menu.show) { padding-bottom: 9rem; }
+}
+</style>

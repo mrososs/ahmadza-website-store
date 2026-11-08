@@ -18,6 +18,9 @@ const saved = ref(false)
 const busy = ref(false)
 const loading = ref(!!props.id)
 const hasImage = computed(() => props.entity !== 'pages')
+const evidence = ref<Record<string, unknown> | null>(null)
+const captures = computed(() => ((evidence.value?.captures as { ts: string; url: string }[] | undefined) ?? []))
+const missing = computed(() => ((evidence.value?.missing as string[] | undefined) ?? []))
 
 if (props.id) {
   try {
@@ -27,7 +30,7 @@ if (props.id) {
     form.kind = String(r.kind ?? form.kind); form.era = String(r.era ?? form.era)
     form.bio_html = String(r.bio_html ?? ''); form.excerpt = String(r.excerpt ?? ''); form.content_html = String(r.content_html ?? '')
     form.status = String(r.status ?? form.status); form.positions = (r.positions as string[]) ?? []
-    if (props.entity === 'articles') form.articleKind = String(r.kind ?? 'article')
+    if (props.entity === 'articles') { form.articleKind = String(r.kind ?? 'article'); evidence.value = r.source_system ? { system: String(r.source_system), review: String(r.review_status ?? ''), ...(r.source_evidence as Record<string, unknown>) } : null }
     currentImage.value = (r.image_path ?? r.poster_path ?? null) as string | null
   } catch (e) { globalError.value = (e as Error).message } finally { loading.value = false }
 }
@@ -77,6 +80,14 @@ const statusModel = computed({
       <div class="col-lg-10 col-12">
         <div v-if="globalError" class="alert alert-danger" role="alert">{{ globalError }}</div>
         <div v-if="saved" class="alert alert-success" role="status">تم الحفظ بنجاح</div>
+        <div v-if="evidence" class="alert alert-warning" role="note" data-test="article-evidence">
+          <strong>مقال مستعاد من مصدر ثانوي ({{ evidence.system }}).</strong>
+          <span> الثقة: {{ evidence.confidence }} — عدد النسخ المؤرشفة: {{ evidence.versions }} — المراجعة: {{ evidence.review }}.</span>
+          <p class="mb-1">{{ evidence.note }}</p>
+          <p v-if="missing.length" class="mb-1">بيانات غير متوفرة في المصدر: {{ missing.join('، ') }}. لم يتم اختلاق أي منها.</p>
+          <details><summary>نسخ الأرشيف ({{ captures.length }})</summary><ul class="mb-0"><li v-for="c in captures" :key="c.ts" dir="ltr">{{ c.ts }} — {{ c.url }}</li></ul></details>
+          <p class="mb-0 mt-1">اختيار «مفعلة» وحفظ المقال يعني اعتماده ونشره.</p>
+        </div>
         <div class="form-layout">
           <div class="row">
             <div v-if="entity === 'categories' || entity === 'makers'" class="col-md-6">

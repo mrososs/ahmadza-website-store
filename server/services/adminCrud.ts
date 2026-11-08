@@ -91,7 +91,10 @@ export async function createEntity(event: H3Event, cfg: Cfg, input: Record<strin
 }
 
 export async function updateEntity(event: H3Event, cfg: Cfg, id: number, input: Record<string, unknown>) {
-  const { data, error } = await adminDb(event).from(cfg.table).update(cfg.prepare(input)).eq('id', id).select('id').maybeSingle()
+  const patch: Record<string, unknown> = { ...cfg.prepare(input) }
+  // Publishing a recovered article is the administrator's explicit approval of it (the act is audited by the caller).
+  if (cfg.table === 'articles' && patch.status === 'published') patch.review_status = 'approved'
+  const { data, error } = await adminDb(event).from(cfg.table).update(patch).eq('id', id).select('id').maybeSingle()
   if (error) dbFail(error)
   if (!data) throw notFound()
 }

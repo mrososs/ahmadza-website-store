@@ -100,10 +100,17 @@ export async function latestArticles(c: Client, n = 3) {
 }
 
 export async function getArticle(c: Client, id: number) {
-  const { data, error } = await c.from('articles').select('id,title,excerpt,content_html,poster_path,view_count,created_at')
+  const { data, error } = await c.from('articles').select('id,title,excerpt,content_html,poster_path,view_count,created_at,date_is_original')
     .eq('id', id).eq('status', 'published').maybeSingle()
   if (error) throw error
   return data
+}
+
+// Legacy /post/<id|token> and /article/<token> links -> the new article id (published articles only).
+export async function resolveLegacyArticle(c: Client, ref: string): Promise<number | null> {
+  const { data, error } = await c.rpc('resolve_legacy_article', { p_ref: ref })
+  if (error) throw error
+  return typeof data === 'number' ? data : null
 }
 
 export async function getPage(c: Client, slug: string) {

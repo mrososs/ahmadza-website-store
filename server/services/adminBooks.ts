@@ -1,8 +1,8 @@
 import type { H3Event } from 'h3'
 import type { AdminBookInput } from '~~/shared/schemas'
-import { ADMIN_PAGE_SIZE } from '~~/shared/schemas/admin'
-import { serviceClient } from '../utils/supabase'
-import { dbFail } from '../utils/adminRoute'
+import { ADMIN_PAGE_SIZE, type AdminBulkBooksInput, type BulkBooksResult } from '~~/shared/schemas/admin'
+import { serviceClient, type AuthedUser } from '../utils/supabase'
+import { adminDb, dbFail } from '../utils/adminRoute'
 import { notFound } from '../utils/errors'
 import { sanitizeRichText } from '../utils/sanitize'
 import { escapeLike } from './adminCrud'
@@ -249,4 +249,34 @@ export async function cloneBook(event: H3Event, id: number) {
     category_ids: src.category_ids, maker_ids: src.maker_ids, tags: src.tags,
   }, [])
   return data
+}
+
+/**
+ * Bulk free / paid / soft-delete. Targets are read first (missing and already-deleted books are reported, not guessed), then ONE database
+ * function applies the change under row locks and writes the audit entries in the same transaction. Only kind/price_amount or deleted_at change.
+ */
+export async function bulkUpdateBooks(event: H3Event, admin: AuthedUser, input: AdminBulkBooksInput): Promise<BulkBooksResult> {
+  const db = serviceClient(event)
+  const { data: books, error } = await db.from('books').select('id,deleted_at').in('id', input.ids)
+  if (error) dbFail(error)
+  const found = new Map((books ?? []).map((b) => [b.id, b]))
+  const skipped: BulkBooksResult['skipped'] = []
+  const targets: number[] = []
+  for (const id of input.ids) {
+    const b = found.get(id)
+    if (!b) skipped.push({ id, reason: 'not_found' })
+    else if (b.deleted_at) skipped.push({ id, reason: 'already_deleted' })
+    else targets.push(id)
+  }
+  let updated: number[] = []
+  if (targets.length) {
+    const { data, error: e3 } = await adminDb(event).rpc('admin_bulk_books', {
+      p_op: input.operation, p_ids: targets, p_price: input.operation === 'make_paid' ? input.price : null, p_admin: admin.id,
+    })
+    if (e3) dbFail(e3)
+    const res = data as { updated: number[]; skipped: BulkBooksResult['skipped'] }
+    updated = res.updated
+    skipped.push(...res.skipped)
+  }
+  return { operation: input.operation, requested: input.ids.length, updated, skipped }
 }

@@ -43,7 +43,7 @@ describe('authorisation: 401 guest / 403 customer+affiliate / 200 admin', () => 
   const WRITES: [string, string, unknown?][] = [
     ['POST', '/api/admin/categories', { name: 'x' }], ['PUT', '/api/admin/categories/1', { name: 'x' }], ['DELETE', '/api/admin/categories/1'],
     ['POST', '/api/admin/books', {}], ['PUT', '/api/admin/books/1', {}], ['DELETE', '/api/admin/books/1'], ['POST', '/api/admin/books/1/clone'],
-    ['POST', '/api/admin/books/1/restore'], ['POST', '/api/admin/books/1/media', {}], ['DELETE', '/api/admin/books/1/media/1'],
+    ['POST', '/api/admin/books/1/restore'], ['POST', '/api/admin/books/bulk', { operation: 'make_free', ids: [1] }], ['POST', '/api/admin/books/1/media', {}], ['DELETE', '/api/admin/books/1/media/1'],
     ['PUT', '/api/admin/settings', {}], ['PATCH', '/api/admin/users/00000000-0000-0000-0000-000000000000', { status: 'active' }],
     ['DELETE', '/api/admin/users/00000000-0000-0000-0000-000000000000'], ['PATCH', '/api/admin/contacts/1', { is_handled: true }],
     ['DELETE', '/api/admin/contacts/1'], ['PATCH', '/api/admin/comments/1', { status: 'approved' }], ['DELETE', '/api/admin/comments/1'],

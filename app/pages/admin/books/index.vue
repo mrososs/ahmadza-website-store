@@ -2,6 +2,8 @@
 // Port of admin/book/index.blade.php (status filter via the sidebar: ?status=active|inactive|soon|trash).
 definePageMeta({ layout: 'admin', middleware: ['admin'] })
 useAdminTitle('الكتب')
+import { BULK_BOOKS_MAX, BULK_SKIP_LABEL, bulkPriceSchema, type BulkBookOperation, type BulkBooksResult } from '~~/shared/schemas/admin'
+import { useRowSelection } from '~~/shared/utils/rowSelection'
 import { RECOVERY_LIST_FILTERS, RECOVERY_LIST_FILTER_LABEL, WORKFLOW_BADGE, WORKFLOW_LABEL, WORKFLOW_STATUSES, readinessReasonLabel } from '~~/shared/constants/recovery'
 
 interface Row { id: number; title: string; cover_path: string | null; status: string; kind: string; price_amount: number; price_currency: string; view_count: number; orders_count: number; favourites_count: number; deleted_at: string | null
@@ -47,6 +49,52 @@ async function confirm() {
     await refresh()
   } catch (e) { actionError.value = (e as Error).message } finally { busy.value = false }
 }
+
+// ---- bulk actions: the selection is keyed by id so it survives paging / search / filters / refreshes, and is only ever ticked by hand ----
+const sel = useRowSelection<Row>((r) => r.title)
+const pageState = computed(() => sel.pageState(data.value?.items))
+const offPage = computed(() => sel.count.value - (data.value?.items ?? []).filter((r) => sel.has(r.id)).length)
+const overLimit = computed(() => sel.count.value > BULK_BOOKS_MAX)
+const bulk = ref<BulkBookOperation | null>(null)
+const bulkPrice = ref('')
+const bulkBusy = ref(false)
+const bulkError = ref('')
+const bulkNotice = ref<{ ok: boolean; text: string; details: string[] } | null>(null)
+const booksPhrase = (n: number) => (n === 1 ? 'كتاب واحد' : n === 2 ? 'كتابين' : n <= 10 ? `${n} كتب` : `${n} كتاباً`)
+const BULK_TEXT: Record<BulkBookOperation, { title: string; done: string; danger?: boolean }> = {
+  make_free: { title: 'تحويل إلى مجاني', done: 'حُوّل إلى مجاني' },
+  make_paid: { title: 'تحويل إلى مدفوع', done: 'حُوّل إلى مدفوع' },
+  soft_delete: { title: 'نقل إلى المهملات', done: 'نُقل إلى المهملات', danger: true },
+}
+function askBulk(op: BulkBookOperation) { if (bulkBusy.value || !sel.count.value || overLimit.value) return; bulk.value = op; bulkPrice.value = ''; bulkError.value = ''; bulkNotice.value = null }
+function closeBulk() { if (!bulkBusy.value) bulk.value = null }
+/** Accepts Arabic-Indic digits and the Arabic decimal separator, as an Arabic keyboard produces them. */
+const parsePrice = (s: string) => Number(s.trim().replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x660)).replace(/[٫،,]/g, '.'))
+async function runBulk() {
+  const op = bulk.value
+  if (!op || bulkBusy.value) return // a second click / Enter while the request is in flight does nothing
+  let price: number | undefined
+  if (op === 'make_paid') {
+    const r = bulkPriceSchema.safeParse(bulkPrice.value.trim() === '' ? undefined : parsePrice(bulkPrice.value))
+    if (!r.success) { bulkError.value = r.error.issues[0]?.message ?? 'السعر غير صالح'; return }
+    price = r.data
+  }
+  bulkBusy.value = true
+  bulkError.value = ''
+  try {
+    const res = await adminFetch<BulkBooksResult>('/api/admin/books/bulk', { method: 'POST', body: { operation: op, ids: sel.ids.value, ...(price === undefined ? {} : { price }) } })
+    // done / already in the target state / gone leave the selection; books the server refused stay selected so they can be reviewed
+    sel.remove([...res.updated, ...res.skipped.filter((s) => ['unchanged', 'not_found', 'already_deleted'].includes(s.reason)).map((s) => s.id)])
+    const titleOf = (id: number) => data.value?.items.find((r) => r.id === id)?.title ?? `#${id}`
+    bulk.value = null
+    bulkNotice.value = {
+      ok: res.updated.length > 0,
+      text: res.updated.length ? `${BULK_TEXT[op].done}: ${booksPhrase(res.updated.length)}${res.skipped.length ? `، وتخطّي ${booksPhrase(res.skipped.length)}` : ''}.` : 'لم يتغير أي كتاب.',
+      details: res.skipped.map((s) => `${titleOf(s.id)}: ${BULK_SKIP_LABEL[s.reason]}`),
+    }
+    await refresh()
+  } catch (e) { bulkError.value = (e as Error).message } finally { bulkBusy.value = false }
+}
 async function clone(r: Row) {
   try { const c = await adminFetch<{ id: number }>(`/api/admin/books/${r.id}/clone`, { method: 'POST' }); await navigateTo(`/admin/books/${c.id}`) } catch (e) { actionError.value = (e as Error).message }
 }
@@ -76,8 +124,33 @@ async function clone(r: Row) {
       </select>
     </div>
     <div v-if="actionError && !target" class="col-12"><div class="alert alert-danger" role="alert">{{ actionError }}</div></div>
+    <div v-if="bulkNotice" class="col-12">
+      <div class="alert alert-dismissible" :class="bulkNotice.ok ? 'alert-success' : 'alert-warning'" :role="bulkNotice.ok ? 'status' : 'alert'">
+        <button type="button" class="close" aria-label="إغلاق" @click="bulkNotice = null"><span aria-hidden="true">&times;</span></button>
+        {{ bulkNotice.text }}
+        <ul v-if="bulkNotice.details.length" class="mb-0 mt-2"><li v-for="d in bulkNotice.details" :key="d">{{ d }}</li></ul>
+      </div>
+    </div>
+    <div v-if="sel.count.value && !trash" class="col-12 mb-3 bulk-toolbar-wrap">
+      <div class="bulk-toolbar" role="toolbar" aria-label="إجراءات جماعية على الكتب المحددة">
+        <span class="bulk-count" role="status" aria-live="polite">
+          <strong>{{ sel.count.value }}</strong> {{ sel.count.value === 1 ? 'كتاب محدد' : 'كتب محددة' }}
+          <small v-if="offPage > 0" class="d-block text-muted">منها {{ offPage }} خارج النتائج المعروضة الآن</small>
+        </span>
+        <div class="bulk-actions">
+          <button type="button" class="btn btn-sm btn-success" :disabled="bulkBusy || overLimit" @click="askBulk('make_free')"><i class="fa fa-gift" /> تحويل إلى مجاني</button>
+          <button type="button" class="btn btn-sm btn-primary" :disabled="bulkBusy || overLimit" @click="askBulk('make_paid')"><i class="fa fa-dollar" /> تحويل إلى مدفوع</button>
+          <button type="button" class="btn btn-sm btn-danger" :disabled="bulkBusy || overLimit" @click="askBulk('soft_delete')"><i class="fa fa-trash" /> نقل إلى المهملات</button>
+          <button type="button" class="btn btn-sm btn-secondary" :disabled="bulkBusy" @click="sel.clear()"><i class="fa fa-times" /> إلغاء التحديد</button>
+        </div>
+        <div v-if="overLimit" class="text-danger w-100" role="alert">الحد الأقصى {{ BULK_BOOKS_MAX }} كتاباً في العملية الواحدة: ألغِ تحديد {{ sel.count.value - BULK_BOOKS_MAX }} على الأقل.</div>
+      </div>
+    </div>
     <div class="col-12 mb-30">
-      <AdminDataTable :columns="columns" :rows="data?.items" :loading="pending" :error="errorText" :total="data?.total" :page="data?.page" :page-size="data?.pageSize" searchable search-placeholder="ابحث بعنوان الكتاب" @retry="refresh()">
+      <AdminDataTable
+        :columns="columns" :rows="data?.items" :loading="pending" :error="errorText" :total="data?.total" :page="data?.page" :page-size="data?.pageSize" searchable search-placeholder="ابحث بعنوان الكتاب"
+        :selectable="!trash" :is-selected="(r: Row) => sel.has(r.id)" :page-state="pageState" :select-label="(r: Row) => `تحديد ${r.title}`"
+        @select="(r: Row, on: boolean) => sel.set(r, on)" @select-page="(on: boolean) => sel.setPage(data?.items ?? [], on)" @retry="refresh()">
         <template #cell-cover="{ row }"><img class="img-fluid" style="width: 35px" :src="publicUrl(row.cover_path)" :alt="row.title" :title="row.title" @error="fallbackCover"></template>
         <template #cell-status="{ row }"><span class="badge" :class="STATUS_BADGE[row.status]?.cls">{{ STATUS_BADGE[row.status]?.label }}</span></template>
         <template #cell-price="{ row }">{{ Number(row.price_amount).toFixed(2) }} <template v-if="row.kind === 'paid'">دولار</template></template>
@@ -111,6 +184,28 @@ async function clone(r: Row) {
       </AdminDataTable>
     </div>
 
+    <AdminModal :open="!!bulk" :title="bulk ? BULK_TEXT[bulk].title : ''" :danger="!!bulk && !!BULK_TEXT[bulk].danger" @close="closeBulk">
+      <template v-if="bulk">
+        <p v-if="bulk === 'make_free'">سيتم تحويل <strong>{{ booksPhrase(sel.count.value) }}</strong> إلى مجانية (السعر 0). تبقى حالة النشر كما هي ولا يتغير شيء آخر.</p>
+        <template v-else-if="bulk === 'make_paid'">
+          <p>سيتم تحويل <strong>{{ booksPhrase(sel.count.value) }}</strong> إلى مدفوعة بنفس السعر. المسودات تبقى مسودات، والكتب المُسترجعة غير المكتملة لا تُنشر.</p>
+          <div class="form-group">
+            <label for="bulk-price">السعر لكل كتاب (دولار)</label>
+            <input id="bulk-price" v-model="bulkPrice" class="form-control" type="text" inputmode="decimal" autocomplete="off" dir="ltr" required :aria-invalid="!!bulkError" aria-describedby="bulk-price-hint" :disabled="bulkBusy" @keydown.enter.prevent="runBulk">
+            <small id="bulk-price-hint" class="text-muted">رقم أكبر من صفر، بخانتين عشريتين على الأكثر.</small>
+          </div>
+        </template>
+        <p v-else>سيتم نقل <strong>{{ booksPhrase(sel.count.value) }}</strong> إلى المهملات. لا يُحذف أي سجل ولا ملف، وتبقى الطلبات والمشتريات كما هي، ويمكن استرجاعها لاحقاً.</p>
+        <p v-if="bulk !== 'soft_delete'" class="text-muted mb-2"><small>الطلبات السابقة وأسعارها وصلاحيات من اشتروا الكتب لا تتأثر.</small></p>
+        <div v-if="bulkError" class="alert alert-danger" role="alert">{{ bulkError }}</div>
+      </template>
+      <template #footer>
+        <button class="btn ripple" :class="bulk && BULK_TEXT[bulk].danger ? 'btn-danger' : 'btn-primary'" type="button" :disabled="bulkBusy" :aria-busy="bulkBusy" @click="runBulk">
+          <i v-if="bulkBusy" class="fa fa-spinner fa-spin" /> {{ bulkBusy ? 'جاري التنفيذ…' : 'تأكيد' }}
+        </button>
+      </template>
+    </AdminModal>
+
     <AdminModal :open="!!target" :title="mode === 'delete' ? 'حذف' : 'استرجاع'" :danger="mode === 'delete'" @close="target = null">
       <div class="form-group"><label>العنوان</label><input readonly class="form-control" :value="target?.title"></div>
       <div v-if="actionError" class="alert alert-danger" role="alert">{{ actionError }}</div>
@@ -120,3 +215,9 @@ async function clone(r: Row) {
     </AdminModal>
   </div>
 </template>
+
+<style scoped>
+.bulk-toolbar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; padding: 0.6rem 1rem; background: #fff; border: 1px solid #b6d4fe; border-radius: 4px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
+.bulk-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+@media (max-width: 575px) { .bulk-actions { width: 100%; } .bulk-actions .btn { flex: 1 1 45%; } }
+</style>

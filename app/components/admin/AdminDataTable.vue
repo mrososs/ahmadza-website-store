@@ -14,8 +14,16 @@ const props = defineProps<{
   searchable?: boolean
   searchPlaceholder?: string
   rowKey?: string
+  /** Adds a leading checkbox column. The parent owns the selection (it must survive paging), the table only reports ticks. */
+  selectable?: boolean
+  isSelected?: (row: T) => boolean
+  pageState?: 'none' | 'some' | 'all'
+  selectLabel?: (row: T) => string
 }>()
-const emit = defineEmits<{ retry: [] }>()
+const emit = defineEmits<{ retry: []; select: [row: T, checked: boolean]; 'select-page': [checked: boolean] }>()
+const span = computed(() => props.columns.length + (props.selectable ? 1 : 0))
+const headBox = ref<HTMLInputElement | null>(null)
+watchEffect(() => { if (headBox.value) headBox.value.indeterminate = props.pageState === 'some' })
 
 const route = useRoute()
 const router = useRouter()
@@ -46,24 +54,32 @@ const keyOf = (r: T, i: number) => String(r[props.rowKey ?? 'id'] ?? i)
         <div class="table-responsive">
           <table class="table table-striped table-bordered p-0 admin-data-table">
             <thead>
-              <tr><th v-for="c in columns" :key="c.key" class="border-bottom-0" :class="c.cls">{{ c.label }}</th></tr>
+              <tr>
+                <th v-if="selectable" class="border-bottom-0 select-col" scope="col">
+                  <input ref="headBox" type="checkbox" aria-label="تحديد كل عناصر هذه الصفحة" :checked="pageState === 'all'" :disabled="!rows?.length" @change="emit('select-page', ($event.target as HTMLInputElement).checked)">
+                </th>
+                <th v-for="c in columns" :key="c.key" class="border-bottom-0" :class="c.cls">{{ c.label }}</th>
+              </tr>
             </thead>
             <tbody>
-              <tr v-if="!rows && !error"><td :colspan="columns.length" class="text-center p-4" role="status"><i class="fa fa-spinner fa-spin" /> جاري التحميل…</td></tr>
+              <tr v-if="!rows && !error"><td :colspan="span" class="text-center p-4" role="status"><i class="fa fa-spinner fa-spin" /> جاري التحميل…</td></tr>
               <tr v-else-if="error">
-                <td :colspan="columns.length" class="text-center p-4 text-danger" role="alert">
+                <td :colspan="span" class="text-center p-4 text-danger" role="alert">
                   {{ error }} <a href="#" @click.prevent="emit('retry')">إعادة المحاولة</a>
                   <template v-if="route.query.page"> | <NuxtLink :to="{ path: route.path, query: { ...route.query, page: undefined } }">الصفحة الأولى</NuxtLink></template>
                 </td>
               </tr>
               <tr v-else-if="!rows?.length">
-                <td :colspan="columns.length" class="text-center p-4">
+                <td :colspan="span" class="text-center p-4">
                   <template v-if="applied">لا توجد نتائج مطابقة لبحثك. <a href="#" @click.prevent="clearSearch">مسح البحث</a></template>
                   <template v-else>لا توجد بيانات</template>
                 </td>
               </tr>
               <template v-else>
-                <tr v-for="(r, i) in rows" :key="keyOf(r, i)">
+                <tr v-for="(r, i) in rows" :key="keyOf(r, i)" :class="{ 'row-selected': selectable && isSelected?.(r) }">
+                  <td v-if="selectable" class="select-col">
+                    <input type="checkbox" :aria-label="selectLabel?.(r) ?? 'تحديد الصف'" :checked="!!isSelected?.(r)" @change="emit('select', r, ($event.target as HTMLInputElement).checked)">
+                  </td>
                   <td v-for="c in columns" :key="c.key">
                     <slot :name="`cell-${c.key}`" :row="r" :index="i">{{ r[c.key] }}</slot>
                   </td>
@@ -82,4 +98,7 @@ const keyOf = (r: T, i: number) => String(r[props.rowKey ?? 'id'] ?? i)
 <style>
 /* on a phone the columns keep a readable width and the .table-responsive wrapper scrolls sideways (instead of one word per line and cut-off badges) */
 .admin-data-table { min-width: 760px; }
+.admin-data-table .select-col { width: 2.5rem; text-align: center; vertical-align: middle; }
+.admin-data-table .select-col input { width: 1.1rem; height: 1.1rem; cursor: pointer; }
+.admin-data-table tr.row-selected > td { background-color: rgba(0, 123, 255, 0.08); }
 </style>
